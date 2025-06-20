@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Buku Tamu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #7FFFD4;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      gap: 40px;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .form-wrapper, .camera-wrapper {
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .camera-wrapper {
+      text-align: center;
+    }
+
+    img.logo {
+      display: block;
+      margin: 0 auto 20px;
+      max-width: 180px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 0;
+      font-size: 26px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #f2f2f2;
+      border: 1px solid #aaa;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #ddd;
+    }
+
+    video {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 10px auto;
+      display: block;
+      transform: scaleX(-1); /* Mirror camera view */
+    }
+
+    #preview {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 10px auto;
+      display: none;
+      object-fit: cover;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      img.logo {
+        max-width: 150px;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+
+      input, textarea, button {
+        font-size: 14px;
+        padding: 12px;
+      }
+
+      video, #preview {
+        max-height: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="form-wrapper">
+      <img src="genetek-logo.png" alt="Genetek Logo" class="logo" />
+      <h2>📘 Buku Tamu</h2>
+      <form id="logForm">
+        <input type="text" id="tanggal" required readonly style="pointer-events: none; background-color: #f5f5f5;" />
+        <input type="text" id="nama" placeholder="Nama" required />
+        <input type="text" id="perusahaan" placeholder="Nama Perusahaan" required />
+        <textarea id="alamat" placeholder="Alamat Perusahaan" required></textarea>
+        <input type="tel" id="telepon" placeholder="No Telepon" required />
+        <input type="text" id="tujuan" placeholder="Tujuan Kunjungan" required />
+        <button type="submit">+ Tambah ke Buku Tamu</button>
+      </form>
+    </div>
+
+    <div class="camera-wrapper">
+      <video id="video" autoplay></video>
+      <button type="button" onclick="takePhoto()">📸 Ambil Foto</button>
+      <canvas id="canvas"></canvas>
+      <img id="preview" alt="Preview Foto" />
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC8LlcI_ccRGieFNjlVFLfEr2c4PBg6J70",
+      authDomain: "logbook-e6ab3.firebaseapp.com",
+      projectId: "logbook-e6ab3",
+      storageBucket: "logbook-e6ab3.appspot.com",
+      messagingSenderId: "484546392348",
+      appId: "1:484546392348:web:861616b680427c158ecad9"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const preview = document.getElementById('preview');
+    let photoData = '';
+
+    function setCurrentDateTime() {
+      const now = new Date();
+      const tzOffset = now.getTimezoneOffset() * 60000;
+      const localISOTime = new Date(now - tzOffset).toISOString().slice(0, 16);
+      document.getElementById('tanggal').value = localISOTime.replace('T', ' ');
+    }
+
+    window.onload = setCurrentDateTime;
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => console.error('Akses kamera ditolak:', err));
+
+    function takePhoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Mirror image to match video
+      context.save();
+      context.scale(-1, 1);
+      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      context.restore();
+
+      photoData = canvas.toDataURL('image/jpeg', 0.3);
+      preview.src = photoData;
+      preview.style.display = 'block';
+    }
+
+    document.getElementById('logForm').onsubmit = function(e) {
+      e.preventDefault();
+
+      if (!photoData) {
+        alert("Silakan ambil foto terlebih dahulu sebelum submit.");
+        return;
+      }
+
+      const tanggal = document.getElementById('tanggal').value;
+      const nama = document.getElementById('nama').value;
+      const perusahaan = document.getElementById('perusahaan').value;
+      const alamat = document.getElementById('alamat').value;
+      const telepon = document.getElementById('telepon').value;
+      const tujuan = document.getElementById('tujuan').value;
+
+      const data = {
+        tanggal,
+        nama,
+        perusahaan,
+        alamat,
+        telepon,
+        tujuan,
+        foto: photoData
+      };
+
+      db.collection("logbook").add(data)
+        .then(() => {
+          alert("Data berhasil disimpan di Firestore");
+          document.getElementById('logForm').reset();
+          photoData = '';
+          preview.style.display = 'none';
+          setCurrentDateTime();
+        })
+        .catch(err => {
+          alert("Gagal menyimpan data: " + err.message);
+        });
+    };
+  </script>
+</body>
+</html>
