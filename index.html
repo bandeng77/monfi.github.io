@@ -32,14 +32,13 @@
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      max-width: 960px;
+      max-width: 1000px;
       width: 100%;
       align-items: flex-start;
     }
 
     .form-wrapper, .camera-wrapper {
       flex: 1;
-      min-width: 0;
     }
 
     .form-wrapper {
@@ -78,17 +77,21 @@
       background-color: #ddd;
     }
 
+    .camera-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     video, #preview {
       width: 100%;
       border-radius: 8px;
-      margin: 10px 0;
       object-fit: cover;
+      transform: scaleX(-1); /* Mirror camera view */;
     }
 
     #preview {
       display: none;
-      max-width: 100%;
-      height: auto;
     }
 
     canvas {
