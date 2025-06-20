@@ -16,77 +16,87 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background-color: #7FFFD4;
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
       min-height: 100vh;
     }
 
     .container {
-      display: flex;
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 40px;
-      background: white;
-      padding: 30px;
+      background-color: #ffffff;
+      padding: 32px;
       border-radius: 16px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      max-width: 1000px;
+      max-width: 960px;
       width: 100%;
-      align-items: flex-start;
     }
 
-    .form-wrapper, .camera-wrapper {
-      flex: 1;
+    .form-wrapper,
+    .camera-wrapper {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      align-items: center;
     }
 
     .form-wrapper img.logo {
-      display: block;
-      margin: 0 auto 16px;
-      max-width: 160px;
+      max-width: 150px;
+      margin-bottom: 16px;
     }
 
     h2 {
+      font-size: 22px;
+      margin-bottom: 20px;
       text-align: center;
-      margin: 0 0 20px;
-      font-size: 24px;
     }
 
-    input, button {
+    form {
+      width: 100%;
+    }
+
+    input,
+    button {
       width: 100%;
       padding: 12px;
-      margin-bottom: 16px;
       font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      margin-bottom: 16px;
+    }
+
+    input[readonly] {
+      background-color: #f2f2f2;
+      pointer-events: none;
     }
 
     button {
-      cursor: pointer;
-      background-color: #f2f2f2;
+      background-color: #f5f5f5;
       border: 1px solid #aaa;
-      transition: background 0.2s ease;
+      cursor: pointer;
+      transition: background 0.3s ease;
     }
 
     button:hover {
       background-color: #ddd;
     }
 
-    video, #preview {
+    video,
+    #preview {
       width: 100%;
       border-radius: 8px;
       margin-top: 10px;
       object-fit: cover;
+      background: #000;
     }
 
     video {
-      transform: scaleX(-1); /* Mirror kamera */
+      transform: scaleX(-1);
     }
 
     #preview {
@@ -98,14 +108,10 @@
     }
 
     @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-
       .container {
-        flex-direction: column;
-        padding: 20px;
+        grid-template-columns: 1fr;
         gap: 30px;
+        padding: 20px;
       }
 
       .form-wrapper img.logo {
@@ -116,7 +122,8 @@
         font-size: 20px;
       }
 
-      input, button {
+      input,
+      button {
         font-size: 14px;
         padding: 10px;
       }
@@ -125,17 +132,19 @@
 </head>
 <body>
   <div class="container">
+    <!-- Form Absensi -->
     <div class="form-wrapper">
       <img src="genetek-logo.png" alt="Genetek Logo" class="logo" />
       <h2>📋 Absensi Rapat</h2>
       <form id="absenForm">
-        <input type="text" id="waktu" readonly required style="pointer-events: none; background-color: #f5f5f5;" />
+        <input type="text" id="waktu" readonly required />
         <input type="text" id="nama" placeholder="Nama Lengkap" required />
         <input type="text" id="unit" placeholder="Unit Kerja" required />
         <button type="submit">✅ Absen Sekarang</button>
       </form>
     </div>
 
+    <!-- Kamera -->
     <div class="camera-wrapper">
       <video id="video" autoplay></video>
       <button type="button" onclick="takePhoto()">📸 Ambil Foto</button>
@@ -171,7 +180,7 @@
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.save();
-      context.scale(-1, 1); // membalik horizontal hasil canvas
+      context.scale(-1, 1); // mirror horizontal
       context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
       context.restore();
 
@@ -180,7 +189,7 @@
       preview.style.display = 'block';
     }
 
-    document.getElementById('absenForm').onsubmit = function(e) {
+    document.getElementById('absenForm').onsubmit = function (e) {
       e.preventDefault();
 
       if (!photoData) {
