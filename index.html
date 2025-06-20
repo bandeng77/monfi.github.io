@@ -22,6 +22,8 @@
       background-color: #7FFFD4;
       display: flex;
       justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
 
     .container {
@@ -32,23 +34,33 @@
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      max-width: 900px;
+      max-width: 1000px;
       width: 100%;
+      align-items: flex-start;
     }
 
     .form-wrapper, .camera-wrapper {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-wrapper img.logo {
+      display: block;
+      margin: 0 auto 16px;
+      max-width: 160px;
     }
 
     h2 {
       text-align: center;
-      margin-top: 0;
+      margin: 0 0 20px;
       font-size: 24px;
     }
 
     input, button {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       margin-bottom: 16px;
       font-size: 16px;
       border-radius: 8px;
@@ -69,7 +81,7 @@
     video, #preview {
       width: 100%;
       border-radius: 8px;
-      margin: 10px 0;
+      margin-top: 10px;
       object-fit: cover;
     }
 
@@ -82,9 +94,18 @@
     }
 
     @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
       .container {
         flex-direction: column;
-        gap: 20px;
+        padding: 20px;
+        gap: 30px;
+      }
+
+      .form-wrapper img.logo {
+        max-width: 120px;
       }
 
       h2 {
@@ -93,7 +114,7 @@
 
       input, button {
         font-size: 14px;
-        padding: 12px;
+        padding: 10px;
       }
     }
   </style>
@@ -135,21 +156,16 @@
       document.getElementById('waktu').value = localTime;
     }
 
-    // Update time every second
     setInterval(updateCurrentTime, 1000);
     window.onload = updateCurrentTime;
 
-    // Start camera
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => video.srcObject = stream)
       .catch(err => console.error('Akses kamera ditolak:', err));
 
-    // Take photo
     function takePhoto() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
-      // Mirror video
       context.save();
       context.scale(-1, 1);
       context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
@@ -160,7 +176,6 @@
       preview.style.display = 'block';
     }
 
-    // Form submission
     document.getElementById('absenForm').onsubmit = function(e) {
       e.preventDefault();
 
@@ -173,7 +188,6 @@
       const nama = document.getElementById('nama').value;
       const unit = document.getElementById('unit').value;
 
-      // Simulasi penyimpanan (local log)
       console.log("Data Absen:", {
         waktu,
         nama,
