@@ -78,21 +78,20 @@
       background-color: #ddd;
     }
 
-    video, #preview {
+    video {
       width: 100%;
       border-radius: 8px;
       margin: 10px 0;
       object-fit: cover;
-      transform: scaleX(-1); /* Mirror camera view */;
+      transform: scaleX(-1); /* Mirror effect */
     }
 
     #preview {
       width: 100%;
-      max-width: 100%;
       border-radius: 8px;
-      margin: 10px auto;
-      display: none;
+      margin: 10px 0;
       object-fit: cover;
+      display: none;
     }
 
     canvas {
@@ -168,10 +167,8 @@
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      context.save();
-      context.scale(-1, 1);
-      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-      context.restore();
+      // Gambar normal (tidak mirror)
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       photoData = canvas.toDataURL('image/jpeg', 0.3);
       preview.src = photoData;
