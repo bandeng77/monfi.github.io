@@ -56,4 +56,136 @@
     }
 
     button {
-      cursor:
+      cursor: pointer;
+      background-color: #f2f2f2;
+      border: 1px solid #aaa;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #ddd;
+    }
+
+    video, #preview {
+      width: 100%;
+      border-radius: 8px;
+      margin: 10px 0;
+      object-fit: cover;
+    }
+
+    #preview {
+      display: none;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      input, button {
+        font-size: 14px;
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="form-wrapper">
+      <h2>📋 Absensi Rapat</h2>
+      <form id="absenForm">
+        <input type="text" id="waktu" readonly required style="pointer-events: none; background-color: #f5f5f5;" />
+        <input type="text" id="nama" placeholder="Nama Lengkap" required />
+        <input type="text" id="unit" placeholder="Unit Kerja" required />
+        <button type="submit">✅ Absen Sekarang</button>
+      </form>
+    </div>
+
+    <div class="camera-wrapper">
+      <video id="video" autoplay></video>
+      <button type="button" onclick="takePhoto()">📸 Ambil Foto</button>
+      <canvas id="canvas"></canvas>
+      <img id="preview" alt="Preview Foto" />
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const preview = document.getElementById('preview');
+    let photoData = '';
+
+    function updateCurrentTime() {
+      const now = new Date();
+      const localTime = now.toLocaleString('id-ID', {
+        dateStyle: 'short',
+        timeStyle: 'medium'
+      });
+      document.getElementById('waktu').value = localTime;
+    }
+
+    // Update time every second
+    setInterval(updateCurrentTime, 1000);
+    window.onload = updateCurrentTime;
+
+    // Start camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => console.error('Akses kamera ditolak:', err));
+
+    // Take photo
+    function takePhoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Mirror video
+      context.save();
+      context.scale(-1, 1);
+      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+      context.restore();
+
+      photoData = canvas.toDataURL('image/jpeg', 0.3);
+      preview.src = photoData;
+      preview.style.display = 'block';
+    }
+
+    // Form submission
+    document.getElementById('absenForm').onsubmit = function(e) {
+      e.preventDefault();
+
+      if (!photoData) {
+        alert("Silakan ambil foto terlebih dahulu.");
+        return;
+      }
+
+      const waktu = document.getElementById('waktu').value;
+      const nama = document.getElementById('nama').value;
+      const unit = document.getElementById('unit').value;
+
+      // Simulasi penyimpanan (local log)
+      console.log("Data Absen:", {
+        waktu,
+        nama,
+        unit,
+        foto: photoData
+      });
+
+      alert("Data berhasil ditangkap secara lokal (belum disimpan).");
+
+      document.getElementById('absenForm').reset();
+      photoData = '';
+      preview.style.display = 'none';
+    };
+  </script>
+</body>
+</html>
