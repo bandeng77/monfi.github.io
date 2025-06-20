@@ -22,8 +22,6 @@
       background-color: #7FFFD4;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
     }
 
     .container {
@@ -34,37 +32,39 @@
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      max-width: 1000px;
+      max-width: 960px;
       width: 100%;
       align-items: flex-start;
     }
 
     .form-wrapper, .camera-wrapper {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      min-width: 0;
     }
 
-    .form-wrapper img.logo {
-      display: block;
-      margin: 0 auto 16px;
-      max-width: 160px;
+    .form-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     h2 {
       text-align: center;
-      margin: 0 0 20px;
+      margin-top: 0;
       font-size: 24px;
     }
 
     input, button {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
+      padding: 14px;
       font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
+    }
+
+    input[readonly] {
+      background-color: #f5f5f5;
+      cursor: not-allowed;
     }
 
     button {
@@ -81,12 +81,14 @@
     video, #preview {
       width: 100%;
       border-radius: 8px;
-      margin-top: 10px;
+      margin: 10px 0;
       object-fit: cover;
     }
 
     #preview {
       display: none;
+      max-width: 100%;
+      height: auto;
     }
 
     canvas {
@@ -94,18 +96,10 @@
     }
 
     @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-
       .container {
         flex-direction: column;
+        gap: 20px;
         padding: 20px;
-        gap: 30px;
-      }
-
-      .form-wrapper img.logo {
-        max-width: 120px;
       }
 
       h2 {
@@ -114,7 +108,7 @@
 
       input, button {
         font-size: 14px;
-        padding: 10px;
+        padding: 12px;
       }
     }
   </style>
@@ -122,10 +116,10 @@
 <body>
   <div class="container">
     <div class="form-wrapper">
-      <img src="genetek-logo.png" alt="Genetek Logo" class="logo" />
+      <img src="genetek-logo.png" alt="Genetek Logo" class="logo" style="max-width:150px; display:block; margin:0 auto;" />
       <h2>📋 Absensi Rapat</h2>
       <form id="absenForm">
-        <input type="text" id="waktu" readonly required style="pointer-events: none; background-color: #f5f5f5;" />
+        <input type="text" id="waktu" readonly required />
         <input type="text" id="nama" placeholder="Nama Lengkap" required />
         <input type="text" id="unit" placeholder="Unit Kerja" required />
         <button type="submit">✅ Absen Sekarang</button>
@@ -133,7 +127,7 @@
     </div>
 
     <div class="camera-wrapper">
-      <video id="video" autoplay></video>
+      <video id="video" autoplay playsinline></video>
       <button type="button" onclick="takePhoto()">📸 Ambil Foto</button>
       <canvas id="canvas"></canvas>
       <img id="preview" alt="Preview Foto" />
@@ -156,16 +150,20 @@
       document.getElementById('waktu').value = localTime;
     }
 
+    // Update time every second
     setInterval(updateCurrentTime, 1000);
     window.onload = updateCurrentTime;
 
+    // Start camera
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => video.srcObject = stream)
       .catch(err => console.error('Akses kamera ditolak:', err));
 
+    // Take photo
     function takePhoto() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+
       context.save();
       context.scale(-1, 1);
       context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
@@ -174,8 +172,11 @@
       photoData = canvas.toDataURL('image/jpeg', 0.3);
       preview.src = photoData;
       preview.style.display = 'block';
+      preview.width = canvas.width;
+      preview.height = canvas.height;
     }
 
+    // Form submission
     document.getElementById('absenForm').onsubmit = function(e) {
       e.preventDefault();
 
