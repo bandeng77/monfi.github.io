@@ -188,43 +188,46 @@
       preview.src = photoData;
       preview.style.display = 'block';
     }
-    
-document.getElementById('absenForm').onsubmit = function (e) {
-  e.preventDefault();
 
-  if (!photoData) {
-    alert("Silakan ambil foto terlebih dahulu.");
-    return;
-  }
+    document.getElementById('absenForm').onsubmit = function (e) {
+      e.preventDefault();
 
-  const waktu = document.getElementById('waktu').value;
-  const nama = document.getElementById('nama').value;
-  const unit = document.getElementById('unit').value;
+      if (!photoData) {
+        alert("Silakan ambil foto terlebih dahulu.");
+        return;
+      }
 
-  fetch("https://script.google.com/macros/s/AKfycbycPpE424Y174_eej4WN6XJOxMmNr-kw8nbDGlwZXDdSU7yY2BmTwBcZJFnY-EsFUp8/exec", {
-    method: "POST",
-    body: JSON.stringify({
-      waktu: waktu,
-      nama: nama,
-      unit: unit,
-      foto: photoData
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-    .then(res => res.text())
-    .then(res => {
-      alert("✅ Data berhasil disimpan ke Google Sheet!");
-      document.getElementById('absenForm').reset();
-      preview.style.display = 'none';
-      photoData = '';
-    })
-    .catch(err => {
-      console.error("❌ Gagal mengirim data:", err);
-      alert("Terjadi kesalahan saat menyimpan data.");
-    });
-};
+      const waktu = document.getElementById('waktu').value;
+      const nama = document.getElementById('nama').value;
+      const unit = document.getElementById('unit').value;
+
+      fetch("https://script.google.com/macros/s/AKfycbycPpE424Y174_eej4WN6XJOxMmNr-kw8nbDGlwZXDdSU7yY2BmTwBcZJFnY-EsFUp8/exec", {
+        method: "POST",
+        body: JSON.stringify({
+          waktu: waktu,
+          nama: nama,
+          unit: unit,
+          foto: photoData
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => res.text())
+      .then(res => {
+        alert("✅ Respon dari server: " + res);
+        if (res.toLowerCase().includes("sukses")) {
+          document.getElementById('absenForm').reset();
+          preview.style.display = 'none';
+          photoData = '';
+          updateCurrentTime();
+        }
+      })
+      .catch(err => {
+        console.error("❌ Gagal mengirim data:", err);
+        alert("❌ Terjadi kesalahan saat menyimpan data.");
+      });
+    };
   </script>
 </body>
 </html>
