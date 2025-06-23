@@ -201,32 +201,18 @@
       const nama = document.getElementById('nama').value;
       const unit = document.getElementById('unit').value;
 
-      fetch("https://script.google.com/macros/s/AKfycbycPpE424Y174_eej4WN6XJOxMmNr-kw8nbDGlwZXDdSU7yY2BmTwBcZJFnY-EsFUp8/exec", {
-        method: "POST",
-        body: JSON.stringify({
-          waktu: waktu,
-          nama: nama,
-          unit: unit,
-          foto: photoData
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-      .then(res => res.text())
-      .then(res => {
-        alert("✅ Respon dari server: " + res);
-        if (res.toLowerCase().includes("sukses")) {
-          document.getElementById('absenForm').reset();
-          preview.style.display = 'none';
-          photoData = '';
-          updateCurrentTime();
-        }
-      })
-      .catch(err => {
-        console.error("❌ Gagal mengirim data:", err);
-        alert("❌ Terjadi kesalahan saat menyimpan data.");
+      console.log("Data Absen:", {
+        waktu,
+        nama,
+        unit,
+        foto: photoData
       });
+
+      alert("Data berhasil ditangkap secara lokal (belum disimpan).");
+
+      document.getElementById('absenForm').reset();
+      photoData = '';
+      preview.style.display = 'none';
     };
   </script>
 </body>
