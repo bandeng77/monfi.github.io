@@ -61,6 +61,7 @@
     }
 
     input,
+    select,
     button {
       width: 100%;
       padding: 12px;
@@ -123,6 +124,7 @@
       }
 
       input,
+      select,
       button {
         font-size: 14px;
         padding: 10px;
@@ -139,7 +141,16 @@
       <form id="absenForm">
         <input type="text" id="waktu" readonly required />
         <input type="text" id="nama" placeholder="Nama Lengkap" required />
-        <input type="text" id="unit" placeholder="Unit Kerja" required />
+        <select id="unit" required>
+          <option value="" disabled selected>Pilih Unit Kerja</option>
+          <option value="HR">HR</option>
+          <option value="IT">IT</option>
+          <option value="FINANCE">FINANCE</option>
+          <option value="PURCHASING">PURCHASING</option>
+          <option value="SALES">SALES</option>
+          <option value="ENGINEERING">ENGINEERING</option>
+          <option value="TECHINCAL">TECHINCAL</option>
+        </select>
         <button type="submit">✅ Absen Sekarang</button>
       </form>
     </div>
