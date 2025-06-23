@@ -180,7 +180,7 @@
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.save();
-      context.scale(-1, 1); // mirror horizontal
+      context.scale(-1, 1);
       context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
       context.restore();
 
@@ -201,18 +201,32 @@
       const nama = document.getElementById('nama').value;
       const unit = document.getElementById('unit').value;
 
-      console.log("Data Absen:", {
-        waktu,
-        nama,
-        unit,
-        foto: photoData
+      fetch("https://99ee-103-66-196-198.ngrok-free.app/api/absen", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          waktu,
+          nama,
+          unit,
+          foto: photoData
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Gagal mengirim data");
+        return response.json();
+      })
+      .then(data => {
+        alert("✅ Absen berhasil dikirim ke server!");
+        document.getElementById('absenForm').reset();
+        photoData = '';
+        preview.style.display = 'none';
+      })
+      .catch(error => {
+        alert("❌ Gagal mengirim data ke server.");
+        console.error(error);
       });
-
-      alert("Data berhasil ditangkap secara lokal (belum disimpan).");
-
-      document.getElementById('absenForm').reset();
-      photoData = '';
-      preview.style.display = 'none';
     };
   </script>
 </body>
