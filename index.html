@@ -1,244 +1,675 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Absensi Rapat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Monitoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #94a3b8;
+            --border: #e2e8f0;
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --sidebar-bg: #f1f5f9;
+            --hover: #f8fafc;
+        }
 
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #7FFFD4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      min-height: 100vh;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      background-color: #ffffff;
-      padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      max-width: 960px;
-      width: 100%;
-    }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #334155;
+            line-height: 1.6;
+        }
 
-    .form-wrapper,
-    .camera-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
 
-    .form-wrapper img.logo {
-      max-width: 150px;
-      margin-bottom: 16px;
-    }
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+        }
 
-    h2 {
-      font-size: 22px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
+        }
 
-    form {
-      width: 100%;
-    }
+        .logo-icon {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-right: 0.75rem;
+        }
 
-    input,
-    select,
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 16px;
-    }
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
 
-    input[readonly] {
-      background-color: #f2f2f2;
-      pointer-events: none;
-    }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            color: var(--secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
 
-    button {
-      background-color: #f5f5f5;
-      border: 1px solid #aaa;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
+        .nav-item:hover {
+            background-color: var(--hover);
+            color: var(--primary);
+        }
 
-    button:hover {
-      background-color: #ddd;
-    }
+        .nav-item.active {
+            background-color: var(--primary);
+            color: white;
+        }
 
-    video,
-    #preview {
-      width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-      object-fit: cover;
-      background: #000;
-    }
+        .nav-icon {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
 
-    video {
-      transform: scaleX(-1);
-    }
+        .nav-text {
+            font-weight: 500;
+        }
 
-    #preview {
-      display: none;
-    }
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
 
-    canvas {
-      display: none;
-    }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
 
-    @media (max-width: 768px) {
-      .container {
-        grid-template-columns: 1fr;
-        gap: 30px;
-        padding: 20px;
-      }
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
 
-      .form-wrapper img.logo {
-        max-width: 120px;
-      }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
 
-      h2 {
-        font-size: 20px;
-      }
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-      input,
-      select,
-      button {
-        font-size: 14px;
-        padding: 10px;
-      }
-    }
-  </style>
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--secondary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--hover);
+        }
+
+        .btn-icon {
+            margin-right: 0.5rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .filter-input {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-paid {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-overdue {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--secondary);
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background-color: var(--hover);
+            color: var(--primary);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem 0;
+        }
+
+        .page-info {
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .page-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .page-btn {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border);
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .page-btn:hover {
+            background-color: var(--hover);
+        }
+
+        .page-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            
+            .nav-menu {
+                display: flex;
+                overflow-x: auto;
+                gap: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+            
+            .nav-item {
+                margin-bottom: 0;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .filter-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Form Absensi -->
-    <div class="form-wrapper">
-      <img src="genetek-logo.png" alt="Genetek Logo" class="logo" />
-      <h2>📋 Absensi Rapat</h2>
-      <form id="absenForm">
-        <input type="text" id="waktu" readonly required />
-        <input type="text" id="nama" placeholder="Nama Lengkap" required />
-        <select id="unit" required>
-          <option value="" disabled selected>Pilih Unit Kerja</option>
-          <option value="HR">HR</option>
-          <option value="IT">IT</option>
-          <option value="FINANCE">FINANCE</option>
-          <option value="PURCHASING">PURCHASING</option>
-          <option value="SALES">SALES</option>
-          <option value="ENGINEERING">ENGINEERING</option>
-          <option value="TECHINCAL">TECHINCAL</option>
-        </select>
-        <button type="submit">✅ Absen Sekarang</button>
-      </form>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="logo-text">FinanceMonitor</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <div class="nav-icon"><i class="fas fa-home"></i></div>
+                    <div class="nav-text">Dashboard</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <div class="nav-text">Invoice</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon"><i class="fas fa-receipt"></i></div>
+                    <div class="nav-text">Faktur Pajak</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                    <div class="nav-text">Pembayaran</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
+                    <div class="nav-text">Laporan</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon"><i class="fas fa-cog"></i></div>
+                    <div class="nav-text">Pengaturan</div>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <h1 class="page-title">Monitoring Finance</h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-download btn-icon"></i> Export
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus btn-icon"></i> Tambah Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="card">
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0f9ff;">
+                            <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--secondary);">Total Invoice</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">142</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0fdf4;">
+                            <div style="font-size: 2rem; color: var(--success); margin-bottom: 0.5rem;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--secondary);">Telah Dibayar</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">89</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fffbeb;">
+                            <div style="font-size: 2rem; color: var(--warning); margin-bottom: 0.5rem;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--secondary);">Menunggu Pembayaran</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">38</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fef2f2;">
+                            <div style="font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem;">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--secondary);">Jatuh Tempo</div>
+                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">15</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Filter Data</h2>
+                </div>
+                <div class="card-body">
+                    <div class="filter-section">
+                        <div class="filter-group">
+                            <label class="filter-label">Tanggal Mulai</label>
+                            <input type="date" class="filter-input">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Tanggal Akhir</label>
+                            <input type="date" class="filter-input">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Status</label>
+                            <select class="filter-input">
+                                <option value="">Semua Status</option>
+                                <option value="paid">Telah Dibayar</option>
+                                <option value="pending">Menunggu Pembayaran</option>
+                                <option value="overdue">Jatuh Tempo</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Cari</label>
+                            <input type="text" class="filter-input" placeholder="Cari invoice, vendor...">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-filter btn-icon"></i> Terapkan Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Daftar Finance</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Email/Hard</th>
+                                    <th>Penerima</th>
+                                    <th>Corp</th>
+                                    <th>Tanggal Diterima</th>
+                                    <th>No Invoice</th>
+                                    <th>Nama Vendor</th>
+                                    <th>DPP</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Email</td>
+                                    <td>Budi Santoso</td>
+                                    <td>PT ABC</td>
+                                    <td>12/04/2023</td>
+                                    <td>INV-2023-001</td>
+                                    <td>Vendor A</td>
+                                    <td>Rp 5.000.000</td>
+                                    <td><span class="status status-paid">Dibayar</span></td>
+                                    <td class="action-cell">
+                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Hard</td>
+                                    <td>Siti Rahayu</td>
+                                    <td>PT XYZ</td>
+                                    <td>15/04/2023</td>
+                                    <td>INV-2023-002</td>
+                                    <td>Vendor B</td>
+                                    <td>Rp 7.500.000</td>
+                                    <td><span class="status status-pending">Menunggu</span></td>
+                                    <td class="action-cell">
+                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Email</td>
+                                    <td>Joko Widodo</td>
+                                    <td>CV Mandiri</td>
+                                    <td>18/04/2023</td>
+                                    <td>INV-2023-003</td>
+                                    <td>Vendor C</td>
+                                    <td>Rp 3.200.000</td>
+                                    <td><span class="status status-overdue">Jatuh Tempo</span></td>
+                                    <td class="action-cell">
+                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>Hard</td>
+                                    <td>Dewi Kusuma</td>
+                                    <td>PT Sejahtera</td>
+                                    <td>20/04/2023</td>
+                                    <td>INV-2023-004</td>
+                                    <td>Vendor D</td>
+                                    <td>Rp 9.800.000</td>
+                                    <td><span class="status status-paid">Dibayar</span></td>
+                                    <td class="action-cell">
+                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>Email</td>
+                                    <td>Rudi Hermawan</td>
+                                    <td>PT Makmur</td>
+                                    <td>22/04/2023</td>
+                                    <td>INV-2023-005</td>
+                                    <td>Vendor E</td>
+                                    <td>Rp 6.300.000</td>
+                                    <td><span class="status status-pending">Menunggu</span></td>
+                                    <td class="action-cell">
+                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        <div class="page-info">
+                            Menampilkan 1-5 dari 142 data
+                        </div>
+                        <div class="page-controls">
+                            <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn">2</button>
+                            <button class="page-btn">3</button>
+                            <button class="page-btn">...</button>
+                            <button class="page-btn">29</button>
+                            <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Kamera -->
-    <div class="camera-wrapper">
-      <video id="video" autoplay></video>
-      <button type="button" onclick="takePhoto()">📸 Ambil Foto</button>
-      <canvas id="canvas"></canvas>
-      <img id="preview" alt="Preview Foto" />
-    </div>
-  </div>
-
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const context = canvas.getContext('2d');
-    const preview = document.getElementById('preview');
-    let photoData = '';
-
-    function updateCurrentTime() {
-      const now = new Date();
-      const localTime = now.toLocaleString('id-ID', {
-        dateStyle: 'short',
-        timeStyle: 'medium'
-      });
-      document.getElementById('waktu').value = localTime;
-    }
-
-    setInterval(updateCurrentTime, 1000);
-    window.onload = updateCurrentTime;
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream)
-      .catch(err => console.error('Akses kamera ditolak:', err));
-
-    function takePhoto() {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.save();
-      context.scale(-1, 1);
-      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-      context.restore();
-
-      photoData = canvas.toDataURL('image/jpeg', 0.3);
-      preview.src = photoData;
-      preview.style.display = 'block';
-    }
-
-    document.getElementById('absenForm').onsubmit = function (e) {
-      e.preventDefault();
-
-      if (!photoData) {
-        alert("Silakan ambil foto terlebih dahulu.");
-        return;
-      }
-
-      const waktu = document.getElementById('waktu').value;
-      const nama = document.getElementById('nama').value;
-      const unit = document.getElementById('unit').value;
-
-      fetch("https://c611-103-66-196-198.ngrok-free.app/api/absen", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          waktu,
-          nama,
-          unit,
-          foto: photoData
-        })
-      })
-      .then(response => {
-        if (!response.ok) throw new Error("Gagal mengirim data");
-        return response.json();
-      })
-      .then(data => {
-        alert("✅ Absen berhasil dikirim ke server!");
-        document.getElementById('absenForm').reset();
-        photoData = '';
-        preview.style.display = 'none';
-      })
-      .catch(error => {
-        alert("❌ Gagal mengirim data ke server.");
-        console.error(error);
-      });
-    };
-  </script>
+    <script>
+        // Basic functionality for the finance monitoring app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter functionality
+            const filterBtn = document.querySelector('.btn-primary');
+            filterBtn.addEventListener('click', function() {
+                alert('Filter diterapkan!');
+            });
+            
+            // Action buttons functionality
+            const actionButtons = document.querySelectorAll('.action-btn');
+            actionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const icon = this.querySelector('i').className;
+                    
+                    if (icon.includes('eye')) {
+                        alert('Melihat detail data');
+                    } else if (icon.includes('edit')) {
+                        alert('Mengedit data');
+                    } else if (icon.includes('trash')) {
+                        alert('Menghapus data');
+                    }
+                });
+            });
+            
+            // Pagination functionality
+            const pageButtons = document.querySelectorAll('.page-btn');
+            pageButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!this.querySelector('i')) {
+                        pageButtons.forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                        alert('Pindah ke halaman ' + this.textContent);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
