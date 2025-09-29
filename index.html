@@ -775,59 +775,6 @@
             }
         }
 
-        // --- Dashboard Summary ---
-        async function loadDashboardSummary() {
-            let totalInvoice = 0;
-            let paidInvoice = 0;
-            let pendingInvoice = 0;
-            let overdueInvoice = 0;
-
-            try {
-                const snapshot = await invoicesCol.get();
-                totalInvoice = snapshot.size;
-
-                for (const doc of snapshot.docs) {
-                    const noInvoice = doc.data().noInvoice; // Menggunakan noInvoice dari data()
-                    const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                    const status = keteranganDoc.empty ? 'Belum Diproses' : keteranganDoc.docs[0].data().statusAkhir;
-
-                    if (status === 'Dibayar') {
-                        paidInvoice++;
-                    } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(status)) {
-                        pendingInvoice++;
-                    } else if (status === 'Jatuh Tempo') {
-                        overdueInvoice++;
-                    }
-                }
-
-                // Update dashboard section
-                const totalInvoiceCount = document.getElementById('total-invoice-count');
-                const paidInvoiceCount = document.getElementById('paid-invoice-count');
-                const pendingInvoiceCount = document.getElementById('pending-invoice-count');
-                const overdueInvoiceCount = document.getElementById('overdue-invoice-count');
-
-                if (totalInvoiceCount) totalInvoiceCount.textContent = totalInvoice;
-                if (paidInvoiceCount) paidInvoiceCount.textContent = paidInvoice;
-                if (pendingInvoiceCount) pendingInvoiceCount.textContent = pendingInvoice;
-                if (overdueInvoiceCount) overdueInvoiceCount.textContent = overdueInvoice;
-
-                // Update Laporan section summary as well
-                const reportTotalInvoice = document.getElementById('report-total-invoice');
-                const reportPaidInvoice = document.getElementById('report-paid-invoice');
-                const reportPendingInvoice = document.getElementById('report-pending-invoice');
-                const reportOverdueInvoice = document.getElementById('report-overdue-invoice');
-
-                if (reportTotalInvoice) reportTotalInvoice.textContent = totalInvoice;
-                if (reportPaidInvoice) reportPaidInvoice.textContent = paidInvoice;
-                if (reportPendingInvoice) reportPendingInvoice.textContent = pendingInvoice;
-                if (reportOverdueInvoice) reportOverdueInvoice.textContent = overdueInvoice;
-
-            } catch (error) {
-                console.error("Error loading dashboard summary: ", error);
-                showAlert("Gagal memuat ringkasan dashboard: " + error.message, 'error');
-            }
-        }
-
         // --- Laporan Section Data Loading ---
         async function loadReportData() {
             const reportTableBody = document.querySelector('#report-invoice-table tbody');
@@ -878,7 +825,6 @@
                     `);
                 }
                 reportTableBody.innerHTML = reportRowsHtml.join('');
-                loadDashboardSummary(); // Update dashboard summary counts which also updates report summary counts
             } catch (error) {
                 console.error("Error loading report data: ", error);
                 reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
@@ -1054,8 +1000,8 @@
                 // Load initial data after login
                 // Ensure DOM is ready before calling these
                 document.addEventListener('DOMContentLoaded', () => {
-                    // Perbaikan: Tampilkan dashboard setelah login
-                    showSection('dashboard-section');
+                    // Tampilkan daftar invoice setelah login
+                    showSection('invoice-list-section');
                 });
             } else {
                 // User is signed out. Show auth UI, hide main app.
@@ -1090,9 +1036,7 @@
                 }
 
                 // Specific actions for sections
-                if (targetId === 'dashboard-section') {
-                    loadDashboardSummary();
-                } else if (targetId === 'invoice-list-section') {
+                if (targetId === 'invoice-list-section') {
                     loadInvoicesToTable();
                 } else if (targetId === 'pengaturan-section') {
                     loadUserSettings();
@@ -1127,9 +1071,6 @@
                 const form = document.getElementById(modalId.replace('-modal', '-form'));
                 if (form) {
                     form.reset();
-                    // Clear specific info spans
-                    const infoSpan = form.querySelector('small span');
-                    if (infoSpan) infoSpan.textContent = '';
                     // Reset readonly status for No Invoice input
                     const noInvoiceInput = form.querySelector('input[id$="-no-invoice"]');
                     if (noInvoiceInput) noInvoiceInput.readOnly = false;
@@ -1146,19 +1087,10 @@
                     const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
                     if (invoiceDoc.exists) {
                         const invoiceData = invoiceDoc.data();
-                        const prefix = modalId.split('-')[0]; // e.g., 'fp', 'pembayaran', 'keterangan'
-                        const invoiceInfoSpan = modal.querySelector(`#${prefix}-invoice-info`);
-                        if (invoiceInfoSpan) {
-                            invoiceInfoSpan.textContent = `${invoiceData.namaVendor || 'N/A'} (${invoiceData.tglInvoice || 'N/A'})`;
-                        }
-                        const noInvoiceInput = modal.querySelector(`#${prefix}-no-invoice`);
+                        const noInvoiceInput = modal.querySelector(`input[id$="-no-invoice"]`);
                         if (noInvoiceInput) {
                             noInvoiceInput.value = invoiceNo;
                             noInvoiceInput.readOnly = true; // Make it readonly when editing/adding to existing invoice
-                        } else if (modalId === 'faktur-pajak-modal' && document.getElementById('fp-no-invoice')) {
-                            // Specific fix for faktur-pajak-modal if noInvoiceInput wasn't found by generic selector
-                            document.getElementById('fp-no-invoice').value = invoiceNo;
-                            document.getElementById('fp-no-invoice').readOnly = true;
                         }
                         // Pre-fill existing data if editing
                         await fillModalWithExistingData(modalId, invoiceNo);
@@ -1213,7 +1145,6 @@
                     showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
                     loadInvoicesToTable(); // Reload table data
-                    loadDashboardSummary(); // Update dashboard
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
                     showAlert("Gagal menyimpan invoice: " + error.message, 'error');
@@ -1351,14 +1282,13 @@
                         await pembayaranBatch.commit();
 
                         // Hapus dokumen terkait dari koleksi keterangan
-                        const keteranganDocs = await keteranganCol.where('noInvoice', '==', invoiceNo).get();
+                        const keteranganDocs = await keteranganCol.where('noInvoice', '==', noInvoice).get();
                         const keteranganBatch = db.batch();
                         keteranganDocs.forEach(doc => keteranganBatch.delete(doc.ref));
                         await keteranganBatch.commit();
 
                         showAlert('Invoice dan data terkait berhasil dihapus!', 'success');
                         loadInvoicesToTable(); // Muat ulang tabel
-                        loadDashboardSummary(); // Perbarui ringkasan dashboard
                     } catch (error) {
                         console.error("Error deleting invoice: ", error);
                         showAlert("Gagal menghapus invoice: " + error.message, 'error');
@@ -1408,17 +1338,17 @@
             document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
                 openModal('faktur-pajak-modal');
                 document.getElementById('fp-no-invoice').readOnly = false; // Allow input for new invoice for new entry
-                document.getElementById('fp-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
+                // document.getElementById('fp-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
             });
             document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
                 openModal('pembayaran-modal');
                 document.getElementById('pembayaran-no-invoice').readOnly = false; // Allow input for new entry
-                document.getElementById('pembayaran-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
+                // document.getElementById('pembayaran-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
             });
             document.getElementById('add-keterangan-standalone-btn').addEventListener('click', function() {
                 openModal('keterangan-modal');
                 document.getElementById('keterangan-no-invoice').readOnly = false; // Allow input for new entry
-                document.getElementById('keterangan-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
+                // document.getElementById('keterangan-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
             });
 
             // --- Search functionality for standalone modals ---
@@ -1555,7 +1485,6 @@
                     showAlert('Pembayaran berhasil disimpan!', 'success');
                     closeModal('pembayaran-modal');
                     loadInvoicesToTable(); // Refresh table
-                    loadDashboardSummary(); // Update dashboard
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
                         displayInvoiceDetail(noInvoice); // Refresh detail view if open
                     }
@@ -1589,7 +1518,6 @@
                     showAlert('Keterangan & Status berhasil disimpan!', 'success');
                     closeModal('keterangan-modal');
                     loadInvoicesToTable(); // Refresh table
-                    loadDashboardSummary(); // Update dashboard
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
                         displayInvoiceDetail(noInvoice); // Refresh detail view if open
                     }
@@ -1667,6 +1595,10 @@
             const settingsErrorMessage = document.getElementById('settings-error-message');
             const settingsSuccessMessage = document.getElementById('settings-success-message');
 
+            const forgotPasswordLink = document.getElementById('forgot-password-link');
+            const forgotPasswordErrorMessage = document.getElementById('forgot-password-error-message');
+            const forgotPasswordSuccessMessage = document.getElementById('forgot-password-success-message');
+
             async function loadUserSettings() {
                 const user = auth.currentUser;
                 if (user) {
@@ -1675,6 +1607,8 @@
                     if (settingsConfirmPasswordInput) settingsConfirmPasswordInput.value = '';
                     if (settingsErrorMessage) settingsErrorMessage.style.display = 'none';
                     if (settingsSuccessMessage) settingsSuccessMessage.style.display = 'none';
+                    if (forgotPasswordErrorMessage) forgotPasswordErrorMessage.style.display = 'none';
+                    if (forgotPasswordSuccessMessage) forgotPasswordSuccessMessage.style.display = 'none';
                 } else {
                     if (settingsEmailInput) {
                         settingsEmailInput.value = 'Tidak ada pengguna yang login';
@@ -1687,6 +1621,8 @@
                 e.preventDefault();
                 if (settingsErrorMessage) settingsErrorMessage.style.display = 'none';
                 if (settingsSuccessMessage) settingsSuccessMessage.style.display = 'none';
+                if (forgotPasswordErrorMessage) forgotPasswordErrorMessage.style.display = 'none';
+                if (forgotPasswordSuccessMessage) forgotPasswordSuccessMessage.style.display = 'none';
 
                 const user = auth.currentUser;
                 if (!user) {
@@ -1779,6 +1715,40 @@
                     }
                 }
             });
+
+            if (forgotPasswordLink) {
+                forgotPasswordLink.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    if (forgotPasswordErrorMessage) forgotPasswordErrorMessage.style.display = 'none';
+                    if (forgotPasswordSuccessMessage) forgotPasswordSuccessMessage.style.display = 'none';
+
+                    const email = settingsEmailInput ? settingsEmailInput.value.trim() : '';
+
+                    if (!email) {
+                        if (forgotPasswordErrorMessage) {
+                            forgotPasswordErrorMessage.textContent = 'Harap masukkan email Anda di kolom Email di atas untuk reset password.';
+                            forgotPasswordErrorMessage.style.display = 'block';
+                        }
+                        showAlert('Harap masukkan email Anda untuk reset password.', 'error');
+                        return;
+                    }
+
+                    try {
+                        await auth.sendPasswordResetEmail(email);
+                        if (forgotPasswordSuccessMessage) {
+                            forgotPasswordSuccessMessage.textContent = `Link reset password telah dikirim ke ${email}. Silakan cek email Anda.`;
+                            forgotPasswordSuccessMessage.style.display = 'block';
+                        }
+                        showAlert(`Link reset password telah dikirim ke ${email}.`, 'success', 7000);
+                    } catch (error) {
+                        if (forgotPasswordErrorMessage) {
+                            forgotPasswordErrorMessage.textContent = 'Gagal mengirim link reset password: ' + error.message;
+                            forgotPasswordErrorMessage.style.display = 'block';
+                        }
+                        showAlert('Gagal mengirim link reset password: ' + error.message, 'error');
+                    }
+                });
+            }
         });
     </script>
 
@@ -1791,11 +1761,8 @@
             </div>
             
             <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-target="dashboard-section">
-                    <div class="nav-icon"><i class="fas fa-home"></i></div>
-                    <div class="nav-text">Dashboard</div>
-                </a>
-                <a href="#" class="nav-item" data-target="invoice-list-section">
+                <!-- Dashboard menu removed -->
+                <a href="#" class="nav-item active" data-target="invoice-list-section">
                     <div class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></div>
                     <div class="nav-text">Invoice</div>
                 </a>
@@ -1829,53 +1796,7 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Dashboard Section -->
-            <section id="dashboard-section" class="content-section active-section">
-                <div class="header">
-                    <h1 class="page-title">Dashboard Monitoring Finance</h1>
-                    <div class="header-actions">
-                        <button class="btn btn-outline export-btn">
-                            <i class="fas fa-download btn-icon"></i> Export
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Summary Cards -->
-                <div class="card">
-                    <div class="card-body">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0f9ff;">
-                                <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-file-invoice"></i>
-                                </div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Total Invoice</div>
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);" id="total-invoice-count">0</div>
-                            </div>
-                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0fdf4;">
-                                <div style="font-size: 2rem; color: var(--success); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Telah Dibayar</div>
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);" id="paid-invoice-count">0</div>
-                            </div>
-                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fffbeb;">
-                                <div style="font-size: 2rem; color: var(--warning); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Menunggu Pembayaran</div>
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);" id="pending-invoice-count">0</div>
-                            </div>
-                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fef2f2;">
-                                <div style="font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem;">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                </div>
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);" id="overdue-invoice-count">0</div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Jatuh Tempo</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Dashboard Section (Removed) -->
 
             <!-- Invoice List Section -->
             <section id="invoice-list-section" class="content-section">
@@ -2201,6 +2122,11 @@
                                 <label for="settings-confirm-password">Konfirmasi Password Baru</label>
                                 <input type="password" id="settings-confirm-password" class="filter-input">
                             </div>
+                            <div class="form-group">
+                                <a href="#" id="forgot-password-link" style="color: var(--primary); text-decoration: underline; font-size: 0.9rem;">Lupa Password?</a>
+                            </div>
+                            <p class="error-message" id="forgot-password-error-message" style="display: none;"></p>
+                            <p class="status-paid" id="forgot-password-success-message" style="display: none; padding: 0.5rem; border-radius: 0.5rem;"></p>
                             <p class="error-message" id="settings-error-message" style="display: none;"></p>
                             <p class="status-paid" id="settings-success-message" style="display: none; padding: 0.5rem; border-radius: 0.5rem;"></p>
                             <div class="form-actions">
@@ -2274,7 +2200,6 @@
                 <div class="form-group">
                     <label for="fp-no-invoice">No Invoice</label>
                     <input type="text" id="fp-no-invoice" class="filter-input" readonly required>
-                    <small style="color: var(--secondary);">Data invoice terkait: <span id="fp-invoice-info"></span></small>
                 </div>
                 <div class="form-group">
                     <label for="fp-tgl-faktur-pajak">Tanggal Faktur Pajak</label>
@@ -2300,7 +2225,6 @@
                 <div class="form-group">
                     <label for="pembayaran-no-invoice">No Invoice</label>
                     <input type="text" id="pembayaran-no-invoice" class="filter-input" readonly required>
-                    <small style="color: var(--secondary);">Data invoice terkait: <span id="pembayaran-invoice-info"></span></small>
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-dpp-idr">DPP (IDR)</label>
@@ -2353,7 +2277,6 @@
                 <div class="form-group">
                     <label for="keterangan-no-invoice">No Invoice</label>
                     <input type="text" id="keterangan-no-invoice" class="filter-input" readonly required>
-                    <small style="color: var(--secondary);">Data invoice terkait: <span id="keterangan-invoice-info"></span></small>
                 </div>
                 <div class="form-group">
                     <label for="keterangan-tgl-pengajuan-finance">Tanggal Pengajuan ke Finance</label>
