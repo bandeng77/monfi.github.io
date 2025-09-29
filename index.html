@@ -359,6 +359,8 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             width: 90%;
             max-width: 700px;
+            max-height: 90vh; /* Set max-height to 90% of viewport height */
+            overflow-y: auto; /* Enable vertical scrolling for content if needed */
             position: relative;
         }
 
@@ -540,17 +542,6 @@
             margin-top: 1rem;
         }
 
-        .auth-card .toggle-auth {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: var(--secondary);
-            cursor: pointer;
-        }
-
-        .auth-card .toggle-auth:hover {
-            color: var(--primary);
-        }
-
         .auth-card .error-message {
             color: var(--danger);
             margin-top: 1rem;
@@ -689,6 +680,326 @@
             }, duration);
         }
 
+        // Global variables for invoice data and autocomplete
+        let allInvoiceNumbers = [];
+        let allInvoiceData = [];
+
+        // --- Functions moved to global scope for accessibility ---
+
+        // --- Load Invoices to Table (Initial Load and Refresh) ---
+        async function loadInvoicesToTable() {
+            const invoiceTableBody = document.querySelector('#invoice-table tbody');
+            if (!invoiceTableBody) return; // Ensure element exists
+
+            invoiceTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">Memuat data...</td></tr>';
+            allInvoiceNumbers = []; // Reset for fresh load
+            allInvoiceData = []; // Reset for fresh load
+
+            try {
+                const snapshot = await invoicesCol.get();
+                if (snapshot.empty) {
+                    invoiceTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">Tidak ada data invoice.</td></tr>';
+                    return;
+                }
+
+                let rowNum = 1;
+                const rowsHtml = [];
+                for (const doc of snapshot.docs) {
+                    const invoice = doc.data();
+                    const noInvoice = invoice.noInvoice;
+                    allInvoiceNumbers.push(noInvoice); // Add to autocomplete list
+
+                    // Fetch related data for display in table (e.g., DPP, Status)
+                    const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
+
+                    const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
+
+                    const dppDisplay = pembayaran.dppIdr ? `Rp ${pembayaran.dppIdr}` : 'N/A';
+                    const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
+                    let statusClass = '';
+                    if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
+                    else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
+                    else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
+
+                    // Store combined data for export
+                    allInvoiceData.push({
+                        No: rowNum,
+                        Email_Hard: invoice.emailHard || '',
+                        Penerima: invoice.penerima || '',
+                        Corp: invoice.corp || '',
+                        Tanggal_Diterima: invoice.tglDiterima || '',
+                        No_Invoice: noInvoice,
+                        Nama_Vendor: invoice.namaVendor || '',
+                        DPP_IDR: pembayaran.dppIdr || '0',
+                        PPn_IDR: pembayaran.ppnIdr || '0',
+                        DPP_USD: pembayaran.dppUsd || '0',
+                        Keterangan_Pembayaran: pembayaran.keterangan || '',
+                        Follow_Up: pembayaran.followUp || '',
+                        Hasil_Follow_Up: pembayaran.hasilFollowUp || '',
+                        TOP: pembayaran.top || '',
+                        Jatuh_Tempo: pembayaran.jatuhTempo || '',
+                        Tanggal_Pengajuan_Finance: keterangan.tglPengajuanFinance || '',
+                        Tanggal_Pengajuan_Reni: keterangan.tglPengajuanReni || '',
+                        Tanggal_Diterima_Anggi: keterangan.tglDiterimaAnggi || '',
+                        Lama_Pengajuan: keterangan.lamaPengajuan || '',
+                        Keterangan_Proses: keterangan.keteranganProses || '',
+                        Tanggal_Bayar: keterangan.tglBayar || '',
+                        Status: statusDisplay
+                    });
+
+                    rowsHtml.push(`
+                        <tr data-invoice-id="${noInvoice}">
+                            <td>${rowNum++}</td>
+                            <td>${invoice.emailHard || '-'}</td>
+                            <td>${invoice.penerima || '-'}</td>
+                            <td>${invoice.corp || '-'}</td>
+                            <td>${invoice.tglDiterima || '-'}</td>
+                            <td><a href="#" class="view-invoice-detail" data-invoice-no="${noInvoice}">${noInvoice}</a></td>
+                            <td>${invoice.namaVendor || '-'}</td>
+                            <td>${dppDisplay}</td>
+                            <td><span class="status ${statusClass}">${statusDisplay}</span></td>
+                            <td class="action-cell">
+                                <button class="action-btn view-invoice-detail" data-invoice-no="${noInvoice}" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                <button class="action-btn edit-invoice-btn" data-invoice-no="${noInvoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-invoice-btn" data-invoice-no="${noInvoice}" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `);
+                }
+                invoiceTableBody.innerHTML = rowsHtml.join('');
+                setupAllAutocompletes(); // Setup autocomplete after data is loaded
+            } catch (error) {
+                console.error("Error loading invoices: ", error);
+                invoiceTableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`;
+                showAlert("Gagal memuat data invoice: " + error.message, 'error');
+            }
+        }
+
+        // --- Dashboard Summary ---
+        async function loadDashboardSummary() {
+            let totalInvoice = 0;
+            let paidInvoice = 0;
+            let pendingInvoice = 0;
+            let overdueInvoice = 0;
+
+            try {
+                const snapshot = await invoicesCol.get();
+                totalInvoice = snapshot.size;
+
+                for (const doc of snapshot.docs) {
+                    const noInvoice = doc.id;
+                    const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    const status = keteranganDoc.empty ? 'Belum Diproses' : keteranganDoc.docs[0].data().statusAkhir;
+
+                    if (status === 'Dibayar') {
+                        paidInvoice++;
+                    } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(status)) {
+                        pendingInvoice++;
+                    } else if (status === 'Jatuh Tempo') {
+                        overdueInvoice++;
+                    }
+                }
+
+                // Update dashboard section
+                const totalInvoiceCount = document.getElementById('total-invoice-count');
+                const paidInvoiceCount = document.getElementById('paid-invoice-count');
+                const pendingInvoiceCount = document.getElementById('pending-invoice-count');
+                const overdueInvoiceCount = document.getElementById('overdue-invoice-count');
+
+                if (totalInvoiceCount) totalInvoiceCount.textContent = totalInvoice;
+                if (paidInvoiceCount) paidInvoiceCount.textContent = paidInvoice;
+                if (pendingInvoiceCount) pendingInvoiceCount.textContent = pendingInvoice;
+                if (overdueInvoiceCount) overdueInvoiceCount.textContent = overdueInvoice;
+
+                // Update Laporan section summary as well
+                const reportTotalInvoice = document.getElementById('report-total-invoice');
+                const reportPaidInvoice = document.getElementById('report-paid-invoice');
+                const reportPendingInvoice = document.getElementById('report-pending-invoice');
+                const reportOverdueInvoice = document.getElementById('report-overdue-invoice');
+
+                if (reportTotalInvoice) reportTotalInvoice.textContent = totalInvoice;
+                if (reportPaidInvoice) reportPaidInvoice.textContent = paidInvoice;
+                if (reportPendingInvoice) reportPendingInvoice.textContent = pendingInvoice;
+                if (reportOverdueInvoice) reportOverdueInvoice.textContent = overdueInvoice;
+
+            } catch (error) {
+                console.error("Error loading dashboard summary: ", error);
+                showAlert("Gagal memuat ringkasan dashboard: " + error.message, 'error');
+            }
+        }
+
+        // --- Laporan Section Data Loading ---
+        async function loadReportData() {
+            const reportTableBody = document.querySelector('#report-invoice-table tbody');
+            if (!reportTableBody) return; // Ensure element exists
+
+            reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
+
+            try {
+                const snapshot = await invoicesCol.get();
+                if (snapshot.empty) {
+                    reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data laporan.</td></tr>';
+                    return;
+                }
+
+                const reportRowsHtml = [];
+                let rowNum = 1;
+
+                for (const doc of snapshot.docs) {
+                    const invoice = doc.data();
+                    const noInvoice = invoice.noInvoice;
+
+                    const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
+
+                    const keteranganDoc = await keteranganCol.collection('keterangan').where('noInvoice', '==', noInvoice).limit(1).get(); // Corrected collection reference
+                    const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
+
+                    const dppDisplay = pembayaran.dppIdr ? `Rp ${pembayaran.dppIdr}` : '0';
+                    const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
+                    const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
+                    const tglBayarDisplay = keterangan.tglBayar || '-';
+
+                    let statusClass = '';
+                    if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
+                    else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
+                    else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
+
+                    reportRowsHtml.push(`
+                        <tr>
+                            <td>${rowNum++}</td>
+                            <td>${noInvoice}</td>
+                            <td>${invoice.namaVendor || '-'}</td>
+                            <td>${dppDisplay}</td>
+                            <td><span class="status ${statusClass}">${statusDisplay}</span></td>
+                            <td>${jatuhTempoDisplay}</td>
+                            <td>${tglBayarDisplay}</td>
+                        </tr>
+                    `);
+                }
+                reportTableBody.innerHTML = reportRowsHtml.join('');
+                loadDashboardSummary(); // Update dashboard summary counts which also updates report summary counts
+            } catch (error) {
+                console.error("Error loading report data: ", error);
+                reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
+                showAlert("Gagal memuat data laporan: " + error.message, 'error');
+            }
+        }
+
+
+        // --- Autocomplete Function ---
+        function autocomplete(inp, arr) {
+            /*the autocomplete function takes two arguments,
+            the text field element and an array of possible autocompleted values:*/
+            var currentFocus;
+            /*execute a function when someone writes in the text field:*/
+            inp.addEventListener("input", function(e) {
+                var a, b, i, val = this.value;
+                /*close any already open lists of autocompleted values*/
+                closeAllLists();
+                if (!val) { return false;}
+                currentFocus = -1;
+                /*create a DIV element that will contain the items (values):*/
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                /*append the DIV element as a child of the autocomplete container:*/
+                this.parentNode.appendChild(a);
+                /*for each item in the array...*/
+                for (i = 0; i < arr.length; i++) {
+                    /*check if the item starts with the same letters as the text field value:*/
+                    if (arr[i].toUpperCase().includes(val.toUpperCase())) {
+                        /*create a DIV element for each matching element:*/
+                        b = document.createElement("DIV");
+                        /*make the matching parts bold:*/
+                        const matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
+                        b.innerHTML = arr[i].substring(0, matchIndex) +
+                            "<strong>" + arr[i].substring(matchIndex, matchIndex + val.length) + "</strong>" +
+                            arr[i].substring(matchIndex + val.length);
+                        /*insert a input field that will hold the current array item's value:*/
+                        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                        /*execute a function when someone clicks on the item value (DIV element):*/
+                        b.addEventListener("click", function(e) {
+                            /*insert the value into the text field:*/
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            /*close the list of autocompleted values,
+                            (or any other open lists of autocompleted values:*/
+                            closeAllLists();
+                        });
+                        a.appendChild(b);
+                    }
+                }
+            });
+            /*execute a function presses a key on the keyboard:*/
+            inp.addEventListener("keydown", function(e) {
+                var x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    /*If the arrow DOWN key is pressed,
+                    increase the currentFocus variable:*/
+                    currentFocus++;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 38) { //arrow UP
+                    /*If the arrow UP key is pressed,
+                    decrease the currentFocus variable:*/
+                    currentFocus--;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        /*and simulate a click on the "active" item:*/
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            function addActive(x) {
+                /*a function to classify an item as "active":*/
+                if (!x) return false;
+                /*start by removing the "active" class on all items:*/
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                /*add class "autocomplete-active":*/
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+            function removeActive(x) {
+                /*a function to remove the "active" class from all autocomplete items:*/
+                for (var i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            function closeAllLists(elmnt) {
+                /*close all autocomplete lists in the document,
+                except the one passed as an argument:*/
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            /*execute a function when someone clicks in the document:*/
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+        }
+
+        // Apply autocomplete to relevant input fields
+        function setupAllAutocompletes() {
+            const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
+            const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
+            const searchInvoiceKeteranganInput = document.getElementById('search-invoice-keterangan');
+
+            if (searchInvoiceFakturPajakInput) autocomplete(searchInvoiceFakturPajakInput, allInvoiceNumbers);
+            if (searchInvoicePembayaranInput) autocomplete(searchInvoicePembayaranInput, allInvoiceNumbers);
+            if (searchInvoiceKeteranganInput) autocomplete(searchInvoiceKeteranganInput, allInvoiceNumbers);
+        }
+
 
         // --- Authentication UI ---
         const authContainer = document.createElement('div');
@@ -719,27 +1030,6 @@
         const authSubmitBtn = document.getElementById('auth-submit-btn');
         const authErrorMessage = document.getElementById('auth-error-message');
 
-        // Removed registration logic as per request
-        // let isRegistering = false;
-        // const toggleToRegister = document.getElementById('toggle-to-register');
-        // if (toggleToRegister) {
-        //     toggleToRegister.addEventListener('click', (e) => {
-        //         e.preventDefault();
-        //         isRegistering = !isRegistering;
-        //         if (isRegistering) {
-        //             authTitle.textContent = 'Daftar';
-        //             authSubmitBtn.textContent = 'Daftar';
-        //             toggleToRegister.innerHTML = 'Sudah punya akun? <a href="#">Login</a>';
-        //         } else {
-        //             authTitle.textContent = 'Login';
-        //             authSubmitBtn.textContent = 'Login';
-        //             toggleToRegister.innerHTML = 'Belum punya akun? <a href="#">Daftar</a>';
-        //         }
-        //         authErrorMessage.style.display = 'none';
-        //     });
-        // }
-
-
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = authEmail.value;
@@ -747,7 +1037,6 @@
             authErrorMessage.style.display = 'none';
 
             try {
-                // Only login functionality remains
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
                 authErrorMessage.textContent = error.message;
@@ -761,16 +1050,21 @@
             if (user) {
                 // User is signed in. Hide auth UI, show main app.
                 authContainer.style.display = 'none';
-                document.querySelector('.container').style.display = 'flex';
+                const mainAppContainer = document.querySelector('.container');
+                if (mainAppContainer) mainAppContainer.style.display = 'flex';
                 console.log('User logged in:', user.email);
                 // Load initial data after login
-                loadInvoicesToTable();
-                loadDashboardSummary(); // Load dashboard data
-                showSection('dashboard-section'); // Show dashboard after login
+                // Ensure DOM is ready before calling these
+                document.addEventListener('DOMContentLoaded', () => {
+                    loadInvoicesToTable();
+                    loadDashboardSummary(); // Load dashboard data
+                    showSection('dashboard-section'); // Show dashboard after login
+                });
             } else {
                 // User is signed out. Show auth UI, hide main app.
                 authContainer.style.display = 'flex';
-                document.querySelector('.container').style.display = 'none';
+                const mainAppContainer = document.querySelector('.container');
+                if (mainAppContainer) mainAppContainer.style.display = 'none';
                 console.log('User logged out');
             }
         });
@@ -786,7 +1080,11 @@
                 contentSections.forEach(section => {
                     section.style.display = 'none';
                 });
-                document.getElementById(targetId).style.display = 'block';
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+
 
                 navItems.forEach(item => item.classList.remove('active'));
                 const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
@@ -801,6 +1099,8 @@
                     loadInvoicesToTable();
                 } else if (targetId === 'pengaturan-section') {
                     loadUserSettings();
+                } else if (targetId === 'laporan-section') {
+                    loadReportData();
                 }
             }
 
@@ -935,7 +1235,7 @@
                 const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
                 const keteranganQuery = await keteranganCol.where('noInvoice', '==', invoiceNo).limit(1).get();
-                const keteranganData = keteranganQuery.empty ? {} : keteranganQuery.docs[0].data();
+                const keterangan = keteranganQuery.empty ? {} : keteranganQuery.docs[0].data();
 
                 // Hide all sections and show detail section
                 contentSections.forEach(section => section.style.display = 'none');
@@ -968,13 +1268,13 @@
                 document.getElementById('add-edit-pembayaran-btn').dataset.invoiceNo = invoiceNo;
 
                 // Populate Keterangan Info
-                document.getElementById('detail-tgl-pengajuan-finance').textContent = keteranganData.tglPengajuanFinance || '-';
-                document.getElementById('detail-tgl-pengajuan-reni').textContent = keteranganData.tglPengajuanReni || '-';
-                document.getElementById('detail-tgl-diterima-anggi').textContent = keteranganData.tglDiterimaAnggi || '-';
-                document.getElementById('detail-lama-pengajuan').textContent = keteranganData.lamaPengajuan || '-';
-                document.getElementById('detail-keterangan-proses').textContent = keteranganData.keteranganProses || '-';
-                document.getElementById('detail-tgl-bayar').textContent = keteranganData.tglBayar || '-';
-                document.getElementById('detail-status-akhir').textContent = keteranganData.statusAkhir || '-';
+                document.getElementById('detail-tgl-pengajuan-finance').textContent = keterangan.tglPengajuanFinance || '-';
+                document.getElementById('detail-tgl-pengajuan-reni').textContent = keterangan.tglPengajuanReni || '-';
+                document.getElementById('detail-tgl-diterima-anggi').textContent = keterangan.tglDiterimaAnggi || '-';
+                document.getElementById('detail-lama-pengajuan').textContent = keterangan.lamaPengajuan || '-';
+                document.getElementById('detail-keterangan-proses').textContent = keterangan.keteranganProses || '-';
+                document.getElementById('detail-tgl-bayar').textContent = keterangan.tglBayar || '-';
+                document.getElementById('detail-status-akhir').textContent = keterangan.statusAkhir || '-';
                 document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = invoiceNo;
 
                 // Set invoiceNo for edit button
@@ -982,14 +1282,17 @@
             }
 
             // Event listeners for viewing invoice details
-            invoiceTableBody.addEventListener('click', function(e) {
-                const targetLink = e.target.closest('.view-invoice-detail');
-                if (targetLink) {
-                    e.preventDefault();
-                    const invoiceNo = targetLink.dataset.invoiceNo;
-                    displayInvoiceDetail(invoiceNo);
-                }
-            });
+            if (invoiceTableBody) {
+                invoiceTableBody.addEventListener('click', function(e) {
+                    const targetLink = e.target.closest('.view-invoice-detail');
+                    if (targetLink) {
+                        e.preventDefault();
+                        const invoiceNo = targetLink.dataset.invoiceNo;
+                        displayInvoiceDetail(invoiceNo);
+                    }
+                });
+            }
+
 
             document.getElementById('back-to-list-btn').addEventListener('click', function() {
                 showSection('invoice-list-section');
@@ -1047,19 +1350,24 @@
 
             // --- Search functionality for standalone modals ---
             function setupSearchAndFillModal(searchBtnId, searchInputId, modalId) {
-                document.getElementById(searchBtnId).addEventListener('click', async function() {
-                    const invoiceNo = document.getElementById(searchInputId).value.trim();
-                    if (invoiceNo) {
-                        const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
-                        if (invoiceDoc.exists) {
-                            openModal(modalId, invoiceNo); // Pass invoiceNo to openModal
+                const searchBtn = document.getElementById(searchBtnId);
+                const searchInput = document.getElementById(searchInputId);
+
+                if (searchBtn && searchInput) {
+                    searchBtn.addEventListener('click', async function() {
+                        const invoiceNo = searchInput.value.trim();
+                        if (invoiceNo) {
+                            const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+                            if (invoiceDoc.exists) {
+                                openModal(modalId, invoiceNo); // Pass invoiceNo to openModal
+                            } else {
+                                showAlert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.', 'error');
+                            }
                         } else {
-                            showAlert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.', 'error');
+                            showAlert('Harap masukkan No Invoice.', 'info');
                         }
-                    } else {
-                        showAlert('Harap masukkan No Invoice.', 'info');
-                    }
-                });
+                    });
+                }
             }
 
             setupSearchAndFillModal('search-faktur-pajak-btn', 'search-invoice-faktur-pajak', 'faktur-pajak-modal');
@@ -1224,6 +1532,8 @@
             const lamaPengajuanInput = document.getElementById('keterangan-lama-pengajuan');
 
             function calculateLamaPengajuan() {
+                if (!tglPengajuanFinanceInput || !tglDiterimaAnggiInput || !lamaPengajuanInput) return;
+
                 const tglFinance = tglPengajuanFinanceInput.value;
                 const tglAnggi = tglDiterimaAnggiInput.value;
 
@@ -1238,284 +1548,9 @@
                 }
             }
 
-            tglPengajuanFinanceInput.addEventListener('change', calculateLamaPengajuan);
-            tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
+            if (tglPengajuanFinanceInput) tglPengajuanFinanceInput.addEventListener('change', calculateLamaPengajuan);
+            if (tglDiterimaAnggiInput) tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
 
-            // --- Load Invoices to Table (Initial Load and Refresh) ---
-            let allInvoiceNumbers = []; // To store all invoice numbers for autocomplete
-            let allInvoiceData = []; // To store all invoice data for export
-
-            async function loadInvoicesToTable() {
-                invoiceTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">Memuat data...</td></tr>';
-                allInvoiceNumbers = []; // Reset for fresh load
-                allInvoiceData = []; // Reset for fresh load
-
-                try {
-                    const snapshot = await invoicesCol.get();
-                    if (snapshot.empty) {
-                        invoiceTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">Tidak ada data invoice.</td></tr>';
-                        return;
-                    }
-
-                    let rowNum = 1;
-                    const rowsHtml = [];
-                    for (const doc of snapshot.docs) {
-                        const invoice = doc.data();
-                        const noInvoice = invoice.noInvoice;
-                        allInvoiceNumbers.push(noInvoice); // Add to autocomplete list
-
-                        // Fetch related data for display in table (e.g., DPP, Status)
-                        const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                        const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
-
-                        const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                        const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
-
-                        const dppDisplay = pembayaran.dppIdr ? `Rp ${pembayaran.dppIdr}` : 'N/A';
-                        const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
-                        let statusClass = '';
-                        if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
-                        else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
-                        else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
-
-                        // Store combined data for export
-                        allInvoiceData.push({
-                            No: rowNum,
-                            Email_Hard: invoice.emailHard || '',
-                            Penerima: invoice.penerima || '',
-                            Corp: invoice.corp || '',
-                            Tanggal_Diterima: invoice.tglDiterima || '',
-                            No_Invoice: noInvoice,
-                            Nama_Vendor: invoice.namaVendor || '',
-                            DPP_IDR: pembayaran.dppIdr || '0',
-                            PPn_IDR: pembayaran.ppnIdr || '0',
-                            DPP_USD: pembayaran.dppUsd || '0',
-                            Keterangan_Pembayaran: pembayaran.keterangan || '',
-                            Follow_Up: pembayaran.followUp || '',
-                            Hasil_Follow_Up: pembayaran.hasilFollowUp || '',
-                            TOP: pembayaran.top || '',
-                            Jatuh_Tempo: pembayaran.jatuhTempo || '',
-                            Tanggal_Pengajuan_Finance: keterangan.tglPengajuanFinance || '',
-                            Tanggal_Pengajuan_Reni: keterangan.tglPengajuanReni || '',
-                            Tanggal_Diterima_Anggi: keterangan.tglDiterimaAnggi || '',
-                            Lama_Pengajuan: keterangan.lamaPengajuan || '',
-                            Keterangan_Proses: keterangan.keteranganProses || '',
-                            Tanggal_Bayar: keterangan.tglBayar || '',
-                            Status: statusDisplay
-                        });
-
-                        rowsHtml.push(`
-                            <tr data-invoice-id="${noInvoice}">
-                                <td>${rowNum++}</td>
-                                <td>${invoice.emailHard || '-'}</td>
-                                <td>${invoice.penerima || '-'}</td>
-                                <td>${invoice.corp || '-'}</td>
-                                <td>${invoice.tglDiterima || '-'}</td>
-                                <td><a href="#" class="view-invoice-detail" data-invoice-no="${noInvoice}">${noInvoice}</a></td>
-                                <td>${invoice.namaVendor || '-'}</td>
-                                <td>${dppDisplay}</td>
-                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                                <td class="action-cell">
-                                    <button class="action-btn view-invoice-detail" data-invoice-no="${noInvoice}" title="Lihat Detail"><i class="fas fa-eye"></i></button>
-                                    <button class="action-btn edit-invoice-btn" data-invoice-no="${noInvoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
-                                    <button class="action-btn delete-invoice-btn" data-invoice-no="${noInvoice}" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                        `);
-                    }
-                    invoiceTableBody.innerHTML = rowsHtml.join('');
-                    setupAllAutocompletes(); // Setup autocomplete after data is loaded
-                } catch (error) {
-                    console.error("Error loading invoices: ", error);
-                    invoiceTableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`;
-                    showAlert("Gagal memuat data invoice: " + error.message, 'error');
-                }
-            }
-
-            // --- Delete Invoice Functionality ---
-            invoiceTableBody.addEventListener('click', async function(e) {
-                const deleteBtn = e.target.closest('.delete-invoice-btn');
-                if (deleteBtn) {
-                    const invoiceNo = deleteBtn.dataset.invoiceNo;
-                    if (confirm(`Apakah Anda yakin ingin menghapus invoice ${invoiceNo} beserta semua data terkaitnya?`)) {
-                        try {
-                            // Delete from invoices collection
-                            await invoicesCol.doc(invoiceNo).delete();
-
-                            // Delete from other collections (using queries)
-                            const fpDocs = await fakturPajakCol.where('noInvoice', '==', invoiceNo).get();
-                            fpDocs.forEach(doc => doc.ref.delete());
-
-                            const pembayaranDocs = await pembayaranCol.where('noInvoice', '==', invoiceNo).get();
-                            pembayaranDocs.forEach(doc => doc.ref.delete());
-
-                            const keteranganDocs = await keteranganCol.where('noInvoice', '==', invoiceNo).get();
-                            keteranganDocs.forEach(doc => doc.ref.delete());
-
-                            showAlert(`Invoice ${invoiceNo} dan data terkait berhasil dihapus.`, 'success');
-                            loadInvoicesToTable(); // Refresh table
-                            loadDashboardSummary(); // Update dashboard
-                            showSection('invoice-list-section'); // Go back to list if detail was open
-                        } catch (error) {
-                            console.error("Error deleting invoice: ", error);
-                            showAlert("Gagal menghapus invoice: " + error.message, 'error');
-                        }
-                    }
-                }
-            });
-
-            // --- Autocomplete Function ---
-            function autocomplete(inp, arr) {
-                /*the autocomplete function takes two arguments,
-                the text field element and an array of possible autocompleted values:*/
-                var currentFocus;
-                /*execute a function when someone writes in the text field:*/
-                inp.addEventListener("input", function(e) {
-                    var a, b, i, val = this.value;
-                    /*close any already open lists of autocompleted values*/
-                    closeAllLists();
-                    if (!val) { return false;}
-                    currentFocus = -1;
-                    /*create a DIV element that will contain the items (values):*/
-                    a = document.createElement("DIV");
-                    a.setAttribute("id", this.id + "autocomplete-list");
-                    a.setAttribute("class", "autocomplete-items");
-                    /*append the DIV element as a child of the autocomplete container:*/
-                    this.parentNode.appendChild(a);
-                    /*for each item in the array...*/
-                    for (i = 0; i < arr.length; i++) {
-                        /*check if the item starts with the same letters as the text field value:*/
-                        if (arr[i].toUpperCase().includes(val.toUpperCase())) {
-                            /*create a DIV element for each matching element:*/
-                            b = document.createElement("DIV");
-                            /*make the matching parts bold:*/
-                            const matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
-                            b.innerHTML = arr[i].substring(0, matchIndex) +
-                                "<strong>" + arr[i].substring(matchIndex, matchIndex + val.length) + "</strong>" +
-                                arr[i].substring(matchIndex + val.length);
-                            /*insert a input field that will hold the current array item's value:*/
-                            b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-                            /*execute a function when someone clicks on the item value (DIV element):*/
-                            b.addEventListener("click", function(e) {
-                                /*insert the value into the text field:*/
-                                inp.value = this.getElementsByTagName("input")[0].value;
-                                /*close the list of autocompleted values,
-                                (or any other open lists of autocompleted values:*/
-                                closeAllLists();
-                            });
-                            a.appendChild(b);
-                        }
-                    }
-                });
-                /*execute a function presses a key on the keyboard:*/
-                inp.addEventListener("keydown", function(e) {
-                    var x = document.getElementById(this.id + "autocomplete-list");
-                    if (x) x = x.getElementsByTagName("div");
-                    if (e.keyCode == 40) {
-                        /*If the arrow DOWN key is pressed,
-                        increase the currentFocus variable:*/
-                        currentFocus++;
-                        /*and and make the current item more visible:*/
-                        addActive(x);
-                    } else if (e.keyCode == 38) { //arrow UP
-                        /*If the arrow UP key is pressed,
-                        decrease the currentFocus variable:*/
-                        currentFocus--;
-                        /*and and make the current item more visible:*/
-                        addActive(x);
-                    } else if (e.keyCode == 13) {
-                        /*If the ENTER key is pressed, prevent the form from being submitted,*/
-                        e.preventDefault();
-                        if (currentFocus > -1) {
-                            /*and simulate a click on the "active" item:*/
-                            if (x) x[currentFocus].click();
-                        }
-                    }
-                });
-                function addActive(x) {
-                    /*a function to classify an item as "active":*/
-                    if (!x) return false;
-                    /*start by removing the "active" class on all items:*/
-                    removeActive(x);
-                    if (currentFocus >= x.length) currentFocus = 0;
-                    if (currentFocus < 0) currentFocus = (x.length - 1);
-                    /*add class "autocomplete-active":*/
-                    x[currentFocus].classList.add("autocomplete-active");
-                }
-                function removeActive(x) {
-                    /*a function to remove the "active" class from all autocomplete items:*/
-                    for (var i = 0; i < x.length; i++) {
-                        x[i].classList.remove("autocomplete-active");
-                    }
-                }
-                function closeAllLists(elmnt) {
-                    /*close all autocomplete lists in the document,
-                    except the one passed as an argument:*/
-                    var x = document.getElementsByClassName("autocomplete-items");
-                    for (var i = 0; i < x.length; i++) {
-                        if (elmnt != x[i] && elmnt != inp) {
-                            x[i].parentNode.removeChild(x[i]);
-                        }
-                    }
-                }
-                /*execute a function when someone clicks in the document:*/
-                document.addEventListener("click", function (e) {
-                    closeAllLists(e.target);
-                });
-            }
-
-            // Apply autocomplete to relevant input fields
-            const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
-            const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
-            const searchInvoiceKeteranganInput = document.getElementById('search-invoice-keterangan');
-
-            function setupAllAutocompletes() {
-                autocomplete(searchInvoiceFakturPajakInput, allInvoiceNumbers);
-                autocomplete(searchInvoicePembayaranInput, allInvoiceNumbers);
-                autocomplete(searchInvoiceKeteranganInput, allInvoiceNumbers);
-            }
-
-            // --- Dashboard Summary ---
-            async function loadDashboardSummary() {
-                let totalInvoice = 0;
-                let paidInvoice = 0;
-                let pendingInvoice = 0;
-                let overdueInvoice = 0;
-
-                try {
-                    const snapshot = await invoicesCol.get();
-                    totalInvoice = snapshot.size;
-
-                    for (const doc of snapshot.docs) {
-                        const noInvoice = doc.id;
-                        const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                        const status = keteranganDoc.empty ? 'Belum Diproses' : keteranganDoc.docs[0].data().statusAkhir;
-
-                        if (status === 'Dibayar') {
-                            paidInvoice++;
-                        } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(status)) {
-                            pendingInvoice++;
-                        } else if (status === 'Jatuh Tempo') {
-                            overdueInvoice++;
-                        }
-                    }
-
-                    document.querySelector('#dashboard-section .card-body div:nth-child(1) .font-weight-600').textContent = totalInvoice;
-                    document.querySelector('#dashboard-section .card-body div:nth-child(2) .font-weight-600').textContent = paidInvoice;
-                    document.querySelector('#dashboard-section .card-body div:nth-child(3) .font-weight-600').textContent = pendingInvoice;
-                    document.querySelector('#dashboard-section .card-body div:nth-child(4) .font-weight-600').textContent = overdueInvoice;
-
-                    // Update Laporan section summary as well
-                    document.getElementById('report-total-invoice').textContent = totalInvoice;
-                    document.getElementById('report-paid-invoice').textContent = paidInvoice;
-                    document.getElementById('report-pending-invoice').textContent = pendingInvoice;
-                    document.getElementById('report-overdue-invoice').textContent = overdueInvoice;
-
-                } catch (error) {
-                    console.error("Error loading dashboard summary: ", error);
-                    showAlert("Gagal memuat ringkasan dashboard: " + error.message, 'error');
-                }
-            }
 
             // --- Export to Excel (CSV) ---
             document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
@@ -1562,33 +1597,37 @@
             async function loadUserSettings() {
                 const user = auth.currentUser;
                 if (user) {
-                    settingsEmailInput.value = user.email;
-                    settingsPasswordInput.value = '';
-                    settingsConfirmPasswordInput.value = '';
-                    settingsErrorMessage.style.display = 'none';
-                    settingsSuccessMessage.style.display = 'none';
+                    if (settingsEmailInput) settingsEmailInput.value = user.email;
+                    if (settingsPasswordInput) settingsPasswordInput.value = '';
+                    if (settingsConfirmPasswordInput) settingsConfirmPasswordInput.value = '';
+                    if (settingsErrorMessage) settingsErrorMessage.style.display = 'none';
+                    if (settingsSuccessMessage) settingsSuccessMessage.style.display = 'none';
                 } else {
-                    settingsEmailInput.value = 'Tidak ada pengguna yang login';
-                    settingsEmailInput.readOnly = true;
+                    if (settingsEmailInput) {
+                        settingsEmailInput.value = 'Tidak ada pengguna yang login';
+                        settingsEmailInput.readOnly = true;
+                    }
                 }
             }
 
             document.getElementById('settings-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                settingsErrorMessage.style.display = 'none';
-                settingsSuccessMessage.style.display = 'none';
+                if (settingsErrorMessage) settingsErrorMessage.style.display = 'none';
+                if (settingsSuccessMessage) settingsSuccessMessage.style.display = 'none';
 
                 const user = auth.currentUser;
                 if (!user) {
-                    settingsErrorMessage.textContent = 'Tidak ada pengguna yang login.';
-                    settingsErrorMessage.style.display = 'block';
+                    if (settingsErrorMessage) {
+                        settingsErrorMessage.textContent = 'Tidak ada pengguna yang login.';
+                        settingsErrorMessage.style.display = 'block';
+                    }
                     showAlert('Tidak ada pengguna yang login.', 'error');
                     return;
                 }
 
-                const newEmail = settingsEmailInput.value;
-                const newPassword = settingsPasswordInput.value;
-                const confirmPassword = settingsConfirmPasswordInput.value;
+                const newEmail = settingsEmailInput ? settingsEmailInput.value : '';
+                const newPassword = settingsPasswordInput ? settingsPasswordInput.value : '';
+                const confirmPassword = settingsConfirmPasswordInput ? settingsConfirmPasswordInput.value : '';
 
                 let changesMade = false;
 
@@ -1597,11 +1636,15 @@
                     try {
                         await user.updateEmail(newEmail);
                         changesMade = true;
-                        settingsSuccessMessage.textContent = 'Email berhasil diperbarui.';
-                        settingsSuccessMessage.style.display = 'block';
+                        if (settingsSuccessMessage) {
+                            settingsSuccessMessage.textContent = 'Email berhasil diperbarui.';
+                            settingsSuccessMessage.style.display = 'block';
+                        }
                     } catch (error) {
-                        settingsErrorMessage.textContent = 'Gagal memperbarui email: ' + error.message;
-                        settingsErrorMessage.style.display = 'block';
+                        if (settingsErrorMessage) {
+                            settingsErrorMessage.textContent = 'Gagal memperbarui email: ' + error.message;
+                            settingsErrorMessage.style.display = 'block';
+                        }
                         showAlert('Gagal memperbarui email: ' + error.message, 'error');
                         return;
                     }
@@ -1610,35 +1653,45 @@
                 // Update Password
                 if (newPassword) {
                     if (newPassword !== confirmPassword) {
-                        settingsErrorMessage.textContent = 'Password baru dan konfirmasi password tidak cocok.';
-                        settingsErrorMessage.style.display = 'block';
+                        if (settingsErrorMessage) {
+                            settingsErrorMessage.textContent = 'Password baru dan konfirmasi password tidak cocok.';
+                            settingsErrorMessage.style.display = 'block';
+                        }
                         showAlert('Password baru dan konfirmasi password tidak cocok.', 'error');
                         return;
                     }
                     if (newPassword.length < 6) {
-                        settingsErrorMessage.textContent = 'Password harus minimal 6 karakter.';
-                        settingsErrorMessage.style.display = 'block';
+                        if (settingsErrorMessage) {
+                            settingsErrorMessage.textContent = 'Password harus minimal 6 karakter.';
+                            settingsErrorMessage.style.display = 'block';
+                        }
                         showAlert('Password harus minimal 6 karakter.', 'error');
                         return;
                     }
                     try {
                         await user.updatePassword(newPassword);
                         changesMade = true;
-                        settingsSuccessMessage.textContent = (changesMade ? settingsSuccessMessage.textContent + ' ' : '') + 'Password berhasil diperbarui.';
-                        settingsSuccessMessage.style.display = 'block';
-                        settingsPasswordInput.value = '';
-                        settingsConfirmPasswordInput.value = '';
+                        if (settingsSuccessMessage) {
+                            settingsSuccessMessage.textContent = (changesMade ? settingsSuccessMessage.textContent + ' ' : '') + 'Password berhasil diperbarui.';
+                            settingsSuccessMessage.style.display = 'block';
+                        }
+                        if (settingsPasswordInput) settingsPasswordInput.value = '';
+                        if (settingsConfirmPasswordInput) settingsConfirmPasswordInput.value = '';
                     } catch (error) {
-                        settingsErrorMessage.textContent = 'Gagal memperbarui password: ' + error.message + '. Anda mungkin perlu login ulang untuk memperbarui password.';
-                        settingsErrorMessage.style.display = 'block';
+                        if (settingsErrorMessage) {
+                            settingsErrorMessage.textContent = 'Gagal memperbarui password: ' + error.message + '. Anda mungkin perlu login ulang untuk memperbarui password.';
+                            settingsErrorMessage.style.display = 'block';
+                        }
                         showAlert('Gagal memperbarui password: ' + error.message + '. Anda mungkin perlu login ulang untuk memperbarui password.', 'error');
                         return;
                     }
                 }
 
                 if (!changesMade && !newPassword) {
-                    settingsErrorMessage.textContent = 'Tidak ada perubahan yang disimpan.';
-                    settingsErrorMessage.style.display = 'block';
+                    if (settingsErrorMessage) {
+                        settingsErrorMessage.textContent = 'Tidak ada perubahan yang disimpan.';
+                        settingsErrorMessage.style.display = 'block';
+                    }
                     showAlert('Tidak ada perubahan yang disimpan.', 'info');
                 } else if (changesMade) {
                     showAlert('Pengaturan akun berhasil diperbarui!', 'success');
@@ -1653,78 +1706,6 @@
                     }
                 }
             });
-
-            // --- Laporan Section Data Loading ---
-            async function loadReportData() {
-                const reportTableBody = document.querySelector('#report-invoice-table tbody');
-                reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
-
-                let totalInvoice = 0;
-                let paidInvoice = 0;
-                let pendingInvoice = 0;
-                let overdueInvoice = 0;
-
-                try {
-                    const snapshot = await invoicesCol.get();
-                    totalInvoice = snapshot.size;
-
-                    const reportRowsHtml = [];
-                    let rowNum = 1;
-
-                    for (const doc of snapshot.docs) {
-                        const invoice = doc.data();
-                        const noInvoice = invoice.noInvoice;
-
-                        const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                        const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
-
-                        const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                        const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
-
-                        const dppDisplay = pembayaran.dppIdr ? `Rp ${pembayaran.dppIdr}` : '0';
-                        const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
-                        const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
-                        const tglBayarDisplay = keterangan.tglBayar || '-';
-
-                        if (statusDisplay === 'Dibayar') {
-                            paidInvoice++;
-                        } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) {
-                            pendingInvoice++;
-                        } else if (statusDisplay === 'Jatuh Tempo') {
-                            overdueInvoice++;
-                        }
-
-                        reportRowsHtml.push(`
-                            <tr>
-                                <td>${rowNum++}</td>
-                                <td>${noInvoice}</td>
-                                <td>${invoice.namaVendor || '-'}</td>
-                                <td>${dppDisplay}</td>
-                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                                <td>${jatuhTempoDisplay}</td>
-                                <td>${tglBayarDisplay}</td>
-                            </tr>
-                        `);
-                    }
-                    reportTableBody.innerHTML = reportRowsHtml.join('');
-
-                    document.getElementById('report-total-invoice').textContent = totalInvoice;
-                    document.getElementById('report-paid-invoice').textContent = paidInvoice;
-                    document.getElementById('report-pending-invoice').textContent = pendingInvoice;
-                    document.getElementById('report-overdue-invoice').textContent = overdueInvoice;
-
-                } catch (error) {
-                    console.error("Error loading report data: ", error);
-                    reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                    showAlert("Gagal memuat data laporan: " + error.message, 'error');
-                }
-            }
-
-            // Add event listener for Laporan section to load data
-            document.querySelector('.nav-item[data-target="laporan-section"]').addEventListener('click', function() {
-                loadReportData();
-            });
-
         });
     </script>
 
@@ -2198,7 +2179,6 @@
                     <input type="text" id="invoice-no-invoice" class="filter-input" required>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Invoice</button>
                 </div>
             </form>
@@ -2225,7 +2205,6 @@
                     <input type="text" id="fp-no-faktur-pajak" class="filter-input" required>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Faktur Pajak</button>
                 </div>
             </form>
@@ -2279,7 +2258,6 @@
                     <input type="date" id="pembayaran-jatuh-tempo" class="filter-input">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Pembayaran</button>
                 </div>
             </form>
@@ -2335,7 +2313,6 @@
                     </select>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Keterangan</button>
                 </div>
             </form>
