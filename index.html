@@ -595,6 +595,41 @@
             background-color: var(--primary) !important;
             color: #ffffff;
         }
+
+        /* Custom Alert/Notification Styles */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            color: white;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 300px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .custom-alert.show {
+            opacity: 1;
+        }
+
+        .custom-alert.success {
+            background-color: var(--success);
+        }
+
+        .custom-alert.error {
+            background-color: var(--danger);
+        }
+
+        .custom-alert.info {
+            background-color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -627,6 +662,34 @@
         const pembayaranCol = db.collection('pembayaran');
         const keteranganCol = db.collection('keterangan');
 
+        // --- Custom Alert Function ---
+        function showAlert(message, type = 'info', duration = 3000) {
+            let alertBox = document.getElementById('custom-alert-box');
+            if (!alertBox) {
+                alertBox = document.createElement('div');
+                alertBox.id = 'custom-alert-box';
+                alertBox.className = 'custom-alert';
+                document.body.appendChild(alertBox);
+            }
+
+            alertBox.textContent = message;
+            alertBox.className = `custom-alert ${type}`; // Reset classes and add new type
+            alertBox.style.display = 'block';
+
+            // Trigger reflow to ensure transition plays
+            void alertBox.offsetWidth;
+            alertBox.classList.add('show');
+
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+                alertBox.addEventListener('transitionend', function handler() {
+                    alertBox.style.display = 'none';
+                    alertBox.removeEventListener('transitionend', handler);
+                });
+            }, duration);
+        }
+
+
         // --- Authentication UI ---
         const authContainer = document.createElement('div');
         authContainer.className = 'auth-container';
@@ -643,7 +706,6 @@
                         <input type="password" id="auth-password" class="filter-input" required>
                     </div>
                     <button type="submit" class="btn btn-primary" id="auth-submit-btn">Login</button>
-                    <p class="toggle-auth">Belum punya akun? <a href="#" id="toggle-to-register">Daftar</a></p>
                     <p class="error-message" id="auth-error-message" style="display: none;"></p>
                 </form>
             </div>
@@ -655,25 +717,28 @@
         const authEmail = document.getElementById('auth-email');
         const authPassword = document.getElementById('auth-password');
         const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const toggleToRegister = document.getElementById('toggle-to-register');
         const authErrorMessage = document.getElementById('auth-error-message');
 
-        let isRegistering = false;
+        // Removed registration logic as per request
+        // let isRegistering = false;
+        // const toggleToRegister = document.getElementById('toggle-to-register');
+        // if (toggleToRegister) {
+        //     toggleToRegister.addEventListener('click', (e) => {
+        //         e.preventDefault();
+        //         isRegistering = !isRegistering;
+        //         if (isRegistering) {
+        //             authTitle.textContent = 'Daftar';
+        //             authSubmitBtn.textContent = 'Daftar';
+        //             toggleToRegister.innerHTML = 'Sudah punya akun? <a href="#">Login</a>';
+        //         } else {
+        //             authTitle.textContent = 'Login';
+        //             authSubmitBtn.textContent = 'Login';
+        //             toggleToRegister.innerHTML = 'Belum punya akun? <a href="#">Daftar</a>';
+        //         }
+        //         authErrorMessage.style.display = 'none';
+        //     });
+        // }
 
-        toggleToRegister.addEventListener('click', (e) => {
-            e.preventDefault();
-            isRegistering = !isRegistering;
-            if (isRegistering) {
-                authTitle.textContent = 'Daftar';
-                authSubmitBtn.textContent = 'Daftar';
-                toggleToRegister.innerHTML = 'Sudah punya akun? <a href="#">Login</a>';
-            } else {
-                authTitle.textContent = 'Login';
-                authSubmitBtn.textContent = 'Login';
-                toggleToRegister.innerHTML = 'Belum punya akun? <a href="#">Daftar</a>';
-            }
-            authErrorMessage.style.display = 'none';
-        });
 
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -682,19 +747,12 @@
             authErrorMessage.style.display = 'none';
 
             try {
-                if (isRegistering) {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                    alert('Pendaftaran berhasil! Silakan login.');
-                    isRegistering = false; // Switch back to login after successful registration
-                    authTitle.textContent = 'Login';
-                    authSubmitBtn.textContent = 'Login';
-                    toggleToRegister.innerHTML = 'Belum punya akun? <a href="#">Daftar</a>';
-                } else {
-                    await auth.signInWithEmailAndPassword(email, password);
-                }
+                // Only login functionality remains
+                await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
                 authErrorMessage.textContent = error.message;
                 authErrorMessage.style.display = 'block';
+                showAlert('Login gagal: ' + error.message, 'error');
             }
         });
 
@@ -755,10 +813,10 @@
                     } else if (this.id === 'logout-btn') {
                         // Handle logout separately
                         auth.signOut().then(() => {
-                            alert('Anda telah logout.');
+                            showAlert('Anda telah logout.', 'info');
                         }).catch((error) => {
                             console.error("Error logging out: ", error);
-                            alert("Gagal logout: " + error.message);
+                            showAlert("Gagal logout: " + error.message, 'error');
                         });
                     }
                 });
@@ -804,7 +862,7 @@
                         // Pre-fill existing data if editing
                         await fillModalWithExistingData(modalId, invoiceNo);
                     } else {
-                        alert('Invoice tidak ditemukan untuk No Invoice ini.');
+                        showAlert('Invoice tidak ditemukan untuk No Invoice ini.', 'error');
                         closeModal(modalId);
                     }
                 }
@@ -851,13 +909,13 @@
 
                 try {
                     await invoicesCol.doc(noInvoice).set(formData, { merge: true }); // Use set with merge to avoid overwriting
-                    alert('Invoice berhasil disimpan!');
+                    showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
                     loadInvoicesToTable(); // Reload table data
                     loadDashboardSummary(); // Update dashboard
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
-                    alert("Gagal menyimpan invoice: " + error.message);
+                    showAlert("Gagal menyimpan invoice: " + error.message, 'error');
                 }
             });
 
@@ -865,7 +923,7 @@
             async function displayInvoiceDetail(invoiceNo) {
                 const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
                 if (!invoiceDoc.exists) {
-                    alert('Data invoice tidak ditemukan.');
+                    showAlert('Data invoice tidak ditemukan.', 'error');
                     return;
                 }
                 const data = invoiceDoc.data();
@@ -955,7 +1013,7 @@
                     document.getElementById('invoice-nama-vendor').value = invoiceData.namaVendor || '';
                     document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || '';
                 } else {
-                    alert('Invoice tidak ditemukan.');
+                    showAlert('Invoice tidak ditemukan.', 'error');
                 }
             });
 
@@ -996,10 +1054,10 @@
                         if (invoiceDoc.exists) {
                             openModal(modalId, invoiceNo); // Pass invoiceNo to openModal
                         } else {
-                            alert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.');
+                            showAlert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.', 'error');
                         }
                     } else {
-                        alert('Harap masukkan No Invoice.');
+                        showAlert('Harap masukkan No Invoice.', 'info');
                     }
                 });
             }
@@ -1079,7 +1137,7 @@
                     } else {
                         await fakturPajakCol.add(formData);
                     }
-                    alert('Faktur Pajak berhasil disimpan!');
+                    showAlert('Faktur Pajak berhasil disimpan!', 'success');
                     closeModal('faktur-pajak-modal');
                     loadInvoicesToTable(); // Refresh table
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
@@ -1087,7 +1145,7 @@
                     }
                 } catch (error) {
                     console.error("Error saving Faktur Pajak: ", error);
-                    alert("Gagal menyimpan Faktur Pajak: " + error.message);
+                    showAlert("Gagal menyimpan Faktur Pajak: " + error.message, 'error');
                 }
             });
 
@@ -1113,7 +1171,7 @@
                     } else {
                         await pembayaranCol.add(formData);
                     }
-                    alert('Pembayaran berhasil disimpan!');
+                    showAlert('Pembayaran berhasil disimpan!', 'success');
                     closeModal('pembayaran-modal');
                     loadInvoicesToTable(); // Refresh table
                     loadDashboardSummary(); // Update dashboard
@@ -1122,7 +1180,7 @@
                     }
                 } catch (error) {
                     console.error("Error saving Pembayaran: ", error);
-                    alert("Gagal menyimpan Pembayaran: " + error.message);
+                    showAlert("Gagal menyimpan Pembayaran: " + error.message, 'error');
                 }
             });
 
@@ -1147,7 +1205,7 @@
                     } else {
                         await keteranganCol.add(formData);
                     }
-                    alert('Keterangan & Status berhasil disimpan!');
+                    showAlert('Keterangan & Status berhasil disimpan!', 'success');
                     closeModal('keterangan-modal');
                     loadInvoicesToTable(); // Refresh table
                     loadDashboardSummary(); // Update dashboard
@@ -1156,7 +1214,7 @@
                     }
                 } catch (error) {
                     console.error("Error saving Keterangan: ", error);
-                    alert("Gagal menyimpan Keterangan: " + error.message);
+                    showAlert("Gagal menyimpan Keterangan: " + error.message, 'error');
                 }
             });
 
@@ -1270,6 +1328,7 @@
                 } catch (error) {
                     console.error("Error loading invoices: ", error);
                     invoiceTableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`;
+                    showAlert("Gagal memuat data invoice: " + error.message, 'error');
                 }
             }
 
@@ -1293,13 +1352,13 @@
                             const keteranganDocs = await keteranganCol.where('noInvoice', '==', invoiceNo).get();
                             keteranganDocs.forEach(doc => doc.ref.delete());
 
-                            alert(`Invoice ${invoiceNo} dan data terkait berhasil dihapus.`);
+                            showAlert(`Invoice ${invoiceNo} dan data terkait berhasil dihapus.`, 'success');
                             loadInvoicesToTable(); // Refresh table
                             loadDashboardSummary(); // Update dashboard
                             showSection('invoice-list-section'); // Go back to list if detail was open
                         } catch (error) {
                             console.error("Error deleting invoice: ", error);
-                            alert("Gagal menghapus invoice: " + error.message);
+                            showAlert("Gagal menghapus invoice: " + error.message, 'error');
                         }
                     }
                 }
@@ -1446,16 +1505,23 @@
                     document.querySelector('#dashboard-section .card-body div:nth-child(3) .font-weight-600').textContent = pendingInvoice;
                     document.querySelector('#dashboard-section .card-body div:nth-child(4) .font-weight-600').textContent = overdueInvoice;
 
+                    // Update Laporan section summary as well
+                    document.getElementById('report-total-invoice').textContent = totalInvoice;
+                    document.getElementById('report-paid-invoice').textContent = paidInvoice;
+                    document.getElementById('report-pending-invoice').textContent = pendingInvoice;
+                    document.getElementById('report-overdue-invoice').textContent = overdueInvoice;
+
                 } catch (error) {
                     console.error("Error loading dashboard summary: ", error);
+                    showAlert("Gagal memuat ringkasan dashboard: " + error.message, 'error');
                 }
             }
 
             // --- Export to Excel (CSV) ---
-            document.querySelectorAll('.header-actions .btn-outline').forEach(btn => {
+            document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     if (allInvoiceData.length === 0) {
-                        alert('Tidak ada data untuk diekspor.');
+                        showAlert('Tidak ada data untuk diekspor.', 'info');
                         return;
                     }
 
@@ -1481,6 +1547,7 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
+                        showAlert('Data berhasil diekspor ke CSV.', 'success');
                     }
                 });
             });
@@ -1515,6 +1582,7 @@
                 if (!user) {
                     settingsErrorMessage.textContent = 'Tidak ada pengguna yang login.';
                     settingsErrorMessage.style.display = 'block';
+                    showAlert('Tidak ada pengguna yang login.', 'error');
                     return;
                 }
 
@@ -1534,6 +1602,7 @@
                     } catch (error) {
                         settingsErrorMessage.textContent = 'Gagal memperbarui email: ' + error.message;
                         settingsErrorMessage.style.display = 'block';
+                        showAlert('Gagal memperbarui email: ' + error.message, 'error');
                         return;
                     }
                 }
@@ -1543,11 +1612,13 @@
                     if (newPassword !== confirmPassword) {
                         settingsErrorMessage.textContent = 'Password baru dan konfirmasi password tidak cocok.';
                         settingsErrorMessage.style.display = 'block';
+                        showAlert('Password baru dan konfirmasi password tidak cocok.', 'error');
                         return;
                     }
                     if (newPassword.length < 6) {
                         settingsErrorMessage.textContent = 'Password harus minimal 6 karakter.';
                         settingsErrorMessage.style.display = 'block';
+                        showAlert('Password harus minimal 6 karakter.', 'error');
                         return;
                     }
                     try {
@@ -1560,6 +1631,7 @@
                     } catch (error) {
                         settingsErrorMessage.textContent = 'Gagal memperbarui password: ' + error.message + '. Anda mungkin perlu login ulang untuk memperbarui password.';
                         settingsErrorMessage.style.display = 'block';
+                        showAlert('Gagal memperbarui password: ' + error.message + '. Anda mungkin perlu login ulang untuk memperbarui password.', 'error');
                         return;
                     }
                 }
@@ -1567,10 +1639,92 @@
                 if (!changesMade && !newPassword) {
                     settingsErrorMessage.textContent = 'Tidak ada perubahan yang disimpan.';
                     settingsErrorMessage.style.display = 'block';
+                    showAlert('Tidak ada perubahan yang disimpan.', 'info');
                 } else if (changesMade) {
-                    alert('Pengaturan akun berhasil diperbarui!');
+                    showAlert('Pengaturan akun berhasil diperbarui!', 'success');
+                    // Force re-login after password change
+                    if (newPassword) {
+                        auth.signOut().then(() => {
+                            showAlert('Password berhasil diperbarui. Silakan login ulang.', 'info', 5000);
+                        }).catch((error) => {
+                            console.error("Error logging out after password change: ", error);
+                            showAlert("Gagal logout setelah perubahan password: " + error.message, 'error');
+                        });
+                    }
                 }
             });
+
+            // --- Laporan Section Data Loading ---
+            async function loadReportData() {
+                const reportTableBody = document.querySelector('#report-invoice-table tbody');
+                reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
+
+                let totalInvoice = 0;
+                let paidInvoice = 0;
+                let pendingInvoice = 0;
+                let overdueInvoice = 0;
+
+                try {
+                    const snapshot = await invoicesCol.get();
+                    totalInvoice = snapshot.size;
+
+                    const reportRowsHtml = [];
+                    let rowNum = 1;
+
+                    for (const doc of snapshot.docs) {
+                        const invoice = doc.data();
+                        const noInvoice = invoice.noInvoice;
+
+                        const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                        const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
+
+                        const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                        const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
+
+                        const dppDisplay = pembayaran.dppIdr ? `Rp ${pembayaran.dppIdr}` : '0';
+                        const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
+                        const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
+                        const tglBayarDisplay = keterangan.tglBayar || '-';
+
+                        if (statusDisplay === 'Dibayar') {
+                            paidInvoice++;
+                        } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) {
+                            pendingInvoice++;
+                        } else if (statusDisplay === 'Jatuh Tempo') {
+                            overdueInvoice++;
+                        }
+
+                        reportRowsHtml.push(`
+                            <tr>
+                                <td>${rowNum++}</td>
+                                <td>${noInvoice}</td>
+                                <td>${invoice.namaVendor || '-'}</td>
+                                <td>${dppDisplay}</td>
+                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
+                                <td>${jatuhTempoDisplay}</td>
+                                <td>${tglBayarDisplay}</td>
+                            </tr>
+                        `);
+                    }
+                    reportTableBody.innerHTML = reportRowsHtml.join('');
+
+                    document.getElementById('report-total-invoice').textContent = totalInvoice;
+                    document.getElementById('report-paid-invoice').textContent = paidInvoice;
+                    document.getElementById('report-pending-invoice').textContent = pendingInvoice;
+                    document.getElementById('report-overdue-invoice').textContent = overdueInvoice;
+
+                } catch (error) {
+                    console.error("Error loading report data: ", error);
+                    reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
+                    showAlert("Gagal memuat data laporan: " + error.message, 'error');
+                }
+            }
+
+            // Add event listener for Laporan section to load data
+            document.querySelector('.nav-item[data-target="laporan-section"]').addEventListener('click', function() {
+                loadReportData();
+            });
+
         });
     </script>
 
@@ -2187,5 +2341,7 @@
             </form>
         </div>
     </div>
+    <!-- Custom Alert Box -->
+    <div id="custom-alert-box" class="custom-alert"></div>
 </body>
 </html>
