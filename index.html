@@ -761,79 +761,84 @@
             allInvoiceData = []; // Reset for fresh load
 
             try {
-                const snapshot = await invoicesCol.get();
-                if (snapshot.empty) {
-                    invoiceTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Tidak ada data invoice.</td></tr>'; // Kolom dikurangi 1
-                    return;
-                }
+                // Menggunakan onSnapshot untuk realtime updates
+                invoicesCol.onSnapshot(async (snapshot) => {
+                    if (snapshot.empty) {
+                        invoiceTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Tidak ada data invoice.</td></tr>'; // Kolom dikurangi 1
+                        return;
+                    }
 
-                let rowNum = 1;
-                const rowsHtml = [];
-                for (const doc of snapshot.docs) {
-                    const invoice = doc.data();
-                    const noInvoice = invoice.noInvoice;
-                    allInvoiceNumbers.push(noInvoice); // Add to autocomplete list
+                    let rowNum = 1;
+                    const rowsHtml = [];
+                    const currentAllInvoiceData = []; // Temporary array for current snapshot
 
-                    // Fetch related data for display in table (e.g., DPP, Status)
-                    const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                    const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
+                    for (const doc of snapshot.docs) {
+                        const invoice = doc.data();
+                        const noInvoice = invoice.noInvoice;
+                        allInvoiceNumbers.push(noInvoice); // Add to autocomplete list
 
-                    const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                    const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
+                        // Fetch related data for display in table (e.g., DPP, Status)
+                        const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                        const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
 
-                    const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : 'N/A';
-                    const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
-                    let statusClass = '';
-                    if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
-                    else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
-                    else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
+                        const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                        const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
 
-                    // Store combined data for export
-                    allInvoiceData.push({
-                        No: rowNum,
-                        Email_Hard: invoice.emailHard || '',
-                        Penerima: invoice.penerima || '',
-                        Corp: invoice.corp || '',
-                        Tanggal_Diterima: invoice.tglDiterima || '',
-                        No_Invoice: noInvoice,
-                        Nama_Vendor: invoice.namaVendor || '',
-                        DPP_IDR: pembayaran.dppIdr || '0',
-                        PPn_IDR: pembayaran.ppnIdr || '0',
-                        DPP_USD: pembayaran.dppUsd || '0',
-                        Keterangan_Pembayaran: pembayaran.keterangan || '',
-                        Follow_Up: pembayaran.followUp || '',
-                        Hasil_Follow_Up: pembayaran.hasilFollowUp || '',
-                        TOP: pembayaran.top || '',
-                        Jatuh_Tempo: pembayaran.jatuhTempo || '',
-                        Tanggal_Pengajuan_Finance: keterangan.tglPengajuanFinance || '',
-                        Tanggal_Pengajuan_Reni: keterangan.tglPengajuanReni || '',
-                        Tanggal_Diterima_Anggi: keterangan.tglDiterimaAnggi || '',
-                        Lama_Pengajuan: keterangan.lamaPengajuan || '',
-                        Keterangan_Proses: keterangan.keteranganProses || '',
-                        Tanggal_Bayar: keterangan.tglBayar || '',
-                        Status: statusDisplay
-                    });
+                        const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : 'N/A';
+                        const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
+                        let statusClass = '';
+                        if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
+                        else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
+                        else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
 
-                    rowsHtml.push(`
-                        <tr data-invoice-id="${noInvoice}">
-                            <td>${rowNum++}</td>
-                            <td>${invoice.emailHard || '-'}</td>
-                            <td>${invoice.penerima || '-'}</td>
-                            <td>${invoice.corp || '-'}</td>
-                            <td>${invoice.tglDiterima || '-'}</td>
-                            <td><a href="#" class="view-invoice-detail" data-invoice-no="${noInvoice}">${noInvoice}</a></td>
-                            <td>${invoice.namaVendor || '-'}</td>
-                            <td>${dppDisplay}</td>
-                            <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                            <td class="action-cell">
-                                <button class="action-btn edit-invoice-btn" data-invoice-no="${noInvoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn delete-invoice-btn" data-invoice-no="${noInvoice}" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
-                            </td>
-                        </tr>
-                    `);
-                }
-                invoiceTableBody.innerHTML = rowsHtml.join('');
-                setupAllAutocompletes(); // Setup autocomplete after data is loaded
+                        // Store combined data for export
+                        currentAllInvoiceData.push({
+                            No: rowNum,
+                            Email_Hard: invoice.emailHard || '',
+                            Penerima: invoice.penerima || '',
+                            Corp: invoice.corp || '',
+                            Tanggal_Diterima: invoice.tglDiterima || '',
+                            No_Invoice: noInvoice,
+                            Nama_Vendor: invoice.namaVendor || '',
+                            DPP_IDR: pembayaran.dppIdr || '0',
+                            PPn_IDR: pembayaran.ppnIdr || '0',
+                            DPP_USD: pembayaran.dppUsd || '0',
+                            Keterangan_Pembayaran: pembayaran.keterangan || '',
+                            Follow_Up: pembayaran.followUp || '',
+                            Hasil_Follow_Up: pembayaran.hasilFollowUp || '',
+                            TOP: pembayaran.top || '',
+                            Jatuh_Tempo: pembayaran.jatuhTempo || '',
+                            Tanggal_Pengajuan_Finance: keterangan.tglPengajuanFinance || '',
+                            Tanggal_Pengajuan_Reni: keterangan.tglPengajuanReni || '',
+                            Tanggal_Diterima_Anggi: keterangan.tglDiterimaAnggi || '',
+                            Lama_Pengajuan: keterangan.lamaPengajuan || '',
+                            Keterangan_Proses: keterangan.keteranganProses || '',
+                            Tanggal_Bayar: keterangan.tglBayar || '',
+                            Status: statusDisplay
+                        });
+
+                        rowsHtml.push(`
+                            <tr data-invoice-id="${noInvoice}">
+                                <td>${rowNum++}</td>
+                                <td>${invoice.emailHard || '-'}</td>
+                                <td>${invoice.penerima || '-'}</td>
+                                <td>${invoice.corp || '-'}</td>
+                                <td>${invoice.tglDiterima || '-'}</td>
+                                <td><a href="#" class="view-invoice-detail" data-invoice-no="${noInvoice}">${noInvoice}</a></td>
+                                <td>${invoice.namaVendor || '-'}</td>
+                                <td>${dppDisplay}</td>
+                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
+                                <td class="action-cell">
+                                    <button class="action-btn edit-invoice-btn" data-invoice-no="${noInvoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn delete-invoice-btn" data-invoice-no="${noInvoice}" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `);
+                    }
+                    invoiceTableBody.innerHTML = rowsHtml.join('');
+                    allInvoiceData = currentAllInvoiceData; // Update global data for export
+                    setupAllAutocompletes(); // Setup autocomplete after data is loaded
+                });
             } catch (error) {
                 console.error("Error loading invoices: ", error);
                 invoiceTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`; // Kolom dikurangi 1
@@ -856,34 +861,42 @@
             overdueInvoiceEl.textContent = '...';
 
             try {
-                const snapshot = await invoicesCol.get();
-                let total = 0;
-                let paid = 0;
-                let pending = 0;
-                let overdue = 0;
+                // Menggunakan onSnapshot untuk realtime updates pada dashboard
+                invoicesCol.onSnapshot(async (snapshot) => {
+                    let total = 0;
+                    let paid = 0;
+                    let pending = 0;
+                    let overdue = 0;
 
-                if (!snapshot.empty) {
-                    total = snapshot.size;
-                    for (const doc of snapshot.docs) {
-                        const noInvoice = doc.data().noInvoice;
-                        const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                        const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
-                        const status = keterangan.statusAkhir || 'Belum Diproses';
+                    if (!snapshot.empty) {
+                        total = snapshot.size;
+                        // Fetch all keterangan documents once to optimize
+                        const keteranganSnapshot = await keteranganCol.get();
+                        const keteranganMap = new Map();
+                        keteranganSnapshot.forEach(doc => {
+                            keteranganMap.set(doc.data().noInvoice, doc.data());
+                        });
 
-                        if (status === 'Dibayar') {
-                            paid++;
-                        } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(status)) {
-                            pending++;
-                        } else if (status === 'Jatuh Tempo') {
-                            overdue++;
+                        for (const doc of snapshot.docs) {
+                            const noInvoice = doc.data().noInvoice;
+                            const keterangan = keteranganMap.get(noInvoice) || {};
+                            const status = keterangan.statusAkhir || 'Belum Diproses';
+
+                            if (status === 'Dibayar') {
+                                paid++;
+                            } else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(status)) {
+                                pending++;
+                            } else if (status === 'Jatuh Tempo') {
+                                overdue++;
+                            }
                         }
                     }
-                }
 
-                totalInvoiceEl.textContent = total;
-                paidInvoiceEl.textContent = paid;
-                pendingInvoiceEl.textContent = pending;
-                overdueInvoiceEl.textContent = overdue;
+                    totalInvoiceEl.textContent = total;
+                    paidInvoiceEl.textContent = paid;
+                    pendingInvoiceEl.textContent = pending;
+                    overdueInvoiceEl.textContent = overdue;
+                });
 
             } catch (error) {
                 console.error("Error loading dashboard data: ", error);
@@ -904,48 +917,60 @@
             reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
 
             try {
-                const snapshot = await invoicesCol.get();
-                if (snapshot.empty) {
-                    reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data laporan.</td></tr>';
-                    return;
-                }
+                // Menggunakan onSnapshot untuk realtime updates
+                invoicesCol.onSnapshot(async (snapshot) => {
+                    if (snapshot.empty) {
+                        reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data laporan.</td></tr>';
+                        return;
+                    }
 
-                const reportRowsHtml = [];
-                let rowNum = 1;
+                    const reportRowsHtml = [];
+                    let rowNum = 1;
 
-                for (const doc of snapshot.docs) {
-                    const invoice = doc.data();
-                    const noInvoice = invoice.noInvoice;
+                    // Fetch all related data once to optimize
+                    const pembayaranSnapshot = await pembayaranCol.get();
+                    const pembayaranMap = new Map();
+                    pembayaranSnapshot.forEach(doc => {
+                        pembayaranMap.set(doc.data().noInvoice, doc.data());
+                    });
 
-                    const pembayaranDoc = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                    const pembayaran = pembayaranDoc.empty ? {} : pembayaranDoc.docs[0].data();
+                    const keteranganSnapshot = await keteranganCol.get();
+                    const keteranganMap = new Map();
+                    keteranganSnapshot.forEach(doc => {
+                        keteranganMap.set(doc.data().noInvoice, doc.data());
+                    });
 
-                    const keteranganDoc = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
-                    const keterangan = keteranganDoc.empty ? {} : keteranganDoc.docs[0].data();
+                    for (const doc of snapshot.docs) {
+                        const invoice = doc.data();
+                        const noInvoice = invoice.noInvoice;
 
-                    const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : '0';
-                    const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
-                    const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
-                    const tglBayarDisplay = keterangan.tglBayar || '-';
+                        const pembayaran = pembayaranMap.get(noInvoice) || {};
+                        const keterangan = keteranganMap.get(noInvoice) || {};
 
-                    let statusClass = '';
-                    if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
-                    else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
-                    else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
+                        const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : '0';
+                        const statusDisplay = keterangan.statusAkhir || 'Belum Diproses';
+                        const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
+                        const tglBayarDisplay = keterangan.tglBayar || '-';
 
-                    reportRowsHtml.push(`
-                        <tr>
-                            <td>${rowNum++}</td>
-                            <td>${noInvoice}</td>
-                            <td>${invoice.namaVendor || '-'}</td>
-                            <td>${dppDisplay}</td>
-                            <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                            <td>${jatuhTempoDisplay}</td>
-                            <td>${tglBayarDisplay}</td>
-                        </tr>
-                    `);
-                }
-                reportTableBody.innerHTML = reportRowsHtml.join('');
+                        let statusClass = '';
+                        if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
+                        else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
+                        else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
+
+                        reportRowsHtml.push(`
+                            <tr>
+                                <td>${rowNum++}</td>
+                                <td>${noInvoice}</td>
+                                <td>${invoice.namaVendor || '-'}</td>
+                                <td>${dppDisplay}</td>
+                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
+                                <td>${jatuhTempoDisplay}</td>
+                                <td>${tglBayarDisplay}</td>
+                            </tr>
+                        `);
+                    }
+                    reportTableBody.innerHTML = reportRowsHtml.join('');
+                });
             } catch (error) {
                 console.error("Error loading report data: ", error);
                 reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
@@ -1105,9 +1130,10 @@
             try {
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
-                authErrorMessage.textContent = error.message;
+                // Notifikasi sederhana tanpa detail error Firebase
+                showAlert('Login gagal. Periksa kembali email dan password Anda.', 'error');
+                authErrorMessage.textContent = 'Email atau password salah.';
                 authErrorMessage.style.display = 'block';
-                showAlert('Login gagal: ' + error.message, 'error');
             }
         });
 
@@ -1157,9 +1183,9 @@
                     loadDashboardData();
                 } else if (targetId === 'invoice-list-section') {
                     loadInvoicesToTable();
+                } else if (targetId === 'laporan-section') { // Jika laporan diaktifkan kembali
+                    loadReportData();
                 }
-                // Removed 'laporan-section' condition as it's hidden
-                // Removed 'pengaturan-section' condition as it's removed
             }
 
             navItems.forEach(item => {
@@ -1264,7 +1290,7 @@
                     await invoicesCol.doc(noInvoice).set(formData, { merge: true }); // Use set with merge to avoid overwriting
                     showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
-                    loadInvoicesToTable(); // Reload table data
+                    // loadInvoicesToTable(); // Realtime listener will handle this
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
                     showAlert("Gagal menyimpan invoice: " + error.message, 'error');
@@ -1408,7 +1434,7 @@
                         await keteranganBatch.commit();
 
                         showAlert('Invoice dan data terkait berhasil dihapus!', 'success');
-                        loadInvoicesToTable(); // Muat ulang tabel
+                        // loadInvoicesToTable(); // Realtime listener will handle this
                     } catch (error) {
                         console.error("Error deleting invoice: ", error);
                         showAlert("Gagal menghapus invoice: " + error.message, 'error');
@@ -1570,7 +1596,7 @@
                     }
                     showAlert('Faktur Pajak berhasil disimpan!', 'success');
                     closeModal('faktur-pajak-modal');
-                    loadInvoicesToTable(); // Refresh table
+                    // loadInvoicesToTable(); // Refresh table - handled by realtime listener
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
                         displayInvoiceDetail(noInvoice); // Refresh detail view if open
                     }
@@ -1607,7 +1633,7 @@
                     }
                     showAlert('Pembayaran berhasil disimpan!', 'success');
                     closeModal('pembayaran-modal');
-                    loadInvoicesToTable(); // Refresh table
+                    // loadInvoicesToTable(); // Refresh table - handled by realtime listener
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
                         displayInvoiceDetail(noInvoice); // Refresh detail view if open
                     }
@@ -1640,7 +1666,7 @@
                     }
                     showAlert('Keterangan & Status berhasil disimpan!', 'success');
                     closeModal('keterangan-modal');
-                    loadInvoicesToTable(); // Refresh table
+                    // loadInvoicesToTable(); // Refresh table - handled by realtime listener
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
                         displayInvoiceDetail(noInvoice); // Refresh detail view if open
                     }
@@ -1731,7 +1757,114 @@
 
 
             // --- Pengaturan Akun (Settings) ---
-            // Removed settings related JavaScript as the section is removed.
+            const settingsForm = document.getElementById('settings-form');
+            const settingsEmailInput = document.getElementById('settings-email');
+            const settingsPasswordInput = document.getElementById('settings-password');
+            const settingsConfirmPasswordInput = document.getElementById('settings-confirm-password');
+            const settingsErrorMessage = document.getElementById('settings-error-message');
+            const settingsSuccessMessage = document.getElementById('settings-success-message');
+            const forgotPasswordLink = document.getElementById('forgot-password-link');
+            const forgotPasswordErrorMessage = document.getElementById('forgot-password-error-message');
+            const forgotPasswordSuccessMessage = document.getElementById('forgot-password-success-message');
+
+            if (settingsForm) {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        settingsEmailInput.value = user.email;
+                    }
+                });
+
+                settingsForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    settingsErrorMessage.style.display = 'none';
+                    settingsSuccessMessage.style.display = 'none';
+
+                    const user = auth.currentUser;
+                    if (!user) {
+                        showAlert('Anda harus login untuk mengubah pengaturan.', 'error');
+                        return;
+                    }
+
+                    const newEmail = settingsEmailInput.value;
+                    const newPassword = settingsPasswordInput.value;
+                    const confirmPassword = settingsConfirmPasswordInput.value;
+
+                    let changesMade = false;
+
+                    // Update Email
+                    if (newEmail !== user.email) {
+                        try {
+                            await user.updateEmail(newEmail);
+                            showAlert('Email berhasil diperbarui.', 'success');
+                            changesMade = true;
+                        } catch (error) {
+                            console.error("Error updating email:", error);
+                            settingsErrorMessage.textContent = 'Gagal memperbarui email: ' + error.message;
+                            settingsErrorMessage.style.display = 'block';
+                            return; // Stop if email update fails
+                        }
+                    }
+
+                    // Update Password
+                    if (newPassword) {
+                        if (newPassword !== confirmPassword) {
+                            settingsErrorMessage.textContent = 'Konfirmasi password tidak cocok.';
+                            settingsErrorMessage.style.display = 'block';
+                            return;
+                        }
+                        if (newPassword.length < 6) {
+                            settingsErrorMessage.textContent = 'Password baru minimal 6 karakter.';
+                            settingsErrorMessage.style.display = 'block';
+                            return;
+                        }
+                        try {
+                            await user.updatePassword(newPassword);
+                            showAlert('Password berhasil diperbarui.', 'success');
+                            settingsPasswordInput.value = '';
+                            settingsConfirmPasswordInput.value = '';
+                            changesMade = true;
+                        } catch (error) {
+                            console.error("Error updating password:", error);
+                            settingsErrorMessage.textContent = 'Gagal memperbarui password: ' + error.message + '. Harap login ulang jika Anda baru saja login.';
+                            settingsErrorMessage.style.display = 'block';
+                            return; // Stop if password update fails
+                        }
+                    }
+
+                    if (changesMade) {
+                        settingsSuccessMessage.textContent = 'Pengaturan berhasil disimpan.';
+                        settingsSuccessMessage.style.display = 'block';
+                    } else {
+                        showAlert('Tidak ada perubahan yang disimpan.', 'info');
+                    }
+                });
+
+                forgotPasswordLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    forgotPasswordErrorMessage.style.display = 'none';
+                    forgotPasswordSuccessMessage.style.display = 'none';
+
+                    const email = settingsEmailInput.value;
+                    if (!email) {
+                        forgotPasswordErrorMessage.textContent = 'Harap masukkan email Anda untuk reset password.';
+                        forgotPasswordErrorMessage.style.display = 'block';
+                        return;
+                    }
+
+                    try {
+                        await auth.sendPasswordResetEmail(email);
+                        forgotPasswordSuccessMessage.textContent = 'Link reset password telah dikirim ke email Anda.';
+                        forgotPasswordSuccessMessage.style.display = 'block';
+                        showAlert('Link reset password telah dikirim.', 'success');
+                    } catch (error) {
+                        console.error("Error sending password reset email:", error);
+                        forgotPasswordErrorMessage.textContent = 'Gagal mengirim link reset password: ' + error.message;
+                        forgotPasswordErrorMessage.style.display = 'block';
+                        showAlert('Gagal mengirim link reset password: ' + error.message, 'error');
+                    }
+                });
+            }
+
 
             // Setup Rupiah formatting for relevant inputs
             setupRupiahInput('pembayaran-dpp-idr');
@@ -1773,6 +1906,10 @@
                     <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
                     <div class="nav-text">Laporan</div>
                 </a> -->
+                <a href="#" class="nav-item" data-target="pengaturan-section">
+                    <div class="nav-icon"><i class="fas fa-cog"></i></div>
+                    <div class="nav-text">Pengaturan Akun</div>
+                </a>
                 <a href="#" class="nav-item" id="logout-btn">
                     <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
                     <div class="nav-text">Logout</div>
@@ -2060,64 +2197,8 @@
                 </div>
             </section>
 
-            <!-- Laporan Section (Placeholder) -->
-            <!-- Perbaikan: Sembunyikan section Laporan -->
-            <!-- <section id="laporan-section" class="content-section" style="display: none;">
-                <div class="header">
-                    <h1 class="page-title">Laporan Keuangan</h1>
-                    <div class="header-actions">
-                        <button class="btn btn-outline export-btn">
-                            <i class="fas fa-download btn-icon"></i> Export Laporan
-                        </button>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <h3>Ringkasan Status Invoice</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                            <div style="padding: 1rem; border-radius: 0.5rem; background-color: #f0f9ff; text-align: center;">
-                                <div style="font-size: 1.2rem; font-weight: 600; color: var(--dark);" id="report-total-invoice">0</div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Total Invoice</div>
-                            </div>
-                            <div style="padding: 1rem; border-radius: 0.5rem; background-color: #f0fdf4; text-align: center;">
-                                <div style="font-size: 1.2rem; font-weight: 600; color: var(--dark);" id="report-paid-invoice">0</div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Telah Dibayar</div>
-                            </div>
-                            <div style="padding: 1rem; border-radius: 0.5rem; background-color: #fffbeb; text-align: center;">
-                                <div style="font-size: 1.2rem; font-weight: 600; color: var(--dark);" id="report-pending-invoice">0</div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Menunggu Pembayaran</div>
-                            </div>
-                            <div style="padding: 1rem; border-radius: 0.5rem; background-color: #fef2f2; text-align: center;">
-                                <div style="font-size: 1.2rem; font-weight: 600; color: var(--dark);" id="report-overdue-invoice">0</div>
-                                <div style="font-size: 0.875rem; color: var(--secondary);">Jatuh Tempo</div>
-                            </div>
-                        </div>
-
-                        <h3>Detail Laporan Invoice</h3>
-                        <div class="table-container">
-                            <table id="report-invoice-table">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>No Invoice</th>
-                                        <th>Nama Vendor</th>
-                                        <th>DPP (IDR)</th>
-                                        <th>Status</th>
-                                        <th>Jatuh Tempo</th>
-                                        <th>Tanggal Bayar</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Report data will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section> -->
-
-            <!-- Pengaturan Section (Removed) -->
-            <!-- <section id="pengaturan-section" class="content-section" style="display: none;">
+            <!-- Pengaturan Section -->
+            <section id="pengaturan-section" class="content-section" style="display: none;">
                 <div class="header">
                     <h1 class="page-title">Pengaturan Akun</h1>
                 </div>
@@ -2151,7 +2232,7 @@
                         </div>
                     </div>
                 </div>
-            </section> -->
+            </section>
 
         </main>
     </div>
