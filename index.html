@@ -216,6 +216,7 @@
             border-radius: 0.5rem;
             font-family: inherit;
             font-size: 0.95rem;
+            width: 100%;
         }
 
         /* Table Styles */
@@ -335,6 +336,117 @@
             border-color: var(--primary);
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: auto;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            color: var(--secondary);
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close-btn:hover,
+        .modal-close-btn:focus {
+            color: var(--dark);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            background-color: var(--light);
+        }
+
+        .detail-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item strong {
+            width: 180px; /* Fixed width for labels */
+            flex-shrink: 0;
+            color: var(--dark);
+        }
+
+        .detail-item span {
+            flex-grow: 1;
+            color: var(--secondary);
+        }
+
         /* Responsive Styles */
         @media (max-width: 1024px) {
             .container {
@@ -381,6 +493,16 @@
                 flex-direction: column;
                 gap: 1rem;
             }
+
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-item strong {
+                width: auto;
+                margin-bottom: 0.25rem;
+            }
         }
     </style>
 </head>
@@ -394,21 +516,25 @@
             </div>
             
             <nav class="nav-menu">
-                <a href="#" class="nav-item active">
+                <a href="#" class="nav-item active" data-target="dashboard-section">
                     <div class="nav-icon"><i class="fas fa-home"></i></div>
                     <div class="nav-text">Dashboard</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-target="invoice-list-section">
                     <div class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></div>
                     <div class="nav-text">Invoice</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-target="faktur-pajak-section">
                     <div class="nav-icon"><i class="fas fa-receipt"></i></div>
                     <div class="nav-text">Faktur Pajak</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-target="pembayaran-section">
                     <div class="nav-icon"><i class="fas fa-hand-holding-usd"></i></div>
                     <div class="nav-text">Pembayaran</div>
+                </a>
+                <a href="#" class="nav-item" data-target="keterangan-section">
+                    <div class="nav-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="nav-text">Keterangan</div>
                 </a>
                 <a href="#" class="nav-item">
                     <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
@@ -423,252 +549,953 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="header">
-                <h1 class="page-title">Monitoring Finance</h1>
-                <div class="header-actions">
-                    <button class="btn btn-outline">
-                        <i class="fas fa-download btn-icon"></i> Export
-                    </button>
-                    <button class="btn btn-primary">
-                        <i class="fas fa-plus btn-icon"></i> Tambah Data
-                    </button>
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section active-section">
+                <div class="header">
+                    <h1 class="page-title">Dashboard Monitoring Finance</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline">
+                            <i class="fas fa-download btn-icon"></i> Export
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Summary Cards -->
-            <div class="card">
-                <div class="card-body">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0f9ff;">
-                            <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">
-                                <i class="fas fa-file-invoice"></i>
+                <!-- Summary Cards -->
+                <div class="card">
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0f9ff;">
+                                <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--secondary);">Total Invoice</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">142</div>
                             </div>
-                            <div style="font-size: 0.875rem; color: var(--secondary);">Total Invoice</div>
-                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">142</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0fdf4;">
-                            <div style="font-size: 2rem; color: var(--success); margin-bottom: 0.5rem;">
-                                <i class="fas fa-check-circle"></i>
+                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #f0fdf4;">
+                                <div style="font-size: 2rem; color: var(--success); margin-bottom: 0.5rem;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--secondary);">Telah Dibayar</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">89</div>
                             </div>
-                            <div style="font-size: 0.875rem; color: var(--secondary);">Telah Dibayar</div>
-                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">89</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fffbeb;">
-                            <div style="font-size: 2rem; color: var(--warning); margin-bottom: 0.5rem;">
-                                <i class="fas fa-clock"></i>
+                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fffbeb;">
+                                <div style="font-size: 2rem; color: var(--warning); margin-bottom: 0.5rem;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--secondary);">Menunggu Pembayaran</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">38</div>
                             </div>
-                            <div style="font-size: 0.875rem; color: var(--secondary);">Menunggu Pembayaran</div>
-                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">38</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fef2f2;">
-                            <div style="font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem;">
-                                <i class="fas fa-exclamation-circle"></i>
+                            <div style="text-align: center; padding: 1rem; border-radius: 0.5rem; background-color: #fef2f2;">
+                                <div style="font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">15</div>
+                                <div style="font-size: 0.875rem; color: var(--secondary);">Jatuh Tempo</div>
                             </div>
-                            <div style="font-size: 0.875rem; color: var(--secondary);">Jatuh Tempo</div>
-                            <div style="font-size: 1.5rem; font-weight: 600; color: var(--dark);">15</div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Filter Section -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Filter Data</h2>
-                </div>
-                <div class="card-body">
-                    <div class="filter-section">
-                        <div class="filter-group">
-                            <label class="filter-label">Tanggal Mulai</label>
-                            <input type="date" class="filter-input">
-                        </div>
-                        <div class="filter-group">
-                            <label class="filter-label">Tanggal Akhir</label>
-                            <input type="date" class="filter-input">
-                        </div>
-                        <div class="filter-group">
-                            <label class="filter-label">Status</label>
-                            <select class="filter-input">
-                                <option value="">Semua Status</option>
-                                <option value="paid">Telah Dibayar</option>
-                                <option value="pending">Menunggu Pembayaran</option>
-                                <option value="overdue">Jatuh Tempo</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label class="filter-label">Cari</label>
-                            <input type="text" class="filter-input" placeholder="Cari invoice, vendor...">
-                        </div>
-                    </div>
-                    <button class="btn btn-primary">
-                        <i class="fas fa-filter btn-icon"></i> Terapkan Filter
-                    </button>
-                </div>
-            </div>
-
-            <!-- Data Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Daftar Finance</h2>
-                </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Email/Hard</th>
-                                    <th>Penerima</th>
-                                    <th>Corp</th>
-                                    <th>Tanggal Diterima</th>
-                                    <th>No Invoice</th>
-                                    <th>Nama Vendor</th>
-                                    <th>DPP</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>Email</td>
-                                    <td>Budi Santoso</td>
-                                    <td>PT ABC</td>
-                                    <td>12/04/2023</td>
-                                    <td>INV-2023-001</td>
-                                    <td>Vendor A</td>
-                                    <td>Rp 5.000.000</td>
-                                    <td><span class="status status-paid">Dibayar</span></td>
-                                    <td class="action-cell">
-                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
-                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>Hard</td>
-                                    <td>Siti Rahayu</td>
-                                    <td>PT XYZ</td>
-                                    <td>15/04/2023</td>
-                                    <td>INV-2023-002</td>
-                                    <td>Vendor B</td>
-                                    <td>Rp 7.500.000</td>
-                                    <td><span class="status status-pending">Menunggu</span></td>
-                                    <td class="action-cell">
-                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
-                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>Email</td>
-                                    <td>Joko Widodo</td>
-                                    <td>CV Mandiri</td>
-                                    <td>18/04/2023</td>
-                                    <td>INV-2023-003</td>
-                                    <td>Vendor C</td>
-                                    <td>Rp 3.200.000</td>
-                                    <td><span class="status status-overdue">Jatuh Tempo</span></td>
-                                    <td class="action-cell">
-                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
-                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>4</td>
-                                    <td>Hard</td>
-                                    <td>Dewi Kusuma</td>
-                                    <td>PT Sejahtera</td>
-                                    <td>20/04/2023</td>
-                                    <td>INV-2023-004</td>
-                                    <td>Vendor D</td>
-                                    <td>Rp 9.800.000</td>
-                                    <td><span class="status status-paid">Dibayar</span></td>
-                                    <td class="action-cell">
-                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
-                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>5</td>
-                                    <td>Email</td>
-                                    <td>Rudi Hermawan</td>
-                                    <td>PT Makmur</td>
-                                    <td>22/04/2023</td>
-                                    <td>INV-2023-005</td>
-                                    <td>Vendor E</td>
-                                    <td>Rp 6.300.000</td>
-                                    <td><span class="status status-pending">Menunggu</span></td>
-                                    <td class="action-cell">
-                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
-                                        <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="pagination">
-                        <div class="page-info">
-                            Menampilkan 1-5 dari 142 data
-                        </div>
-                        <div class="page-controls">
-                            <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
-                            <button class="page-btn active">1</button>
-                            <button class="page-btn">2</button>
-                            <button class="page-btn">3</button>
-                            <button class="page-btn">...</button>
-                            <button class="page-btn">29</button>
-                            <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
-                        </div>
+            <!-- Invoice List Section -->
+            <section id="invoice-list-section" class="content-section">
+                <div class="header">
+                    <h1 class="page-title">Daftar Invoice</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline">
+                            <i class="fas fa-download btn-icon"></i> Export
+                        </button>
+                        <button class="btn btn-primary" id="add-invoice-btn">
+                            <i class="fas fa-plus btn-icon"></i> Tambah Invoice
+                        </button>
                     </div>
                 </div>
-            </div>
+
+                <!-- Filter Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Filter Data</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-section">
+                            <div class="filter-group">
+                                <label class="filter-label">Tanggal Mulai</label>
+                                <input type="date" class="filter-input">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Tanggal Akhir</label>
+                                <input type="date" class="filter-input">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Status</label>
+                                <select class="filter-input">
+                                    <option value="">Semua Status</option>
+                                    <option value="paid">Dibayar</option>
+                                    <option value="pending">Menunggu Pembayaran</option>
+                                    <option value="overdue">Jatuh Tempo</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Cari</label>
+                                <input type="text" class="filter-input" placeholder="Cari invoice, vendor...">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-filter btn-icon"></i> Terapkan Filter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Daftar Invoice</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="invoice-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Email/Hard</th>
+                                        <th>Penerima</th>
+                                        <th>Corp</th>
+                                        <th>Tanggal Diterima</th>
+                                        <th>No Invoice</th>
+                                        <th>Nama Vendor</th>
+                                        <th>DPP</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-invoice-id="INV-2023-001">
+                                        <td>1</td>
+                                        <td>Email</td>
+                                        <td>Budi Santoso</td>
+                                        <td>PT ABC</td>
+                                        <td>12/04/2023</td>
+                                        <td><a href="#" class="view-invoice-detail" data-invoice-no="INV-2023-001">INV-2023-001</a></td>
+                                        <td>Vendor A</td>
+                                        <td>Rp 5.000.000</td>
+                                        <td><span class="status status-paid">Dibayar</span></td>
+                                        <td class="action-cell">
+                                            <button class="action-btn view-invoice-detail" data-invoice-no="INV-2023-001" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                            <button class="action-btn edit-invoice-btn" data-invoice-no="INV-2023-001" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete-invoice-btn" data-invoice-no="INV-2023-001" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr data-invoice-id="INV-2023-002">
+                                        <td>2</td>
+                                        <td>Hard</td>
+                                        <td>Siti Rahayu</td>
+                                        <td>PT XYZ</td>
+                                        <td>15/04/2023</td>
+                                        <td><a href="#" class="view-invoice-detail" data-invoice-no="INV-2023-002">INV-2023-002</a></td>
+                                        <td>Vendor B</td>
+                                        <td>Rp 7.500.000</td>
+                                        <td><span class="status status-pending">Menunggu</span></td>
+                                        <td class="action-cell">
+                                            <button class="action-btn view-invoice-detail" data-invoice-no="INV-2023-002" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                            <button class="action-btn edit-invoice-btn" data-invoice-no="INV-2023-002" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete-invoice-btn" data-invoice-no="INV-2023-002" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr data-invoice-id="INV-2023-003">
+                                        <td>3</td>
+                                        <td>Email</td>
+                                        <td>Joko Widodo</td>
+                                        <td>CV Mandiri</td>
+                                        <td>18/04/2023</td>
+                                        <td><a href="#" class="view-invoice-detail" data-invoice-no="INV-2023-003">INV-2023-003</a></td>
+                                        <td>Vendor C</td>
+                                        <td>Rp 3.200.000</td>
+                                        <td><span class="status status-overdue">Jatuh Tempo</span></td>
+                                        <td class="action-cell">
+                                            <button class="action-btn view-invoice-detail" data-invoice-no="INV-2023-003" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                            <button class="action-btn edit-invoice-btn" data-invoice-no="INV-2023-003" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete-invoice-btn" data-invoice-no="INV-2023-003" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr data-invoice-id="INV-2023-004">
+                                        <td>4</td>
+                                        <td>Hard</td>
+                                        <td>Dewi Kusuma</td>
+                                        <td>PT Sejahtera</td>
+                                        <td>20/04/2023</td>
+                                        <td><a href="#" class="view-invoice-detail" data-invoice-no="INV-2023-004">INV-2023-004</a></td>
+                                        <td>Vendor D</td>
+                                        <td>Rp 9.800.000</td>
+                                        <td><span class="status status-paid">Dibayar</span></td>
+                                        <td class="action-cell">
+                                            <button class="action-btn view-invoice-detail" data-invoice-no="INV-2023-004" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                            <button class="action-btn edit-invoice-btn" data-invoice-no="INV-2023-004" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete-invoice-btn" data-invoice-no="INV-2023-004" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr data-invoice-id="INV-2023-005">
+                                        <td>5</td>
+                                        <td>Email</td>
+                                        <td>Rudi Hermawan</td>
+                                        <td>PT Makmur</td>
+                                        <td>22/04/2023</td>
+                                        <td><a href="#" class="view-invoice-detail" data-invoice-no="INV-2023-005">INV-2023-005</a></td>
+                                        <td>Vendor E</td>
+                                        <td>Rp 6.300.000</td>
+                                        <td><span class="status status-pending">Menunggu</span></td>
+                                        <td class="action-cell">
+                                            <button class="action-btn view-invoice-detail" data-invoice-no="INV-2023-005" title="Lihat Detail"><i class="fas fa-eye"></i></button>
+                                            <button class="action-btn edit-invoice-btn" data-invoice-no="INV-2023-005" title="Edit Invoice"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete-invoice-btn" data-invoice-no="INV-2023-005" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination">
+                            <div class="page-info">
+                                Menampilkan 1-5 dari 142 data
+                            </div>
+                            <div class="page-controls">
+                                <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                                <button class="page-btn active">1</button>
+                                <button class="page-btn">2</button>
+                                <button class="page-btn">3</button>
+                                <button class="page-btn">...</button>
+                                <button class="page-btn">29</button>
+                                <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Invoice Detail Section (Hidden by default) -->
+            <section id="invoice-detail-section" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1 class="page-title">Detail Invoice: <span id="detail-invoice-no"></span></h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" id="back-to-list-btn">
+                            <i class="fas fa-arrow-left btn-icon"></i> Kembali ke Daftar
+                        </button>
+                        <button class="btn btn-primary" id="edit-full-invoice-btn">
+                            <i class="fas fa-edit btn-icon"></i> Edit Invoice
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="detail-section">
+                            <h3>Informasi Dasar Invoice</h3>
+                            <div class="detail-item"><strong>Email/Hard:</strong> <span id="detail-email-hard"></span></div>
+                            <div class="detail-item"><strong>Penerima:</strong> <span id="detail-penerima"></span></div>
+                            <div class="detail-item"><strong>Corp:</strong> <span id="detail-corp"></span></div>
+                            <div class="detail-item"><strong>Tanggal Diterima:</strong> <span id="detail-tgl-diterima"></span></div>
+                            <div class="detail-item"><strong>Tanggal Invoice:</strong> <span id="detail-tgl-invoice"></span></div>
+                            <div class="detail-item"><strong>Surat Jalan/BA:</strong> <span id="detail-surat-jalan"></span></div>
+                            <div class="detail-item"><strong>Nama Vendor:</strong> <span id="detail-nama-vendor"></span></div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3>Detail Faktur Pajak</h3>
+                            <div class="detail-item"><strong>No Faktur Pajak:</strong> <span id="detail-no-faktur-pajak"></span></div>
+                            <div class="detail-item"><strong>Tanggal Faktur Pajak:</strong> <span id="detail-tgl-faktur-pajak"></span></div>
+                            <div class="detail-item">
+                                <button class="btn btn-outline btn-sm" id="add-edit-faktur-pajak-btn">
+                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Faktur Pajak
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3>Detail Pembayaran</h3>
+                            <div class="detail-item"><strong>DPP (IDR):</strong> <span id="detail-dpp-idr"></span></div>
+                            <div class="detail-item"><strong>PPn (IDR):</strong> <span id="detail-ppn-idr"></span></div>
+                            <div class="detail-item"><strong>DPP (USD):</strong> <span id="detail-dpp-usd"></span></div>
+                            <div class="detail-item"><strong>Keterangan Pembayaran:</strong> <span id="detail-keterangan-pembayaran"></span></div>
+                            <div class="detail-item"><strong>Follow Up:</strong> <span id="detail-follow-up"></span></div>
+                            <div class="detail-item"><strong>Hasil Follow Up:</strong> <span id="detail-hasil-follow-up"></span></div>
+                            <div class="detail-item"><strong>TOP:</strong> <span id="detail-top"></span></div>
+                            <div class="detail-item"><strong>Jatuh Tempo:</strong> <span id="detail-jatuh-tempo"></span></div>
+                            <div class="detail-item">
+                                <button class="btn btn-outline btn-sm" id="add-edit-pembayaran-btn">
+                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Pembayaran
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <h3>Status & Proses Internal</h3>
+                            <div class="detail-item"><strong>Tanggal Pengajuan ke Finance:</strong> <span id="detail-tgl-pengajuan-finance"></span></div>
+                            <div class="detail-item"><strong>Tanggal Pengajuan (Reni):</strong> <span id="detail-tgl-pengajuan-reni"></span></div>
+                            <div class="detail-item"><strong>Tanggal Diterima (Anggi):</strong> <span id="detail-tgl-diterima-anggi"></span></div>
+                            <div class="detail-item"><strong>Lama Pengajuan:</strong> <span id="detail-lama-pengajuan"></span></div>
+                            <div class="detail-item"><strong>Keterangan Proses:</strong> <span id="detail-keterangan-proses"></span></div>
+                            <div class="detail-item"><strong>Tanggal Bayar:</strong> <span id="detail-tgl-bayar"></span></div>
+                            <div class="detail-item"><strong>Status Akhir:</strong> <span id="detail-status-akhir"></span></div>
+                            <div class="detail-item">
+                                <button class="btn btn-outline btn-sm" id="add-edit-keterangan-btn">
+                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Keterangan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Faktur Pajak Section (Standalone for direct access from sidebar) -->
+            <section id="faktur-pajak-section" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1 class="page-title">Manajemen Faktur Pajak</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="add-faktur-pajak-standalone-btn">
+                            <i class="fas fa-plus btn-icon"></i> Tambah Faktur Pajak
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p>Di sini akan ada daftar faktur pajak atau form pencarian untuk mengelola faktur pajak secara langsung.</p>
+                        <!-- Example: A simple search for invoice to add faktur pajak -->
+                        <div class="filter-group" style="max-width: 400px; margin-bottom: 1rem;">
+                            <label class="filter-label">Cari No Invoice untuk Faktur Pajak</label>
+                            <input type="text" class="filter-input" id="search-invoice-faktur-pajak" placeholder="Masukkan No Invoice...">
+                        </div>
+                        <button class="btn btn-primary" id="search-faktur-pajak-btn">Cari & Tambah/Edit</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pembayaran Section (Standalone for direct access from sidebar) -->
+            <section id="pembayaran-section" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1 class="page-title">Manajemen Pembayaran</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="add-pembayaran-standalone-btn">
+                            <i class="fas fa-plus btn-icon"></i> Tambah Pembayaran
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p>Di sini akan ada daftar pembayaran atau form pencarian untuk mengelola pembayaran secara langsung.</p>
+                        <div class="filter-group" style="max-width: 400px; margin-bottom: 1rem;">
+                            <label class="filter-label">Cari No Invoice untuk Pembayaran</label>
+                            <input type="text" class="filter-input" id="search-invoice-pembayaran" placeholder="Masukkan No Invoice...">
+                        </div>
+                        <button class="btn btn-primary" id="search-pembayaran-btn">Cari & Tambah/Edit</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Keterangan Section (Standalone for direct access from sidebar) -->
+            <section id="keterangan-section" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1 class="page-title">Manajemen Keterangan & Status</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="add-keterangan-standalone-btn">
+                            <i class="fas fa-plus btn-icon"></i> Tambah Keterangan
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p>Di sini akan ada daftar keterangan/status atau form pencarian untuk mengelola keterangan secara langsung.</p>
+                        <div class="filter-group" style="max-width: 400px; margin-bottom: 1rem;">
+                            <label class="filter-label">Cari No Invoice untuk Keterangan</label>
+                            <input type="text" class="filter-input" id="search-invoice-keterangan" placeholder="Masukkan No Invoice...">
+                        </div>
+                        <button class="btn btn-primary" id="search-keterangan-btn">Cari & Tambah/Edit</button>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
+    <!-- Modals -->
+
+    <!-- Modal Tambah/Edit Invoice -->
+    <div id="invoice-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Invoice</h2>
+            <form id="invoice-form">
+                <div class="form-group">
+                    <label for="invoice-email-hard">Email/Hard</label>
+                    <select id="invoice-email-hard" class="filter-input" required>
+                        <option value="">Pilih</option>
+                        <option value="Email">Email</option>
+                        <option value="Hard">Hardcopy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-penerima">Penerima</label>
+                    <input type="text" id="invoice-penerima" class="filter-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-corp">Corp</label>
+                    <input type="text" id="invoice-corp" class="filter-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-tgl-diterima">Tanggal Diterima</label>
+                    <input type="date" id="invoice-tgl-diterima" class="filter-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-tgl-invoice">Tanggal Invoice</label>
+                    <input type="date" id="invoice-tgl-invoice" class="filter-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-surat-jalan">Surat Jalan/BA</label>
+                    <input type="text" id="invoice-surat-jalan" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="invoice-nama-vendor">Nama Vendor</label>
+                    <input type="text" id="invoice-nama-vendor" class="filter-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-no-invoice">No Invoice</label>
+                    <input type="text" id="invoice-no-invoice" class="filter-input" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Invoice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Faktur Pajak -->
+    <div id="faktur-pajak-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Faktur Pajak</h2>
+            <form id="faktur-pajak-form">
+                <div class="form-group">
+                    <label for="fp-no-invoice">No Invoice</label>
+                    <input type="text" id="fp-no-invoice" class="filter-input" readonly required>
+                    <small style="color: var(--secondary);">Data invoice terkait: <span id="fp-invoice-info"></span></small>
+                </div>
+                <div class="form-group">
+                    <label for="fp-tgl-faktur-pajak">Tanggal Faktur Pajak</label>
+                    <input type="date" id="fp-tgl-faktur-pajak" class="filter-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="fp-no-faktur-pajak">No Faktur Pajak</label>
+                    <input type="text" id="fp-no-faktur-pajak" class="filter-input" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Faktur Pajak</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Pembayaran -->
+    <div id="pembayaran-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Pembayaran</h2>
+            <form id="pembayaran-form">
+                <div class="form-group">
+                    <label for="pembayaran-no-invoice">No Invoice</label>
+                    <input type="text" id="pembayaran-no-invoice" class="filter-input" readonly required>
+                    <small style="color: var(--secondary);">Data invoice terkait: <span id="pembayaran-invoice-info"></span></small>
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-dpp-idr">DPP (IDR)</label>
+                    <input type="text" id="pembayaran-dpp-idr" class="filter-input" placeholder="Rp 0" required>
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-ppn-idr">PPn (IDR)</label>
+                    <input type="text" id="pembayaran-ppn-idr" class="filter-input" placeholder="Rp 0">
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-dpp-usd">DPP (USD)</label>
+                    <input type="text" id="pembayaran-dpp-usd" class="filter-input" placeholder="$ 0.00">
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-keterangan">Keterangan</label>
+                    <textarea id="pembayaran-keterangan" class="filter-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-follow-up">Follow Up</label>
+                    <select id="pembayaran-follow-up" class="filter-input">
+                        <option value="Tidak">Tidak</option>
+                        <option value="Ya">Ya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-hasil-follow-up">Hasil Follow Up</label>
+                    <textarea id="pembayaran-hasil-follow-up" class="filter-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-top">TOP (Term of Payment)</label>
+                    <input type="text" id="pembayaran-top" class="filter-input" placeholder="Contoh: 30 Hari">
+                </div>
+                <div class="form-group">
+                    <label for="pembayaran-jatuh-tempo">Jatuh Tempo</label>
+                    <input type="date" id="pembayaran-jatuh-tempo" class="filter-input">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Pembayaran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Keterangan -->
+    <div id="keterangan-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Keterangan & Status</h2>
+            <form id="keterangan-form">
+                <div class="form-group">
+                    <label for="keterangan-no-invoice">No Invoice</label>
+                    <input type="text" id="keterangan-no-invoice" class="filter-input" readonly required>
+                    <small style="color: var(--secondary);">Data invoice terkait: <span id="keterangan-invoice-info"></span></small>
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-pengajuan-finance">Tanggal Pengajuan ke Finance</label>
+                    <input type="date" id="keterangan-tgl-pengajuan-finance" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-pengajuan-reni">Tanggal Pengajuan (Reni)</label>
+                    <input type="date" id="keterangan-tgl-pengajuan-reni" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-diterima-anggi">Tanggal Diterima (Anggi)</label>
+                    <input type="date" id="keterangan-tgl-diterima-anggi" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-lama-pengajuan">Lama Pengajuan (Hari)</label>
+                    <input type="text" id="keterangan-lama-pengajuan" class="filter-input" readonly placeholder="Otomatis dihitung">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-keterangan-proses">Keterangan Proses</label>
+                    <textarea id="keterangan-keterangan-proses" class="filter-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-bayar">Tanggal Bayar</label>
+                    <input type="date" id="keterangan-tgl-bayar" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-status-akhir">Status Akhir</label>
+                    <select id="keterangan-status-akhir" class="filter-input">
+                        <option value="">Pilih Status</option>
+                        <option value="Menunggu Pengajuan">Menunggu Pengajuan</option>
+                        <option value="Diajukan ke Finance">Diajukan ke Finance</option>
+                        <option value="Diterima Anggi">Diterima Anggi</option>
+                        <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+                        <option value="Dibayar">Dibayar</option>
+                        <option value="Jatuh Tempo">Jatuh Tempo</option>
+                        <option value="Dibatalkan">Dibatalkan</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline modal-close-btn">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Keterangan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <script>
-        // Basic functionality for the finance monitoring app
+        // --- Data Simulasi (akan diganti dengan data dari backend) ---
+        const simulatedData = {
+            "INV-2023-001": {
+                invoice: {
+                    emailHard: "Email", penerima: "Budi Santoso", corp: "PT ABC", tglDiterima: "2023-04-12",
+                    tglInvoice: "2023-04-10", suratJalan: "SJ-001", namaVendor: "Vendor A", noInvoice: "INV-2023-001", dpp: "5.000.000", status: "Dibayar"
+                },
+                fakturPajak: {
+                    noFakturPajak: "FP-001-2023", tglFakturPajak: "2023-04-15"
+                },
+                pembayaran: {
+                    dppIdr: "5.000.000", ppnIdr: "500.000", dppUsd: "", keterangan: "Pembayaran lunas via transfer bank.",
+                    followUp: "Tidak", hasilFollowUp: "-", top: "30 Hari", jatuhTempo: "2023-05-10"
+                },
+                keterangan: {
+                    tglPengajuanFinance: "2023-04-13", tglPengajuanReni: "2023-04-13", tglDiterimaAnggi: "2023-04-14",
+                    lamaPengajuan: "1 Hari", keteranganProses: "Dokumen lengkap, siap proses.", tglBayar: "2023-05-08", statusAkhir: "Dibayar"
+                }
+            },
+            "INV-2023-002": {
+                invoice: {
+                    emailHard: "Hard", penerima: "Siti Rahayu", corp: "PT XYZ", tglDiterima: "2023-04-15",
+                    tglInvoice: "2023-04-14", suratJalan: "BA-002", namaVendor: "Vendor B", noInvoice: "INV-2023-002", dpp: "7.500.000", status: "Menunggu"
+                },
+                fakturPajak: {
+                    noFakturPajak: "", tglFakturPajak: "" // Belum ada faktur pajak
+                },
+                pembayaran: {
+                    dppIdr: "7.500.000", ppnIdr: "750.000", dppUsd: "", keterangan: "Menunggu approval pembayaran.",
+                    followUp: "Ya", hasilFollowUp: "Sudah di follow up, menunggu konfirmasi.", top: "45 Hari", jatuhTempo: "2023-05-29"
+                },
+                keterangan: {
+                    tglPengajuanFinance: "2023-04-16", tglPengajuanReni: "2023-04-16", tglDiterimaAnggi: "2023-04-17",
+                    lamaPengajuan: "1 Hari", keteranganProses: "Menunggu kelengkapan faktur pajak.", tglBayar: "", statusAkhir: "Menunggu Pembayaran"
+                }
+            },
+            "INV-2023-003": {
+                invoice: {
+                    emailHard: "Email", penerima: "Joko Widodo", corp: "CV Mandiri", tglDiterima: "2023-04-18",
+                    tglInvoice: "2023-04-16", suratJalan: "SJ-003", namaVendor: "Vendor C", noInvoice: "INV-2023-003", dpp: "3.200.000", status: "Jatuh Tempo"
+                },
+                fakturPajak: {
+                    noFakturPajak: "FP-003-2023", tglFakturPajak: "2023-04-20"
+                },
+                pembayaran: {
+                    dppIdr: "3.200.000", ppnIdr: "320.000", dppUsd: "", keterangan: "Pembayaran terlambat, sedang di follow up.",
+                    followUp: "Ya", hasilFollowUp: "Vendor berjanji akan segera membayar.", top: "30 Hari", jatuhTempo: "2023-05-16"
+                },
+                keterangan: {
+                    tglPengajuanFinance: "2023-04-19", tglPengajuanReni: "2023-04-19", tglDiterimaAnggi: "2023-04-20",
+                    lamaPengajuan: "1 Hari", keteranganProses: "Invoice sudah jatuh tempo, perlu segera ditindaklanjuti.", tglBayar: "", statusAkhir: "Jatuh Tempo"
+                }
+            },
+            "INV-2023-004": {
+                invoice: {
+                    emailHard: "Hard", penerima: "Dewi Kusuma", corp: "PT Sejahtera", tglDiterima: "2023-04-20",
+                    tglInvoice: "2023-04-19", suratJalan: "BA-004", namaVendor: "Vendor D", noInvoice: "INV-2023-004", dpp: "9.800.000", status: "Dibayar"
+                },
+                fakturPajak: {
+                    noFakturPajak: "FP-004-2023", tglFakturPajak: "2023-04-22"
+                },
+                pembayaran: {
+                    dppIdr: "9.800.000", ppnIdr: "980.000", dppUsd: "", keterangan: "Pembayaran lunas.",
+                    followUp: "Tidak", hasilFollowUp: "-", top: "60 Hari", jatuhTempo: "2023-06-19"
+                },
+                keterangan: {
+                    tglPengajuanFinance: "2023-04-21", tglPengajuanReni: "2023-04-21", tglDiterimaAnggi: "2023-04-22",
+                    lamaPengajuan: "1 Hari", keteranganProses: "Proses pembayaran lancar.", tglBayar: "2023-06-15", statusAkhir: "Dibayar"
+                }
+            },
+            "INV-2023-005": {
+                invoice: {
+                    emailHard: "Email", penerima: "Rudi Hermawan", corp: "PT Makmur", tglDiterima: "2023-04-22",
+                    tglInvoice: "2023-04-21", suratJalan: "SJ-005", namaVendor: "Vendor E", noInvoice: "INV-2023-005", dpp: "6.300.000", status: "Menunggu"
+                },
+                fakturPajak: {
+                    noFakturPajak: "", tglFakturPajak: ""
+                },
+                pembayaran: {
+                    dppIdr: "6.300.000", ppnIdr: "630.000", dppUsd: "", keterangan: "Menunggu kelengkapan dokumen.",
+                    followUp: "Ya", hasilFollowUp: "Sudah dihubungi, dokumen akan segera dikirim.", top: "30 Hari", jatuhTempo: "2023-05-21"
+                },
+                keterangan: {
+                    tglPengajuanFinance: "2023-04-23", tglPengajuanReni: "2023-04-23", tglDiterimaAnggi: "2023-04-24",
+                    lamaPengajuan: "1 Hari", keteranganProses: "Menunggu dokumen pendukung dari vendor.", tglBayar: "", statusAkhir: "Menunggu Pembayaran"
+                }
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Filter functionality
-            const filterBtn = document.querySelector('.btn-primary');
-            filterBtn.addEventListener('click', function() {
-                alert('Filter diterapkan!');
-            });
-            
-            // Action buttons functionality
-            const actionButtons = document.querySelectorAll('.action-btn');
-            actionButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const icon = this.querySelector('i').className;
-                    
-                    if (icon.includes('eye')) {
-                        alert('Melihat detail data');
-                    } else if (icon.includes('edit')) {
-                        alert('Mengedit data');
-                    } else if (icon.includes('trash')) {
-                        alert('Menghapus data');
+            const mainContent = document.querySelector('.main-content');
+            const contentSections = document.querySelectorAll('.content-section');
+            const navItems = document.querySelectorAll('.nav-item');
+            const invoiceTableBody = document.querySelector('#invoice-table tbody');
+
+            // --- Fungsi Navigasi Sidebar ---
+            function showSection(targetId) {
+                contentSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                document.getElementById(targetId).style.display = 'block';
+
+                navItems.forEach(item => item.classList.remove('active'));
+                document.querySelector(`.nav-item[data-target="${targetId}"]`).classList.add('active');
+            }
+
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.dataset.target;
+                    if (targetId) {
+                        showSection(targetId);
                     }
                 });
             });
-            
-            // Pagination functionality
-            const pageButtons = document.querySelectorAll('.page-btn');
-            pageButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    if (!this.querySelector('i')) {
-                        pageButtons.forEach(btn => btn.classList.remove('active'));
-                        this.classList.add('active');
-                        alert('Pindah ke halaman ' + this.textContent);
+
+            // Default view
+            showSection('dashboard-section');
+
+            // --- Modals Functionality ---
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.modal-close-btn');
+
+            function openModal(modalId, invoiceNo = null) {
+                const modal = document.getElementById(modalId);
+                modal.style.display = 'flex'; // Use flex to center
+
+                // Populate invoice info for related modals
+                if (invoiceNo) {
+                    const invoiceData = simulatedData[invoiceNo]?.invoice;
+                    if (invoiceData) {
+                        const invoiceInfoSpan = modal.querySelector(`#${modalId.split('-')[0]}-invoice-info`);
+                        if (invoiceInfoSpan) {
+                            invoiceInfoSpan.textContent = `${invoiceData.namaVendor} (${invoiceData.tglInvoice})`;
+                        }
+                        const invoiceNoInput = modal.querySelector(`#${modalId.split('-')[0]}-no-invoice`);
+                        if (invoiceNoInput) {
+                            invoiceNoInput.value = invoiceNo;
+                        }
+                    }
+                    // Pre-fill existing data if editing
+                    fillModalWithExistingData(modalId, invoiceNo);
+                }
+            }
+
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+                // Reset form fields here if needed
+                document.getElementById(modalId.replace('-modal', '-form')).reset();
+            }
+
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            });
+
+            window.addEventListener('click', function(event) {
+                modals.forEach(modal => {
+                    if (event.target == modal) {
+                        modal.style.display = 'none';
                     }
                 });
             });
+
+            // --- Invoice Modal Specifics ---
+            document.getElementById('add-invoice-btn').addEventListener('click', function() {
+                openModal('invoice-modal');
+                document.getElementById('invoice-no-invoice').readOnly = false; // Allow input for new invoice
+            });
+
+            document.getElementById('invoice-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Invoice berhasil disimpan! (Simulasi)');
+                closeModal('invoice-modal');
+                // In a real app, you'd send this data to a backend and refresh the table
+            });
+
+            // --- View Invoice Detail Functionality ---
+            function displayInvoiceDetail(invoiceNo) {
+                const data = simulatedData[invoiceNo];
+                if (!data) {
+                    alert('Data invoice tidak ditemukan.');
+                    return;
+                }
+
+                // Hide all sections and show detail section
+                contentSections.forEach(section => section.style.display = 'none');
+                document.getElementById('invoice-detail-section').style.display = 'block';
+                document.getElementById('detail-invoice-no').textContent = invoiceNo;
+
+                // Populate Invoice Basic Info
+                document.getElementById('detail-email-hard').textContent = data.invoice.emailHard;
+                document.getElementById('detail-penerima').textContent = data.invoice.penerima;
+                document.getElementById('detail-corp').textContent = data.invoice.corp;
+                document.getElementById('detail-tgl-diterima').textContent = data.invoice.tglDiterima;
+                document.getElementById('detail-tgl-invoice').textContent = data.invoice.tglInvoice;
+                document.getElementById('detail-surat-jalan').textContent = data.invoice.suratJalan || '-';
+                document.getElementById('detail-nama-vendor').textContent = data.invoice.namaVendor;
+
+                // Populate Faktur Pajak Info
+                document.getElementById('detail-no-faktur-pajak').textContent = data.fakturPajak.noFakturPajak || 'Belum ada';
+                document.getElementById('detail-tgl-faktur-pajak').textContent = data.fakturPajak.tglFakturPajak || 'Belum ada';
+                document.getElementById('add-edit-faktur-pajak-btn').dataset.invoiceNo = invoiceNo;
+
+                // Populate Pembayaran Info
+                document.getElementById('detail-dpp-idr').textContent = `Rp ${data.pembayaran.dppIdr || '0'}`;
+                document.getElementById('detail-ppn-idr').textContent = `Rp ${data.pembayaran.ppnIdr || '0'}`;
+                document.getElementById('detail-dpp-usd').textContent = `$ ${data.pembayaran.dppUsd || '0.00'}`;
+                document.getElementById('detail-keterangan-pembayaran').textContent = data.pembayaran.keterangan || '-';
+                document.getElementById('detail-follow-up').textContent = data.pembayaran.followUp || '-';
+                document.getElementById('detail-hasil-follow-up').textContent = data.pembayaran.hasilFollowUp || '-';
+                document.getElementById('detail-top').textContent = data.pembayaran.top || '-';
+                document.getElementById('detail-jatuh-tempo').textContent = data.pembayaran.jatuhTempo || '-';
+                document.getElementById('add-edit-pembayaran-btn').dataset.invoiceNo = invoiceNo;
+
+                // Populate Keterangan Info
+                document.getElementById('detail-tgl-pengajuan-finance').textContent = data.keterangan.tglPengajuanFinance || '-';
+                document.getElementById('detail-tgl-pengajuan-reni').textContent = data.keterangan.tglPengajuanReni || '-';
+                document.getElementById('detail-tgl-diterima-anggi').textContent = data.keterangan.tglDiterimaAnggi || '-';
+                document.getElementById('detail-lama-pengajuan').textContent = data.keterangan.lamaPengajuan || '-';
+                document.getElementById('detail-keterangan-proses').textContent = data.keterangan.keteranganProses || '-';
+                document.getElementById('detail-tgl-bayar').textContent = data.keterangan.tglBayar || '-';
+                document.getElementById('detail-status-akhir').textContent = data.keterangan.statusAkhir || '-';
+                document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = invoiceNo;
+
+                // Set invoiceNo for edit button
+                document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = invoiceNo;
+            }
+
+            // Event listeners for viewing invoice details
+            invoiceTableBody.addEventListener('click', function(e) {
+                const targetLink = e.target.closest('.view-invoice-detail');
+                if (targetLink) {
+                    e.preventDefault();
+                    const invoiceNo = targetLink.dataset.invoiceNo;
+                    displayInvoiceDetail(invoiceNo);
+                }
+            });
+
+            document.getElementById('back-to-list-btn').addEventListener('click', function() {
+                showSection('invoice-list-section');
+            });
+
+            // --- Edit Invoice from Detail Page ---
+            document.getElementById('edit-full-invoice-btn').addEventListener('click', function() {
+                const invoiceNo = this.dataset.invoiceNo;
+                const invoiceData = simulatedData[invoiceNo]?.invoice;
+                if (invoiceData) {
+                    openModal('invoice-modal', invoiceNo);
+                    document.getElementById('invoice-no-invoice').readOnly = true; // Prevent changing invoice number
+                    // Fill the form with existing data
+                    document.getElementById('invoice-email-hard').value = invoiceData.emailHard;
+                    document.getElementById('invoice-penerima').value = invoiceData.penerima;
+                    document.getElementById('invoice-corp').value = invoiceData.corp;
+                    document.getElementById('invoice-tgl-diterima').value = invoiceData.tglDiterima;
+                    document.getElementById('invoice-tgl-invoice').value = invoiceData.tglInvoice;
+                    document.getElementById('invoice-surat-jalan').value = invoiceData.suratJalan;
+                    document.getElementById('invoice-nama-vendor').value = invoiceData.namaVendor;
+                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice;
+                }
+            });
+
+            // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) ---
+            document.getElementById('add-edit-faktur-pajak-btn').addEventListener('click', function() {
+                openModal('faktur-pajak-modal', this.dataset.invoiceNo);
+            });
+            document.getElementById('add-edit-pembayaran-btn').addEventListener('click', function() {
+                openModal('pembayaran-modal', this.dataset.invoiceNo);
+            });
+            document.getElementById('add-edit-keterangan-btn').addEventListener('click', function() {
+                openModal('keterangan-modal', this.dataset.invoiceNo);
+            });
+
+            // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
+            document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
+                openModal('faktur-pajak-modal');
+                document.getElementById('fp-no-invoice').readOnly = false; // Allow input for new invoice
+                document.getElementById('fp-invoice-info').textContent = 'Masukkan No Invoice di bawah.';
+            });
+            document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
+                openModal('pembayaran-modal');
+                document.getElementById('pembayaran-no-invoice').readOnly = false;
+                document.getElementById('pembayaran-invoice-info').textContent = 'Masukkan No Invoice di bawah.';
+            });
+            document.getElementById('add-keterangan-standalone-btn').addEventListener('click', function() {
+                openModal('keterangan-modal');
+                document.getElementById('keterangan-no-invoice').readOnly = false;
+                document.getElementById('keterangan-invoice-info').textContent = 'Masukkan No Invoice di bawah.';
+            });
+
+            // --- Search functionality for standalone modals ---
+            function setupSearchAndFillModal(searchBtnId, searchInputId, modalId, infoSpanId) {
+                document.getElementById(searchBtnId).addEventListener('click', function() {
+                    const invoiceNo = document.getElementById(searchInputId).value.trim();
+                    if (invoiceNo) {
+                        const invoiceData = simulatedData[invoiceNo]?.invoice;
+                        if (invoiceData) {
+                            openModal(modalId, invoiceNo);
+                            document.getElementById(modalId.split('-')[0] + '-no-invoice').readOnly = true;
+                        } else {
+                            alert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.');
+                        }
+                    } else {
+                        alert('Harap masukkan No Invoice.');
+                    }
+                });
+            }
+
+            setupSearchAndFillModal('search-faktur-pajak-btn', 'search-invoice-faktur-pajak', 'faktur-pajak-modal', 'fp-invoice-info');
+            setupSearchAndFillModal('search-pembayaran-btn', 'search-invoice-pembayaran', 'pembayaran-modal', 'pembayaran-invoice-info');
+            setupSearchAndFillModal('search-keterangan-btn', 'search-invoice-keterangan', 'keterangan-modal', 'keterangan-invoice-info');
+
+
+            // --- Fill Modal with Existing Data (for edit) ---
+            function fillModalWithExistingData(modalId, invoiceNo) {
+                const data = simulatedData[invoiceNo];
+                if (!data) return;
+
+                switch (modalId) {
+                    case 'faktur-pajak-modal':
+                        document.getElementById('fp-tgl-faktur-pajak').value = data.fakturPajak.tglFakturPajak;
+                        document.getElementById('fp-no-faktur-pajak').value = data.fakturPajak.noFakturPajak;
+                        break;
+                    case 'pembayaran-modal':
+                        document.getElementById('pembayaran-dpp-idr').value = data.pembayaran.dppIdr;
+                        document.getElementById('pembayaran-ppn-idr').value = data.pembayaran.ppnIdr;
+                        document.getElementById('pembayaran-dpp-usd').value = data.pembayaran.dppUsd;
+                        document.getElementById('pembayaran-keterangan').value = data.pembayaran.keterangan;
+                        document.getElementById('pembayaran-follow-up').value = data.pembayaran.followUp;
+                        document.getElementById('pembayaran-hasil-follow-up').value = data.pembayaran.hasilFollowUp;
+                        document.getElementById('pembayaran-top').value = data.pembayaran.top;
+                        document.getElementById('pembayaran-jatuh-tempo').value = data.pembayaran.jatuhTempo;
+                        break;
+                    case 'keterangan-modal':
+                        document.getElementById('keterangan-tgl-pengajuan-finance').value = data.keterangan.tglPengajuanFinance;
+                        document.getElementById('keterangan-tgl-pengajuan-reni').value = data.keterangan.tglPengajuanReni;
+                        document.getElementById('keterangan-tgl-diterima-anggi').value = data.keterangan.tglDiterimaAnggi;
+                        document.getElementById('keterangan-lama-pengajuan').value = data.keterangan.lamaPengajuan; // Auto-calculated
+                        document.getElementById('keterangan-keterangan-proses').value = data.keterangan.keteranganProses;
+                        document.getElementById('keterangan-tgl-bayar').value = data.keterangan.tglBayar;
+                        document.getElementById('keterangan-status-akhir').value = data.keterangan.statusAkhir;
+                        break;
+                }
+            }
+
+            // --- Form Submissions (Simulated) ---
+            document.getElementById('faktur-pajak-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Faktur Pajak berhasil disimpan! (Simulasi)');
+                closeModal('faktur-pajak-modal');
+                // In a real app, update simulatedData and refresh relevant displays
+            });
+
+            document.getElementById('pembayaran-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Pembayaran berhasil disimpan! (Simulasi)');
+                closeModal('pembayaran-modal');
+            });
+
+            document.getElementById('keterangan-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Keterangan & Status berhasil disimpan! (Simulasi)');
+                closeModal('keterangan-modal');
+            });
+
+            // --- Calculate Lama Pengajuan (Simulated) ---
+            const tglPengajuanFinanceInput = document.getElementById('keterangan-tgl-pengajuan-finance');
+            const tglDiterimaAnggiInput = document.getElementById('keterangan-tgl-diterima-anggi');
+            const lamaPengajuanInput = document.getElementById('keterangan-lama-pengajuan');
+
+            function calculateLamaPengajuan() {
+                const tglFinance = tglPengajuanFinanceInput.value;
+                const tglAnggi = tglDiterimaAnggiInput.value;
+
+                if (tglFinance && tglAnggi) {
+                    const date1 = new Date(tglFinance);
+                    const date2 = new Date(tglAnggi);
+                    const diffTime = Math.abs(date2 - date1);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    lamaPengajuanInput.value = `${diffDays} Hari`;
+                } else {
+                    lamaPengajuanInput.value = '';
+                }
+            }
+
+            tglPengajuanFinanceInput.addEventListener('change', calculateLamaPengajuan);
+            tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
+
         });
     </script>
 </body>
