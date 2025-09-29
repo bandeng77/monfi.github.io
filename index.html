@@ -1155,6 +1155,10 @@
                         if (noInvoiceInput) {
                             noInvoiceInput.value = invoiceNo;
                             noInvoiceInput.readOnly = true; // Make it readonly when editing/adding to existing invoice
+                        } else if (modalId === 'faktur-pajak-modal' && document.getElementById('fp-no-invoice')) {
+                            // Specific fix for faktur-pajak-modal if noInvoiceInput wasn't found by generic selector
+                            document.getElementById('fp-no-invoice').value = invoiceNo;
+                            document.getElementById('fp-no-invoice').readOnly = true;
                         }
                         // Pre-fill existing data if editing
                         await fillModalWithExistingData(modalId, invoiceNo);
@@ -1403,18 +1407,18 @@
             // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
             document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
                 openModal('faktur-pajak-modal');
-                document.getElementById('fp-no-invoice').readOnly = false; // Allow input for new invoice
-                document.getElementById('fp-invoice-info').textContent = 'Masukkan No Invoice di bawah.';
+                document.getElementById('fp-no-invoice').readOnly = false; // Allow input for new invoice for new entry
+                document.getElementById('fp-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
             });
             document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
                 openModal('pembayaran-modal');
-                document.getElementById('pembayaran-no-invoice').readOnly = false;
-                document.getElementById('pembayaran-invoice-info').textContent = 'Masukkan No Invoice di bawah.';
+                document.getElementById('pembayaran-no-invoice').readOnly = false; // Allow input for new entry
+                document.getElementById('pembayaran-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
             });
             document.getElementById('add-keterangan-standalone-btn').addEventListener('click', function() {
                 openModal('keterangan-modal');
-                document.getElementById('keterangan-no-invoice').readOnly = false;
-                document.getElementById('keterangan-invoice-info').textContent = 'Masukkan No Invoice di bawah.';
+                document.getElementById('keterangan-no-invoice').readOnly = false; // Allow input for new entry
+                document.getElementById('keterangan-invoice-info').textContent = 'Masukkan No Invoice di bawah.'; // Clear info for new entry
             });
 
             // --- Search functionality for standalone modals ---
