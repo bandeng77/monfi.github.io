@@ -671,6 +671,7 @@
         }
 
         .autocomplete-items {
+            position: absolute;
             border: 1px solid var(--border);
             border-bottom: none;
             border-top: none;
@@ -1727,25 +1728,7 @@
             // Override openModal to handle fetching tglDiterima for pembayaran-modal
             const originalOpenModal = window.openModal;
             window.openModal = async function(modalId, invoiceNo = null) {
-                await originalOpenModal(modalId, invoiceNo); // Call original function first
-
-                if (modalId === 'pembayaran-modal' && invoiceNo) {
-                    const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
-                    if (invoiceDoc.exists) {
-                        const invoiceData = invoiceDoc.data();
-                        // Temporarily set the invoice-tgl-diterima value for calculation
-                        // This assumes 'invoice-tgl-diterima' input exists even if not visible
-                        const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima');
-                        if (tempInvoiceTglDiterimaInput) {
-                            tempInvoiceTglDiterimaInput.value = invoiceData.tglDiterima || '';
-                        }
-                        calculateJatuhTempo(); // Recalculate after invoice data is potentially loaded
-                    }
-                }
-            };
-
-
-            async function openModal(modalId, invoiceNo = null) {
+                // Call original function first to open modal and fill basic data
                 const modal = document.getElementById(modalId);
                 resetModalForm(modalId); // Reset form before opening
                 modal.style.display = 'flex'; // Use flex to center
@@ -1762,12 +1745,48 @@
                         }
                         // Pre-fill existing data if editing
                         await fillModalWithExistingData(modalId, invoiceNo);
+
+                        // Specific logic for pembayaran-modal to get tglDiterima
+                        if (modalId === 'pembayaran-modal') {
+                            // Temporarily set the invoice-tgl-diterima value for calculation
+                            // This assumes 'invoice-tgl-diterima' input exists even if not visible
+                            const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima');
+                            if (tempInvoiceTglDiterimaInput) {
+                                tempInvoiceTglDiterimaInput.value = invoiceData.tglDiterima || '';
+                            }
+                            calculateJatuhTempo(); // Recalculate after invoice data is potentially loaded
+                        }
                     } else {
                         showAlert('Invoice tidak ditemukan untuk No Invoice ini.', 'error');
                         closeModal(modalId);
                     }
                 }
-            }
+            };
+
+
+            // async function openModal(modalId, invoiceNo = null) {
+            //     const modal = document.getElementById(modalId);
+            //     resetModalForm(modalId); // Reset form before opening
+            //     modal.style.display = 'flex'; // Use flex to center
+
+            //     // Populate invoice info for related modals
+            //     if (invoiceNo) {
+            //         const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+            //         if (invoiceDoc.exists) {
+            //             const invoiceData = invoiceDoc.data();
+            //             const noInvoiceInput = modal.querySelector(`input[id$="-no-invoice"]`);
+            //             if (noInvoiceInput) {
+            //                 noInvoiceInput.value = invoiceNo;
+            //                 noInvoiceInput.readOnly = true; // Make it readonly when editing/adding to existing invoice
+            //             }
+            //             // Pre-fill existing data if editing
+            //             await fillModalWithExistingData(modalId, invoiceNo);
+            //         } else {
+            //             showAlert('Invoice tidak ditemukan untuk No Invoice ini.', 'error');
+            //             closeModal(modalId);
+            //         }
+            //     }
+            // }
 
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = 'none';
@@ -1790,7 +1809,7 @@
 
             // --- Invoice Modal Specifics ---
             document.getElementById('add-invoice-btn').addEventListener('click', function() {
-                openModal('invoice-modal');
+                window.openModal('invoice-modal'); // Use window.openModal
                 document.getElementById('invoice-no-invoice').readOnly = false; // Allow input for new invoice
             });
 
@@ -1925,7 +1944,7 @@
                 const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
                 if (invoiceDoc.exists) {
                     const invoiceData = invoiceDoc.data();
-                    openModal('invoice-modal', invoiceNo);
+                    window.openModal('invoice-modal', invoiceNo); // Use window.openModal
                     document.getElementById('invoice-no-invoice').readOnly = true; // Prevent changing invoice number
                     // Fill the form with existing data
                     document.getElementById('invoice-email-hard').value = invoiceData.emailHard || '';
@@ -1992,7 +2011,7 @@
                 const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
                 if (invoiceDoc.exists) {
                     const invoiceData = invoiceDoc.data();
-                    openModal('invoice-modal', invoiceNo);
+                    window.openModal('invoice-modal', invoiceNo); // Use window.openModal
                     document.getElementById('invoice-no-invoice').readOnly = true; // Prevent changing invoice number
                     // Fill the form with existing data
                     document.getElementById('invoice-email-hard').value = invoiceData.emailHard || '';
@@ -2010,26 +2029,26 @@
 
             // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) ---
             document.getElementById('add-edit-faktur-pajak-btn').addEventListener('click', function() {
-                openModal('faktur-pajak-modal', this.dataset.invoiceNo);
+                window.openModal('faktur-pajak-modal', this.dataset.invoiceNo); // Use window.openModal
             });
             document.getElementById('add-edit-pembayaran-btn').addEventListener('click', function() {
-                openModal('pembayaran-modal', this.dataset.invoiceNo);
+                window.openModal('pembayaran-modal', this.dataset.invoiceNo); // Use window.openModal
             });
             document.getElementById('add-edit-keterangan-btn').addEventListener('click', function() {
-                openModal('keterangan-modal', this.dataset.invoiceNo);
+                window.openModal('keterangan-modal', this.dataset.invoiceNo); // Use window.openModal
             });
 
             // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
             document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
-                openModal('faktur-pajak-modal');
+                window.openModal('faktur-pajak-modal'); // Use window.openModal
                 document.getElementById('fp-no-invoice').readOnly = false; // Allow input for new invoice for new entry
             });
             document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
-                openModal('pembayaran-modal');
+                window.openModal('pembayaran-modal'); // Use window.openModal
                 document.getElementById('pembayaran-no-invoice').readOnly = false; // Allow input for new entry
             });
             document.getElementById('add-keterangan-standalone-btn').addEventListener('click', function() {
-                openModal('keterangan-modal');
+                window.openModal('keterangan-modal'); // Use window.openModal
                 document.getElementById('keterangan-no-invoice').readOnly = false; // Allow input for new entry
             });
 
@@ -2044,7 +2063,7 @@
                         if (invoiceNo) {
                             const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
                             if (invoiceDoc.exists) {
-                                openModal(modalId, invoiceNo); // Pass invoiceNo to openModal
+                                window.openModal(modalId, invoiceNo); // Pass invoiceNo to openModal
                             } else {
                                 showAlert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.', 'error');
                             }
@@ -2262,44 +2281,71 @@
             // --- Auto-calculate Jatuh Tempo based on TOP ---
             const pembayaranTopInput = document.getElementById('pembayaran-top');
             const pembayaranJatuhTempoInput = document.getElementById('pembayaran-jatuh-tempo');
-            const invoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima'); // Assuming invoice received date is the base
+            // We need to get the invoice's tglDiterima dynamically based on the invoiceNo in the modal
+            // For this, we'll use a hidden input or fetch it when the modal opens.
+            // Let's assume a hidden input 'invoice-tgl-diterima' is available in the DOM,
+            // which gets populated when the pembayaran modal is opened for an existing invoice.
+            const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima'); // This is the input from the invoice-modal
 
-            function calculateJatuhTempo() {
-                const topValue = pembayaranTopInput.value;
-                // For calculation, we need the invoice's tglDiterima.
+            async function calculateJatuhTempo() {
+                const topValue = parseInt(pembayaranTopInput.value, 10); // Parse as integer
+                const noInvoice = document.getElementById('pembayaran-no-invoice').value;
+
+                if (isNaN(topValue) || topValue <= 0 || !noInvoice) {
+                    pembayaranJatuhTempoInput.value = ''; // Clear if TOP is invalid or no invoice selected
+                    return;
+                }
+
+                let tglDiterimaInvoice = '';
+
                 // If the pembayaran modal is opened from invoice detail, invoiceTglDiterimaInput might have the value.
-                // If opened standalone, we need to fetch it. The modified openModal handles this.
-                const tglDiterimaInvoice = invoiceTglDiterimaInput.value;
-
-                if (topValue && tglDiterimaInvoice) {
-                    const daysMatch = topValue.match(/(\d+)\s*Hari/i);
-                    if (daysMatch && daysMatch[1]) {
-                        const days = parseInt(daysMatch[1], 10);
-                        const receivedDate = new Date(tglDiterimaInvoice);
-                        receivedDate.setDate(receivedDate.getDate() + days);
-
-                        // Format date to YYYY-MM-DD for input type="date"
-                        const year = receivedDate.getFullYear();
-                        const month = String(receivedDate.getMonth() + 1).padStart(2, '0');
-                        const day = String(receivedDate.getDate()).padStart(2, '0');
-                        pembayaranJatuhTempoInput.value = `${year}-${month}-${day}`;
-                    } else {
-                        pembayaranJatuhTempoInput.value = ''; // Clear if TOP format is not recognized
-                    }
+                // If opened standalone, we need to fetch it from the database.
+                if (tempInvoiceTglDiterimaInput && tempInvoiceTglDiterimaInput.value) {
+                    tglDiterimaInvoice = tempInvoiceTglDiterimaInput.value;
                 } else {
-                    pembayaranJatuhTempoInput.value = ''; // Clear if TOP or Tgl Diterima is missing
+                    // Fetch tglDiterima from the invoices collection using noInvoice
+                    try {
+                        const invoiceDoc = await invoicesCol.doc(noInvoice).get();
+                        if (invoiceDoc.exists) {
+                            tglDiterimaInvoice = invoiceDoc.data().tglDiterima || '';
+                        }
+                    } catch (error) {
+                        console.error("Error fetching tglDiterima for Jatuh Tempo calculation:", error);
+                        showAlert("Gagal mengambil Tanggal Diterima untuk perhitungan Jatuh Tempo.", 'error');
+                        pembayaranJatuhTempoInput.value = '';
+                        return;
+                    }
+                }
+
+                if (tglDiterimaInvoice) {
+                    const receivedDate = new Date(tglDiterimaInvoice);
+                    receivedDate.setDate(receivedDate.getDate() + topValue);
+
+                    // Format date to YYYY-MM-DD for input type="date"
+                    const year = receivedDate.getFullYear();
+                    const month = String(receivedDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(receivedDate.getDate()).padStart(2, '0');
+                    pembayaranJatuhTempoInput.value = `${year}-${month}-${day}`;
+                } else {
+                    pembayaranJatuhTempoInput.value = ''; // Clear if Tgl Diterima is missing
                 }
             }
 
             if (pembayaranTopInput) {
-                pembayaranTopInput.addEventListener('input', calculateJatuhTempo);
+                pembayaranTopInput.addEventListener('change', calculateJatuhTempo); // Changed to 'change'
             }
             // Also recalculate if the invoice's Tanggal Diterima changes while the modal is open
             // This listener is important if the invoice-modal is open and its tglDiterima changes
             // and then the pembayaran-modal is opened.
-            if (invoiceTglDiterimaInput) {
-                invoiceTglDiterimaInput.addEventListener('change', calculateJatuhTempo);
-            }
+            // We need to ensure this listener is only active when the pembayaran modal is open and linked to an invoice.
+            // A more robust solution would be to pass tglDiterima directly to the openModal function for pembayaran.
+            // For now, we rely on the tempInvoiceTglDiterimaInput being set by the modified openModal.
+            // If the invoice-modal's tglDiterima changes, it won't automatically update the pembayaran modal unless it's reopened.
+            // The current setup in openModal for 'pembayaran-modal' already fetches tglDiterima, so this listener might be redundant or problematic if not carefully managed.
+            // Let's remove the direct listener on invoiceTglDiterimaInput here to avoid confusion, as the openModal handles fetching it.
+            // if (tempInvoiceTglDiterimaInput) {
+            //     tempInvoiceTglDiterimaInput.addEventListener('change', calculateJatuhTempo);
+            // }
 
 
             // --- Export to Excel (CSV) ---
@@ -3022,7 +3068,7 @@
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-top">TOP (Term of Payment)</label>
-                    <input type="text" id="pembayaran-top" class="filter-input" placeholder="Contoh: 30 Hari">
+                    <input type="number" id="pembayaran-top" class="filter-input" placeholder="Contoh: 30">
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-jatuh-tempo">Jatuh Tempo</label>
