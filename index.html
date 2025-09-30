@@ -55,6 +55,13 @@
             padding: 1.5rem 1rem;
             display: flex;
             flex-direction: column;
+            transition: width 0.3s ease; /* Transisi untuk lebar sidebar */
+            position: relative; /* Untuk tombol toggle */
+            flex-shrink: 0; /* Mencegah sidebar menyusut lebih jauh */
+        }
+
+        .sidebar.collapsed {
+            width: 60px; /* Lebar sidebar saat diperkecil */
         }
 
         .logo {
@@ -70,10 +77,21 @@
             margin-right: 0.75rem;
         }
 
+        .sidebar.collapsed .logo-icon {
+            margin-right: 0; /* Hapus margin saat collapsed */
+        }
+
         .logo-text {
             font-weight: 700;
             font-size: 1.25rem;
             color: var(--dark);
+            transition: opacity 0.3s ease; /* Transisi untuk teks logo */
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0; /* Sembunyikan teks logo */
+            width: 0; /* Pastikan tidak memakan ruang */
+            overflow: hidden;
         }
 
         .nav-item {
@@ -104,8 +122,44 @@
             text-align: center;
         }
 
+        .sidebar.collapsed .nav-icon {
+            margin-right: 0; /* Hapus margin saat collapsed */
+        }
+
         .nav-text {
             font-weight: 500;
+            transition: opacity 0.3s ease; /* Transisi untuk teks navigasi */
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0; /* Sembunyikan teks navigasi */
+            width: 0; /* Pastikan tidak memakan ruang */
+            overflow: hidden;
+        }
+
+        /* Sidebar Toggle Button */
+        .sidebar-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: -12px; /* Setengah dari lebar tombol agar terlihat di luar sidebar */
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: right 0.3s ease, transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            right: -12px; /* Tetap di posisi yang sama relatif terhadap sidebar yang diperkecil */
+            transform: rotate(180deg); /* Putar ikon saat collapsed */
         }
 
         /* Main Content Styles */
@@ -113,8 +167,10 @@
             flex: 1;
             padding: 2rem;
             overflow-y: auto;
+            transition: margin-left 0.3s ease; /* Transisi untuk main content jika diperlukan */
         }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
@@ -308,7 +364,7 @@
             background-color: #fecaca; /* light red */
             color: #b91c1c; /* dark red */
         }
-        .status-belum-diproses {
+        .status-belum-diproses, .status-menunggu-pengajuan { /* Gabungkan gaya untuk status serupa */
             background-color: #e2e8f0; /* light gray */
             color: #475569; /* dark gray */
         }
@@ -513,6 +569,10 @@
             .nav-item {
                 margin-bottom: 0;
                 white-space: nowrap;
+            }
+
+            .sidebar-toggle {
+                display: none; /* Sembunyikan tombol toggle di mode responsif vertikal */
             }
         }
 
@@ -823,7 +883,7 @@
 
             // 2. Pertahankan status manual tertentu jika sudah diatur
             //    Kecuali jika kondisi 'Jatuh Tempo' terpenuhi
-            const manualStatusesToRetain = ['Diajukan ke Finance', 'Diterima Anggi', 'Dibatalkan'];
+            const manualStatusesToRetain = ['Diajukan ke Finance', 'Diterima Anggi', 'Dibatalkan', 'Belum Diproses', 'Menunggu Pengajuan'];
             if (currentStatus && manualStatusesToRetain.includes(currentStatus)) {
                 // Lanjutkan untuk memeriksa jatuh tempo, jika jatuh tempo, override status manual
                 // Jika tidak jatuh tempo, pertahankan status manual
@@ -915,7 +975,7 @@
                 else if (['Diajukan ke Finance'].includes(invoice.Status)) statusClass = 'status-diajukan-finance';
                 else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                 else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
-                else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-belum-diproses';
+                else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
 
 
                 rowsHtml.push(`
@@ -1568,6 +1628,26 @@
             const contentSections = document.querySelectorAll('.content-section');
             const navItems = document.querySelectorAll('.nav-item');
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+
+            // --- Sidebar Toggle Functionality ---
+            function toggleSidebar() {
+                sidebar.classList.toggle('collapsed');
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed); // Save state
+            }
+
+            // Load sidebar state from localStorage
+            const savedSidebarState = localStorage.getItem('sidebarCollapsed');
+            if (savedSidebarState === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.addEventListener('click', toggleSidebar);
+            }
+
 
             // --- Fungsi Navigasi Sidebar ---
             function showSection(targetId) {
@@ -1644,6 +1724,27 @@
                     });
                 }
             }
+
+            // Override openModal to handle fetching tglDiterima for pembayaran-modal
+            const originalOpenModal = window.openModal;
+            window.openModal = async function(modalId, invoiceNo = null) {
+                await originalOpenModal(modalId, invoiceNo); // Call original function first
+
+                if (modalId === 'pembayaran-modal' && invoiceNo) {
+                    const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+                    if (invoiceDoc.exists) {
+                        const invoiceData = invoiceDoc.data();
+                        // Temporarily set the invoice-tgl-diterima value for calculation
+                        // This assumes 'invoice-tgl-diterima' input exists even if not visible
+                        const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima');
+                        if (tempInvoiceTglDiterimaInput) {
+                            tempInvoiceTglDiterimaInput.value = invoiceData.tglDiterima || '';
+                        }
+                        calculateJatuhTempo(); // Recalculate after invoice data is potentially loaded
+                    }
+                }
+            };
+
 
             async function openModal(modalId, invoiceNo = null) {
                 const modal = document.getElementById(modalId);
@@ -2159,6 +2260,49 @@
             if (tglDiterimaAnggiInput) tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
 
 
+            // --- Auto-calculate Jatuh Tempo based on TOP ---
+            const pembayaranTopInput = document.getElementById('pembayaran-top');
+            const pembayaranJatuhTempoInput = document.getElementById('pembayaran-jatuh-tempo');
+            const invoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima'); // Assuming invoice received date is the base
+
+            function calculateJatuhTempo() {
+                const topValue = pembayaranTopInput.value;
+                // For calculation, we need the invoice's tglDiterima.
+                // If the pembayaran modal is opened from invoice detail, invoiceTglDiterimaInput might have the value.
+                // If opened standalone, we need to fetch it. The modified openModal handles this.
+                const tglDiterimaInvoice = invoiceTglDiterimaInput.value;
+
+                if (topValue && tglDiterimaInvoice) {
+                    const daysMatch = topValue.match(/(\d+)\s*Hari/i);
+                    if (daysMatch && daysMatch[1]) {
+                        const days = parseInt(daysMatch[1], 10);
+                        const receivedDate = new Date(tglDiterimaInvoice);
+                        receivedDate.setDate(receivedDate.getDate() + days);
+
+                        // Format date to YYYY-MM-DD for input type="date"
+                        const year = receivedDate.getFullYear();
+                        const month = String(receivedDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(receivedDate.getDate()).padStart(2, '0');
+                        pembayaranJatuhTempoInput.value = `${year}-${month}-${day}`;
+                    } else {
+                        pembayaranJatuhTempoInput.value = ''; // Clear if TOP format is not recognized
+                    }
+                } else {
+                    pembayaranJatuhTempoInput.value = ''; // Clear if TOP or Tgl Diterima is missing
+                }
+            }
+
+            if (pembayaranTopInput) {
+                pembayaranTopInput.addEventListener('input', calculateJatuhTempo);
+            }
+            // Also recalculate if the invoice's Tanggal Diterima changes while the modal is open
+            // This listener is important if the invoice-modal is open and its tglDiterima changes
+            // and then the pembayaran-modal is opened.
+            if (invoiceTglDiterimaInput) {
+                invoiceTglDiterimaInput.addEventListener('change', calculateJatuhTempo);
+            }
+
+
             // --- Export to Excel (CSV) ---
             document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -2352,7 +2496,13 @@
                         existingKeteranganData = keteranganQuery.docs[0].data();
                     } else {
                         // If no existing keterangan, create a new one
-                        keteranganDocRef = keteranganCol.doc(); // Firestore will generate a new ID
+                        // We need to ensure the document exists before updating statusAkhir
+                        // For simplicity, we'll add a new doc with minimal info if not found
+                        // In a real app, you might want to prompt the user to add full keterangan first
+                        await keteranganCol.add({ noInvoice: noInvoice, statusAkhir: newManualStatus });
+                        showAlert('Keterangan baru dibuat dan status diperbarui!', 'success');
+                        closeModal('status-modal');
+                        return; // Exit after adding new doc
                     }
 
                     // Fetch invoice and pembayaran data to recalculate status
@@ -2371,18 +2521,13 @@
                     );
 
                     const updateData = {
-                        noInvoice: noInvoice,
                         statusAkhir: finalStatus,
                         // Merge with existing data to preserve other fields
-                        ...existingKeteranganData,
-                        statusAkhir: finalStatus
+                        ...existingKeteranganData, // Spread existing data first
+                        statusAkhir: finalStatus // Override statusAkhir
                     };
 
-                    if (existingDocQuery.empty) {
-                        await keteranganCol.add(updateData); // Add new document if it didn't exist
-                    } else {
-                        await keteranganDocRef.update(updateData); // Update existing document
-                    }
+                    await keteranganDocRef.update(updateData); // Update existing document
 
                     showAlert('Status invoice berhasil diperbarui!', 'success');
                     closeModal('status-modal');
@@ -2398,6 +2543,9 @@
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
+            <button id="sidebar-toggle-btn" class="sidebar-toggle">
+                <i class="fas fa-chevron-left"></i>
+            </button>
             <div class="logo">
                 <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
                 <div class="logo-text">FinanceMonitor</div>
