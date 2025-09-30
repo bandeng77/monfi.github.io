@@ -1294,10 +1294,12 @@
             const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
             const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
             const searchInvoiceKeteranganInput = document.getElementById('search-invoice-keterangan');
+            const filterSearchInput = document.getElementById('filter-search'); // Tambahkan ini
 
             if (searchInvoiceFakturPajakInput) autocomplete(searchInvoiceFakturPajakInput, allInvoiceNumbers);
             if (searchInvoicePembayaranInput) autocomplete(searchInvoicePembayaranInput, allInvoiceNumbers);
             if (searchInvoiceKeteranganInput) autocomplete(searchInvoiceKeteranganInput, allInvoiceNumbers);
+            if (filterSearchInput) autocomplete(filterSearchInput, allInvoiceNumbers); // Tambahkan ini
         }
 
         // --- Format Rupiah Function ---
@@ -2266,7 +2268,10 @@
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Cari</label>
-                                <input type="text" class="filter-input" id="filter-search" placeholder="Cari invoice, vendor...">
+                                <!-- Ubah bagian ini -->
+                                <div class="autocomplete-container">
+                                    <input type="text" class="filter-input" id="filter-search" placeholder="Cari invoice, vendor...">
+                                </div>
                             </div>
                         </div>
                         <button class="btn btn-primary">
