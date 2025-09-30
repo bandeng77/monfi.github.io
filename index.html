@@ -1164,7 +1164,7 @@
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
 
-                        const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : 'N/A';
+                        const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                         // Calculate status dynamically
                         const statusDisplay = calculateStatus(invoice.tglDiterima, pembayaran.jatuhTempo, keterangan.tglBayar, keterangan.statusAkhir);
                         
