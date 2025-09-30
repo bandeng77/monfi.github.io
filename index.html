@@ -2567,7 +2567,7 @@
                     const invoiceData = invoiceDoc.exists ? invoiceDoc.data() : {};
 
                     // Query sub-koleksi menggunakan nilai 'noInvoice' yang asli
-                    const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
+                    const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                     const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
                     // Calculate the final status using the new manual status as currentStatus
@@ -2787,6 +2787,9 @@
                     <div class="header-actions">
                         <button class="btn btn-outline" id="back-to-list-btn">
                             <i class="fas fa-arrow-left btn-icon"></i> Kembali ke Daftar
+                        </button>
+                        <button class="btn btn-outline" id="export-detail-btn">
+                            <i class="fas fa-download btn-icon"></i> Export Detail
                         </button>
                         <button class="btn btn-primary" id="edit-full-invoice-btn">
                             <i class="fas fa-edit btn-icon"></i> Edit Invoice
