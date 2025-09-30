@@ -671,7 +671,6 @@
         }
 
         .autocomplete-items {
-            position: absolute;
             border: 1px solid var(--border);
             border-bottom: none;
             border-top: none;
@@ -873,6 +872,18 @@
         window.invoiceUnsubscribe = null;
         window.dashboardUnsubscribe = null;
         window.reportUnsubscribe = null; // If you decide to re-enable reports
+
+        // --- Fungsi untuk membersihkan No Invoice agar aman digunakan sebagai ID dokumen Firestore ---
+        function sanitizeInvoiceNo(invoiceNo) {
+            // Mengganti semua '/' dengan '-'
+            return invoiceNo.replace(/\//g, '-');
+        }
+
+        // --- Fungsi untuk mengembalikan No Invoice ke format aslinya (jika diperlukan untuk tampilan) ---
+        function desanitizeInvoiceNo(sanitizedInvoiceNo) {
+            // Mengganti semua '-' kembali ke '/'
+            return sanitizedInvoiceNo.replace(/-/g, '/');
+        }
 
         // --- Calculate Status Based on Dates ---
         function calculateStatus(tglDiterima, jatuhTempo, tglBayar, currentStatus) {
@@ -1146,6 +1157,7 @@
 
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
+                        // Gunakan nilai 'noInvoice' yang disimpan di dalam dokumen, yang merupakan nilai asli
                         const noInvoice = invoice.noInvoice;
                         currentInvoiceNumbers.push(noInvoice); // Add to autocomplete list
 
@@ -1162,7 +1174,7 @@
                             Penerima: invoice.penerima || '',
                             Corp: invoice.corp || '',
                             Tanggal_Diterima: invoice.tglDiterima || '',
-                            No_Invoice: noInvoice,
+                            No_Invoice: noInvoice, // <--- Gunakan nilai asli untuk tampilan
                             Nama_Vendor: invoice.namaVendor || '',
                             DPP_IDR: dppDisplay, // Store formatted for display
                             PPn_IDR: pembayaran.ppnIdr || '0',
@@ -1295,7 +1307,7 @@
                         });
 
                         snapshot.forEach(doc => {
-                            const noInvoice = doc.data().noInvoice;
+                            const noInvoice = doc.data().noInvoice; // Gunakan nilai asli dari field
                             const invoiceData = doc.data(); // Get full invoice data
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
@@ -1385,7 +1397,7 @@
 
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
-                        const noInvoice = invoice.noInvoice;
+                        const noInvoice = invoice.noInvoice; // Gunakan nilai asli dari field
 
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
@@ -1726,25 +1738,26 @@
             }
 
             // Override openModal to handle fetching tglDiterima for pembayaran-modal
+            // dan memastikan noInvoice diisi dengan nilai asli
             const originalOpenModal = window.openModal;
-            window.openModal = async function(modalId, invoiceNo = null) {
-                // Call original function first to open modal and fill basic data
+            window.openModal = async function(modalId, rawInvoiceNo = null) { // <--- Terima raw No Invoice
                 const modal = document.getElementById(modalId);
                 resetModalForm(modalId); // Reset form before opening
                 modal.style.display = 'flex'; // Use flex to center
 
                 // Populate invoice info for related modals
-                if (invoiceNo) {
-                    const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+                if (rawInvoiceNo) {
+                    const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                    const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                     if (invoiceDoc.exists) {
                         const invoiceData = invoiceDoc.data();
                         const noInvoiceInput = modal.querySelector(`input[id$="-no-invoice"]`);
                         if (noInvoiceInput) {
-                            noInvoiceInput.value = invoiceNo;
+                            noInvoiceInput.value = rawInvoiceNo; // <--- Tampilkan raw No Invoice
                             noInvoiceInput.readOnly = true; // Make it readonly when editing/adding to existing invoice
                         }
                         // Pre-fill existing data if editing
-                        await fillModalWithExistingData(modalId, invoiceNo);
+                        await fillModalWithExistingData(modalId, rawInvoiceNo); // <--- Kirim raw No Invoice
 
                         // Specific logic for pembayaran-modal to get tglDiterima
                         if (modalId === 'pembayaran-modal') {
@@ -1763,30 +1776,6 @@
                 }
             };
 
-
-            // async function openModal(modalId, invoiceNo = null) {
-            //     const modal = document.getElementById(modalId);
-            //     resetModalForm(modalId); // Reset form before opening
-            //     modal.style.display = 'flex'; // Use flex to center
-
-            //     // Populate invoice info for related modals
-            //     if (invoiceNo) {
-            //         const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
-            //         if (invoiceDoc.exists) {
-            //             const invoiceData = invoiceDoc.data();
-            //             const noInvoiceInput = modal.querySelector(`input[id$="-no-invoice"]`);
-            //             if (noInvoiceInput) {
-            //                 noInvoiceInput.value = invoiceNo;
-            //                 noInvoiceInput.readOnly = true; // Make it readonly when editing/adding to existing invoice
-            //             }
-            //             // Pre-fill existing data if editing
-            //             await fillModalWithExistingData(modalId, invoiceNo);
-            //         } else {
-            //             showAlert('Invoice tidak ditemukan untuk No Invoice ini.', 'error');
-            //             closeModal(modalId);
-            //         }
-            //     }
-            // }
 
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = 'none';
@@ -1811,11 +1800,18 @@
             document.getElementById('add-invoice-btn').addEventListener('click', function() {
                 window.openModal('invoice-modal'); // Use window.openModal
                 document.getElementById('invoice-no-invoice').readOnly = false; // Allow input for new invoice
+                document.getElementById('invoice-no-invoice').value = ''; // Bersihkan input saat menambah baru
             });
 
             document.getElementById('invoice-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const noInvoice = document.getElementById('invoice-no-invoice').value;
+                const rawNoInvoice = document.getElementById('invoice-no-invoice').value.trim();
+                if (!rawNoInvoice) {
+                    showAlert('No Invoice tidak boleh kosong.', 'error');
+                    return;
+                }
+                const noInvoiceDocId = sanitizeInvoiceNo(rawNoInvoice); // <--- SANITASI DI SINI UNTUK ID DOKUMEN
+
                 const formData = {
                     emailHard: document.getElementById('invoice-email-hard').value,
                     penerima: document.getElementById('invoice-penerima').value,
@@ -1824,11 +1820,11 @@
                     tglInvoice: document.getElementById('invoice-tgl-invoice').value,
                     suratJalan: document.getElementById('invoice-surat-jalan').value,
                     namaVendor: document.getElementById('invoice-nama-vendor').value,
-                    noInvoice: noInvoice,
+                    noInvoice: rawNoInvoice, // <--- Simpan nilai asli di field 'noInvoice' dalam dokumen
                 };
 
                 try {
-                    await invoicesCol.doc(noInvoice).set(formData, { merge: true }); // Use set with merge to avoid overwriting
+                    await invoicesCol.doc(noInvoiceDocId).set(formData, { merge: true }); // Gunakan ID dokumen yang disanitasi
                     showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
                     // loadInvoicesToTable(); // Realtime listener will handle this
@@ -1839,21 +1835,23 @@
             });
 
             // --- View Invoice Detail Functionality ---
-            async function displayInvoiceDetail(invoiceNo) {
-                const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+            async function displayInvoiceDetail(rawInvoiceNo) { // <--- Terima raw No Invoice
+                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                 if (!invoiceDoc.exists) {
                     showAlert('Data invoice tidak ditemukan.', 'error');
                     return;
                 }
                 const data = invoiceDoc.data();
 
-                const fpQuery = await fakturPajakCol.where('noInvoice', '==', invoiceNo).limit(1).get();
+                // Query sub-koleksi menggunakan nilai 'noInvoice' yang asli
+                const fpQuery = await fakturPajakCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                 const fpData = fpQuery.empty ? {} : fpQuery.docs[0].data();
 
-                const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', invoiceNo).limit(1).get();
+                const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                 const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
-                const keteranganQuery = await keteranganCol.where('noInvoice', '==', invoiceNo).limit(1).get();
+                const keteranganQuery = await keteranganCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                 const keterangan = keteranganQuery.empty ? {} : keteranganQuery.docs[0].data();
 
                 const calculatedStatus = calculateStatus(data.tglDiterima, pembayaranData.jatuhTempo, keterangan.tglBayar, keterangan.statusAkhir);
@@ -1861,7 +1859,7 @@
                 // Hide all sections and show detail section
                 contentSections.forEach(section => section.style.display = 'none');
                 document.getElementById('invoice-detail-section').style.display = 'block';
-                document.getElementById('detail-invoice-no').textContent = invoiceNo;
+                document.getElementById('detail-invoice-no').textContent = rawInvoiceNo; // <--- Tampilkan raw No Invoice
 
                 // Populate Invoice Basic Info
                 document.getElementById('detail-email-hard').textContent = data.emailHard || '-';
@@ -1875,7 +1873,7 @@
                 // Populate Faktur Pajak Info
                 document.getElementById('detail-no-faktur-pajak').textContent = fpData.noFakturPajak || 'Belum ada';
                 document.getElementById('detail-tgl-faktur-pajak').textContent = fpData.tglFakturPajak || 'Belum ada';
-                document.getElementById('add-edit-faktur-pajak-btn').dataset.invoiceNo = invoiceNo;
+                document.getElementById('add-edit-faktur-pajak-btn').dataset.invoiceNo = rawInvoiceNo; // <--- Gunakan raw No Invoice
 
                 // Populate Pembayaran Info
                 document.getElementById('detail-dpp-idr').textContent = `Rp ${formatRupiah(pembayaranData.dppIdr || '0')}`;
@@ -1886,7 +1884,7 @@
                 document.getElementById('detail-hasil-follow-up').textContent = pembayaranData.hasilFollowUp || '-';
                 document.getElementById('detail-top').textContent = pembayaranData.top || '-';
                 document.getElementById('detail-jatuh-tempo').textContent = pembayaranData.jatuhTempo || '-';
-                document.getElementById('add-edit-pembayaran-btn').dataset.invoiceNo = invoiceNo;
+                document.getElementById('add-edit-pembayaran-btn').dataset.invoiceNo = rawInvoiceNo; // <--- Gunakan raw No Invoice
 
                 // Populate Keterangan Info
                 document.getElementById('detail-tgl-pengajuan-finance').textContent = keterangan.tglPengajuanFinance || '-';
@@ -1896,10 +1894,10 @@
                 document.getElementById('detail-keterangan-proses').textContent = keterangan.keteranganProses || '-';
                 document.getElementById('detail-tgl-bayar').textContent = keterangan.tglBayar || '-';
                 document.getElementById('detail-status-akhir').textContent = calculatedStatus || '-'; // Use calculated status
-                document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = invoiceNo;
+                document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = rawInvoiceNo; // <--- Gunakan raw No Invoice
 
                 // Set invoiceNo for edit button
-                document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = invoiceNo;
+                document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = rawInvoiceNo; // <--- Gunakan raw No Invoice
             }
 
             // Event listeners for viewing invoice details
@@ -1908,7 +1906,7 @@
                     const targetLink = e.target.closest('.view-invoice-detail');
                     if (targetLink) {
                         e.preventDefault();
-                        const invoiceNo = targetLink.dataset.invoiceNo;
+                        const invoiceNo = targetLink.dataset.invoiceNo; // Ini adalah raw No Invoice
                         displayInvoiceDetail(invoiceNo);
                     }
 
@@ -1916,7 +1914,7 @@
                     const editBtn = e.target.closest('.edit-invoice-btn');
                     if (editBtn) {
                         e.preventDefault();
-                        const invoiceNo = editBtn.dataset.invoiceNo;
+                        const invoiceNo = editBtn.dataset.invoiceNo; // Ini adalah raw No Invoice
                         editInvoiceFromTable(invoiceNo);
                     }
 
@@ -1924,7 +1922,7 @@
                     const deleteBtn = e.target.closest('.delete-invoice-btn');
                     if (deleteBtn) {
                         e.preventDefault();
-                        const invoiceNo = deleteBtn.dataset.invoiceNo; // Correctly get invoiceNo
+                        const invoiceNo = deleteBtn.dataset.invoiceNo; // Correctly get invoiceNo (raw)
                         deleteInvoice(invoiceNo);
                     }
 
@@ -1932,7 +1930,7 @@
                     const statusButton = e.target.closest('.status-button');
                     if (statusButton) {
                         e.preventDefault();
-                        const invoiceNo = statusButton.dataset.invoiceNo;
+                        const invoiceNo = statusButton.dataset.invoiceNo; // Ini adalah raw No Invoice
                         const currentStatus = statusButton.dataset.currentStatus;
                         openStatusModal(invoiceNo, currentStatus);
                     }
@@ -1940,11 +1938,12 @@
             }
 
             // Function to edit Invoice from table
-            async function editInvoiceFromTable(invoiceNo) {
-                const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+            async function editInvoiceFromTable(rawInvoiceNo) { // <--- Terima raw No Invoice
+                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                 if (invoiceDoc.exists) {
                     const invoiceData = invoiceDoc.data();
-                    window.openModal('invoice-modal', invoiceNo); // Use window.openModal
+                    window.openModal('invoice-modal', rawInvoiceNo); // Use window.openModal, kirim raw No Invoice
                     document.getElementById('invoice-no-invoice').readOnly = true; // Prevent changing invoice number
                     // Fill the form with existing data
                     document.getElementById('invoice-email-hard').value = invoiceData.emailHard || '';
@@ -1954,40 +1953,41 @@
                     document.getElementById('invoice-tgl-invoice').value = invoiceData.tglInvoice || '';
                     document.getElementById('invoice-surat-jalan').value = invoiceData.suratJalan || '';
                     document.getElementById('invoice-nama-vendor').value = invoiceData.namaVendor || '';
-                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || '';
+                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || ''; // <--- Tampilkan raw No Invoice
                 } else {
                     showAlert('Invoice tidak ditemukan.', 'error');
                 }
             }
 
             // Function to delete Invoice
-            async function deleteInvoice(invoiceNo) {
+            async function deleteInvoice(rawInvoiceNo) { // <--- Terima raw No Invoice
                 // Use custom alert for confirmation
-                const userConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus invoice dengan No Invoice: ${invoiceNo}? Ini akan menghapus semua data terkait (Faktur Pajak, Pembayaran, Keterangan).`);
+                const userConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus invoice dengan No Invoice: ${rawInvoiceNo}? Ini akan menghapus semua data terkait (Faktur Pajak, Pembayaran, Keterangan).`);
 
                 if (!userConfirmed) {
                     showAlert('Penghapusan invoice dibatalkan.', 'info');
                     return;
                 }
 
-                try {
-                    // Hapus dokumen dari koleksi invoices
-                    await invoicesCol.doc(invoiceNo).delete();
+                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo); // <--- SANITASI UNTUK MENGHAPUS DOKUMEN UTAMA
 
-                    // Hapus dokumen terkait dari koleksi fakturPajak
-                    const fpDocs = await fakturPajakCol.where('noInvoice', '==', invoiceNo).get();
+                try {
+                    // Hapus dokumen dari koleksi invoices menggunakan ID dokumen yang disanitasi
+                    await invoicesCol.doc(invoiceNoDocId).delete();
+
+                    // Hapus dokumen terkait dari koleksi fakturPajak, pembayaran, keterangan
+                    // Query menggunakan field 'noInvoice' yang menyimpan nilai asli
+                    const fpDocs = await fakturPajakCol.where('noInvoice', '==', rawInvoiceNo).get();
                     const fpBatch = db.batch();
                     fpDocs.forEach(doc => fpBatch.delete(doc.ref));
                     await fpBatch.commit();
 
-                    // Hapus dokumen terkait dari koleksi pembayaran
-                    const pembayaranDocs = await pembayaranCol.where('noInvoice', '==', noInvoice).get();
+                    const pembayaranDocs = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).get();
                     const pembayaranBatch = db.batch();
                     pembayaranDocs.forEach(doc => pembayaranBatch.delete(doc.ref));
                     await pembayaranBatch.commit();
 
-                    // Hapus dokumen terkait dari koleksi keterangan
-                    const keteranganDocs = await keteranganCol.where('noInvoice', '==', noInvoice).get();
+                    const keteranganDocs = await keteranganCol.where('noInvoice', '==', rawInvoiceNo).get();
                     const keteranganBatch = db.batch();
                     keteranganDocs.forEach(doc => keteranganBatch.delete(doc.ref));
                     await keteranganBatch.commit();
@@ -2007,11 +2007,12 @@
 
             // --- Edit Invoice from Detail Page ---
             document.getElementById('edit-full-invoice-btn').addEventListener('click', async function() {
-                const invoiceNo = this.dataset.invoiceNo;
-                const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+                const rawInvoiceNo = this.dataset.invoiceNo; // Ini adalah raw No Invoice
+                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                 if (invoiceDoc.exists) {
                     const invoiceData = invoiceDoc.data();
-                    window.openModal('invoice-modal', invoiceNo); // Use window.openModal
+                    window.openModal('invoice-modal', rawInvoiceNo); // Use window.openModal, kirim raw No Invoice
                     document.getElementById('invoice-no-invoice').readOnly = true; // Prevent changing invoice number
                     // Fill the form with existing data
                     document.getElementById('invoice-email-hard').value = invoiceData.emailHard || '';
@@ -2021,7 +2022,7 @@
                     document.getElementById('invoice-tgl-invoice').value = invoiceData.tglInvoice || '';
                     document.getElementById('invoice-surat-jalan').value = invoiceData.suratJalan || '';
                     document.getElementById('invoice-nama-vendor').value = invoiceData.namaVendor || '';
-                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || '';
+                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || ''; // <--- Tampilkan raw No Invoice
                 } else {
                     showAlert('Invoice tidak ditemukan.', 'error');
                 }
@@ -2029,27 +2030,30 @@
 
             // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) ---
             document.getElementById('add-edit-faktur-pajak-btn').addEventListener('click', function() {
-                window.openModal('faktur-pajak-modal', this.dataset.invoiceNo); // Use window.openModal
+                window.openModal('faktur-pajak-modal', this.dataset.invoiceNo); // Kirim raw No Invoice
             });
             document.getElementById('add-edit-pembayaran-btn').addEventListener('click', function() {
-                window.openModal('pembayaran-modal', this.dataset.invoiceNo); // Use window.openModal
+                window.openModal('pembayaran-modal', this.dataset.invoiceNo); // Kirim raw No Invoice
             });
             document.getElementById('add-edit-keterangan-btn').addEventListener('click', function() {
-                window.openModal('keterangan-modal', this.dataset.invoiceNo); // Use window.openModal
+                window.openModal('keterangan-modal', this.dataset.invoiceNo); // Kirim raw No Invoice
             });
 
             // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
             document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
                 window.openModal('faktur-pajak-modal'); // Use window.openModal
                 document.getElementById('fp-no-invoice').readOnly = false; // Allow input for new invoice for new entry
+                document.getElementById('fp-no-invoice').value = ''; // Bersihkan input
             });
             document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
                 window.openModal('pembayaran-modal'); // Use window.openModal
                 document.getElementById('pembayaran-no-invoice').readOnly = false; // Allow input for new entry
+                document.getElementById('pembayaran-no-invoice').value = ''; // Bersihkan input
             });
             document.getElementById('add-keterangan-standalone-btn').addEventListener('click', function() {
                 window.openModal('keterangan-modal'); // Use window.openModal
                 document.getElementById('keterangan-no-invoice').readOnly = false; // Allow input for new entry
+                document.getElementById('keterangan-no-invoice').value = ''; // Bersihkan input
             });
 
             // --- Search functionality for standalone modals ---
@@ -2059,11 +2063,12 @@
 
                 if (searchBtn && searchInput) {
                     searchBtn.addEventListener('click', async function() {
-                        const invoiceNo = searchInput.value.trim();
-                        if (invoiceNo) {
-                            const invoiceDoc = await invoicesCol.doc(invoiceNo).get();
+                        const rawInvoiceNo = searchInput.value.trim();
+                        if (rawInvoiceNo) {
+                            const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                            const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                             if (invoiceDoc.exists) {
-                                window.openModal(modalId, invoiceNo); // Pass invoiceNo to openModal
+                                window.openModal(modalId, rawInvoiceNo); // Pass rawInvoiceNo to openModal
                             } else {
                                 showAlert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.', 'error');
                             }
@@ -2080,7 +2085,7 @@
 
 
             // --- Fill Modal with Existing Data (for edit) ---
-            async function fillModalWithExistingData(modalId, invoiceNo) {
+            async function fillModalWithExistingData(modalId, rawInvoiceNo) { // <--- Terima raw No Invoice
                 let dataToFill = {};
                 let collectionRef;
 
@@ -2101,7 +2106,8 @@
                         return;
                 }
 
-                const existingDocQuery = await collectionRef.where('noInvoice', '==', invoiceNo).limit(1).get();
+                // Query menggunakan field 'noInvoice' yang menyimpan nilai asli
+                const existingDocQuery = await collectionRef.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                 if (!existingDocQuery.empty) {
                     dataToFill = existingDocQuery.docs[0].data();
                 }
@@ -2133,7 +2139,7 @@
                         calculateLamaPengajuan(); // Recalculate after filling dates
                         break;
                     case 'status-modal': // Isi status-modal
-                        document.getElementById('status-no-invoice').value = invoiceNo;
+                        document.getElementById('status-no-invoice').value = rawInvoiceNo; // <--- Tampilkan raw No Invoice
                         document.getElementById('status-manual-select').value = dataToFill.statusAkhir || '';
                         break;
                 }
@@ -2142,15 +2148,16 @@
             // --- Form Submissions (Firestore) ---
             document.getElementById('faktur-pajak-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const noInvoice = document.getElementById('fp-no-invoice').value;
+                const rawNoInvoice = document.getElementById('fp-no-invoice').value; // Ini adalah raw No Invoice
                 const formData = {
-                    noInvoice: noInvoice,
+                    noInvoice: rawNoInvoice, // Simpan nilai asli di field 'noInvoice'
                     tglFakturPajak: document.getElementById('fp-tgl-faktur-pajak').value,
                     noFakturPajak: document.getElementById('fp-no-faktur-pajak').value,
                 };
 
                 try {
-                    const existingDocQuery = await fakturPajakCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    // Query menggunakan field 'noInvoice' yang menyimpan nilai asli
+                    const existingDocQuery = await fakturPajakCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                     if (!existingDocQuery.empty) {
                         await fakturPajakCol.doc(existingDocQuery.docs[0].id).update(formData);
                     } else {
@@ -2160,7 +2167,7 @@
                     closeModal('faktur-pajak-modal');
                     // loadInvoicesToTable(); // Refresh table - handled by realtime listener
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(noInvoice); // Refresh detail view if open
+                        displayInvoiceDetail(rawNoInvoice); // Refresh detail view if open
                     }
                 } catch (error) {
                     console.error("Error saving Faktur Pajak: ", error);
@@ -2170,12 +2177,12 @@
 
             document.getElementById('pembayaran-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const noInvoice = document.getElementById('pembayaran-no-invoice').value;
+                const rawNoInvoice = document.getElementById('pembayaran-no-invoice').value; // Ini adalah raw No Invoice
                 const dppIdrRaw = document.getElementById('pembayaran-dpp-idr').value.replace(/[^0-9]/g, ''); // Remove non-numeric for storage
                 const ppnIdrRaw = document.getElementById('pembayaran-ppn-idr').value.replace(/[^0-9]/g, ''); // Remove non-numeric for storage
 
                 const formData = {
-                    noInvoice: noInvoice,
+                    noInvoice: rawNoInvoice, // Simpan nilai asli di field 'noInvoice'
                     dppIdr: dppIdrRaw,
                     ppnIdr: ppnIdrRaw,
                     dppUsd: document.getElementById('pembayaran-dpp-usd').value,
@@ -2187,7 +2194,8 @@
                 };
 
                 try {
-                    const existingDocQuery = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    // Query menggunakan field 'noInvoice' yang menyimpan nilai asli
+                    const existingDocQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                     if (!existingDocQuery.empty) {
                         await pembayaranCol.doc(existingDocQuery.docs[0].id).update(formData);
                     } else {
@@ -2197,7 +2205,7 @@
                     closeModal('pembayaran-modal');
                     // loadInvoicesToTable(); // Refresh table - handled by realtime listener
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(noInvoice); // Refresh detail view if open
+                        displayInvoiceDetail(rawNoInvoice); // Refresh detail view if open
                     }
                 } catch (error) {
                     console.error("Error saving Pembayaran: ", error);
@@ -2207,13 +2215,15 @@
 
             document.getElementById('keterangan-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const noInvoice = document.getElementById('keterangan-no-invoice').value;
+                const rawNoInvoice = document.getElementById('keterangan-no-invoice').value; // Ini adalah raw No Invoice
 
                 // Fetch existing invoice and pembayaran data to calculate status
-                const invoiceDoc = await invoicesCol.doc(noInvoice).get();
+                const invoiceNoDocId = sanitizeInvoiceNo(rawNoInvoice); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                 const invoiceData = invoiceDoc.exists ? invoiceDoc.data() : {};
 
-                const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                // Query sub-koleksi menggunakan nilai 'noInvoice' yang asli
+                const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                 const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
                 const newTglBayar = document.getElementById('keterangan-tgl-bayar').value;
@@ -2223,7 +2233,7 @@
                 const newStatusAkhir = calculateStatus(invoiceData.tglDiterima, pembayaranData.jatuhTempo, newTglBayar, selectedManualStatus);
 
                 const formData = {
-                    noInvoice: noInvoice,
+                    noInvoice: rawNoInvoice, // Simpan nilai asli di field 'noInvoice'
                     tglPengajuanFinance: document.getElementById('keterangan-tgl-pengajuan-finance').value,
                     tglPengajuanReni: document.getElementById('keterangan-tgl-pengajuan-reni').value,
                     tglDiterimaAnggi: document.getElementById('keterangan-tgl-diterima-anggi').value,
@@ -2234,7 +2244,8 @@
                 };
 
                 try {
-                    const existingDocQuery = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    // Query menggunakan field 'noInvoice' yang menyimpan nilai asli
+                    const existingDocQuery = await keteranganCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                     if (!existingDocQuery.empty) {
                         await keteranganCol.doc(existingDocQuery.docs[0].id).update(formData);
                     } else {
@@ -2244,7 +2255,7 @@
                     closeModal('keterangan-modal');
                     // loadInvoicesToTable(); // Refresh table - handled by realtime listener
                     if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(noInvoice); // Refresh detail view if open
+                        displayInvoiceDetail(rawNoInvoice); // Refresh detail view if open
                     }
                 } catch (error) {
                     console.error("Error saving Keterangan: ", error);
@@ -2289,9 +2300,9 @@
 
             async function calculateJatuhTempo() {
                 const topValue = parseInt(pembayaranTopInput.value, 10); // Parse as integer
-                const noInvoice = document.getElementById('pembayaran-no-invoice').value;
+                const rawNoInvoice = document.getElementById('pembayaran-no-invoice').value; // Ini adalah raw No Invoice
 
-                if (isNaN(topValue) || topValue <= 0 || !noInvoice) {
+                if (isNaN(topValue) || topValue <= 0 || !rawNoInvoice) {
                     pembayaranJatuhTempoInput.value = ''; // Clear if TOP is invalid or no invoice selected
                     return;
                 }
@@ -2303,9 +2314,10 @@
                 if (tempInvoiceTglDiterimaInput && tempInvoiceTglDiterimaInput.value) {
                     tglDiterimaInvoice = tempInvoiceTglDiterimaInput.value;
                 } else {
-                    // Fetch tglDiterima from the invoices collection using noInvoice
+                    // Fetch tglDiterima from the invoices collection using sanitized No Invoice
                     try {
-                        const invoiceDoc = await invoicesCol.doc(noInvoice).get();
+                        const invoiceNoDocId = sanitizeInvoiceNo(rawNoInvoice); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                        const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                         if (invoiceDoc.exists) {
                             tglDiterimaInvoice = invoiceDoc.data().tglDiterima || '';
                         }
@@ -2518,8 +2530,8 @@
             const statusManualSelect = document.getElementById('status-manual-select');
             const statusForm = document.getElementById('status-form');
 
-            async function openStatusModal(invoiceNo, currentStatus) {
-                statusNoInvoiceInput.value = invoiceNo;
+            async function openStatusModal(rawInvoiceNo, currentStatus) { // <--- Terima raw No Invoice
+                statusNoInvoiceInput.value = rawInvoiceNo; // <--- Tampilkan raw No Invoice
                 statusNoInvoiceInput.readOnly = true; // Ensure it's always readonly
                 statusManualSelect.value = currentStatus || ''; // Set current status
                 statusModal.style.display = 'flex';
@@ -2527,12 +2539,12 @@
 
             statusForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const noInvoice = statusNoInvoiceInput.value;
+                const rawNoInvoice = statusNoInvoiceInput.value; // Ini adalah raw No Invoice
                 const newManualStatus = statusManualSelect.value;
 
                 try {
-                    // Fetch existing keterangan data
-                    const keteranganQuery = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    // Fetch existing keterangan data using rawNoInvoice
+                    const keteranganQuery = await keteranganCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                     let keteranganDocRef;
                     let existingKeteranganData = {};
 
@@ -2543,18 +2555,19 @@
                         // If no existing keterangan, create a new one
                         // We need to ensure the document exists before updating statusAkhir
                         // For simplicity, we'll add a new doc with minimal info if not found
-                        // In a real app, you might want to prompt the user to add full keterangan first
-                        await keteranganCol.add({ noInvoice: noInvoice, statusAkhir: newManualStatus });
+                        await keteranganCol.add({ noInvoice: rawNoInvoice, statusAkhir: newManualStatus });
                         showAlert('Keterangan baru dibuat dan status diperbarui!', 'success');
                         closeModal('status-modal');
                         return; // Exit after adding new doc
                     }
 
                     // Fetch invoice and pembayaran data to recalculate status
-                    const invoiceDoc = await invoicesCol.doc(noInvoice).get();
+                    const invoiceNoDocId = sanitizeInvoiceNo(rawNoInvoice); // <--- SANITASI UNTUK MENGAMBIL DOKUMEN UTAMA
+                    const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get(); // <--- Gunakan ID dokumen yang disanitasi
                     const invoiceData = invoiceDoc.exists ? invoiceDoc.data() : {};
 
-                    const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    // Query sub-koleksi menggunakan nilai 'noInvoice' yang asli
+                    const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                     const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
                     // Calculate the final status using the new manual status as currentStatus
