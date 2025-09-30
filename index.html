@@ -35,11 +35,16 @@
             background-color: #f1f5f9;
             color: #334155;
             line-height: 1.6;
+            /* Menyesuaikan layout agar 90% di Chrome */
+            width: 90%; /* Mengatur lebar body menjadi 90% */
+            margin: 0 auto; /* Memusatkan body */
+            min-height: 100vh; /* Memastikan body tetap memiliki tinggi minimum */
         }
 
         .container {
             display: flex;
             min-height: 100vh;
+            width: 100%; /* Container mengambil 100% dari body (yang sudah 90%) */
         }
 
         /* Sidebar Styles */
@@ -258,12 +263,22 @@
             background-color: #f8fafc;
         }
 
-        .status {
+        .status-button { /* Gaya untuk tombol status */
             display: inline-block;
             padding: 0.35rem 0.75rem;
             border-radius: 1rem;
             font-size: 0.875rem;
             font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent; /* Border transparan agar tidak ada perubahan layout saat hover */
+            transition: all 0.2s ease;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .status-button:hover {
+            opacity: 0.9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .status-paid {
@@ -280,6 +295,24 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+        /* Tambahkan gaya untuk status lain jika diperlukan */
+        .status-diajukan-finance {
+            background-color: #bfdbfe; /* light blue */
+            color: #1e40af; /* dark blue */
+        }
+        .status-diterima-anggi {
+            background-color: #dbeafe; /* lighter blue */
+            color: #1e3a8a; /* darker blue */
+        }
+        .status-dibatalkan {
+            background-color: #fecaca; /* light red */
+            color: #b91c1c; /* dark red */
+        }
+        .status-belum-diproses {
+            background-color: #e2e8f0; /* light gray */
+            color: #475569; /* dark gray */
+        }
+
 
         .action-cell {
             display: flex;
@@ -406,6 +439,7 @@
             border-radius: 0.5rem;
             font-family: inherit;
             font-size: 0.95rem;
+            width: 100%;
         }
 
         .form-group textarea {
@@ -455,6 +489,9 @@
 
         /* Responsive Styles */
         @media (max-width: 1024px) {
+            body {
+                width: 100%; /* Full width on smaller screens */
+            }
             .container {
                 flex-direction: column;
             }
@@ -871,9 +908,15 @@
             const rowsHtml = [];
 
             paginatedData.forEach(invoice => {
-                const statusClass = invoice.Status === 'Dibayar' ? 'status-paid' :
-                                    (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(invoice.Status) ? 'status-pending' :
-                                    (invoice.Status === 'Jatuh Tempo' ? 'status-overdue' : ''));
+                let statusClass = '';
+                if (invoice.Status === 'Dibayar') statusClass = 'status-paid';
+                else if (['Menunggu Pembayaran'].includes(invoice.Status)) statusClass = 'status-pending';
+                else if (invoice.Status === 'Jatuh Tempo') statusClass = 'status-overdue';
+                else if (['Diajukan ke Finance'].includes(invoice.Status)) statusClass = 'status-diajukan-finance';
+                else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
+                else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
+                else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-belum-diproses';
+
 
                 rowsHtml.push(`
                     <tr data-invoice-id="${invoice.No_Invoice}">
@@ -885,7 +928,11 @@
                         <td><a href="#" class="view-invoice-detail" data-invoice-no="${invoice.No_Invoice}">${invoice.No_Invoice}</a></td>
                         <td>${invoice.Nama_Vendor || '-'}</td>
                         <td>${invoice.DPP_IDR}</td>
-                        <td><span class="status ${statusClass}">${invoice.Status}</span></td>
+                        <td>
+                            <button class="status-button ${statusClass}" data-invoice-no="${invoice.No_Invoice}" data-current-status="${invoice.Status}">
+                                ${invoice.Status}
+                            </button>
+                        </td>
                         <td class="action-cell">
                             <button class="action-btn edit-invoice-btn" data-invoice-no="${invoice.No_Invoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
                             <button class="action-btn delete-invoice-btn" data-invoice-no="${invoice.No_Invoice}" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
@@ -1761,6 +1808,15 @@
                         const invoiceNo = deleteBtn.dataset.invoiceNo; // Correctly get invoiceNo
                         deleteInvoice(invoiceNo);
                     }
+
+                    // Handle Status Button click
+                    const statusButton = e.target.closest('.status-button');
+                    if (statusButton) {
+                        e.preventDefault();
+                        const invoiceNo = statusButton.dataset.invoiceNo;
+                        const currentStatus = statusButton.dataset.currentStatus;
+                        openStatusModal(invoiceNo, currentStatus);
+                    }
                 });
             }
 
@@ -1919,6 +1975,9 @@
                     case 'keterangan-modal':
                         collectionRef = keteranganCol;
                         break;
+                    case 'status-modal': // Tambahkan case untuk status-modal
+                        collectionRef = keteranganCol; // Status disimpan di koleksi keterangan
+                        break;
                     default:
                         return;
                 }
@@ -1953,6 +2012,10 @@
                         document.getElementById('keterangan-tgl-bayar').value = dataToFill.tglBayar || '';
                         document.getElementById('keterangan-status-akhir').value = dataToFill.statusAkhir || '';
                         calculateLamaPengajuan(); // Recalculate after filling dates
+                        break;
+                    case 'status-modal': // Isi status-modal
+                        document.getElementById('status-no-invoice').value = invoiceNo;
+                        document.getElementById('status-manual-select').value = dataToFill.statusAkhir || '';
                         break;
                 }
             }
@@ -2259,6 +2322,76 @@
             // Setup Rupiah formatting for relevant inputs
             setupRupiahInput('pembayaran-dpp-idr');
             setupRupiahInput('pembayaran-ppn-idr');
+
+            // --- Status Modal Specifics ---
+            const statusModal = document.getElementById('status-modal');
+            const statusNoInvoiceInput = document.getElementById('status-no-invoice');
+            const statusManualSelect = document.getElementById('status-manual-select');
+            const statusForm = document.getElementById('status-form');
+
+            async function openStatusModal(invoiceNo, currentStatus) {
+                statusNoInvoiceInput.value = invoiceNo;
+                statusNoInvoiceInput.readOnly = true; // Ensure it's always readonly
+                statusManualSelect.value = currentStatus || ''; // Set current status
+                statusModal.style.display = 'flex';
+            }
+
+            statusForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const noInvoice = statusNoInvoiceInput.value;
+                const newManualStatus = statusManualSelect.value;
+
+                try {
+                    // Fetch existing keterangan data
+                    const keteranganQuery = await keteranganCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    let keteranganDocRef;
+                    let existingKeteranganData = {};
+
+                    if (!keteranganQuery.empty) {
+                        keteranganDocRef = keteranganQuery.docs[0].ref;
+                        existingKeteranganData = keteranganQuery.docs[0].data();
+                    } else {
+                        // If no existing keterangan, create a new one
+                        keteranganDocRef = keteranganCol.doc(); // Firestore will generate a new ID
+                    }
+
+                    // Fetch invoice and pembayaran data to recalculate status
+                    const invoiceDoc = await invoicesCol.doc(noInvoice).get();
+                    const invoiceData = invoiceDoc.exists ? invoiceDoc.data() : {};
+
+                    const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', noInvoice).limit(1).get();
+                    const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
+
+                    // Calculate the final status using the new manual status as currentStatus
+                    const finalStatus = calculateStatus(
+                        invoiceData.tglDiterima,
+                        pembayaranData.jatuhTempo,
+                        existingKeteranganData.tglBayar, // Use existing tglBayar
+                        newManualStatus // Pass the manually selected status
+                    );
+
+                    const updateData = {
+                        noInvoice: noInvoice,
+                        statusAkhir: finalStatus,
+                        // Merge with existing data to preserve other fields
+                        ...existingKeteranganData,
+                        statusAkhir: finalStatus
+                    };
+
+                    if (existingDocQuery.empty) {
+                        await keteranganCol.add(updateData); // Add new document if it didn't exist
+                    } else {
+                        await keteranganDocRef.update(updateData); // Update existing document
+                    }
+
+                    showAlert('Status invoice berhasil diperbarui!', 'success');
+                    closeModal('status-modal');
+                    // loadInvoicesToTable(); // Realtime listener will handle this
+                } catch (error) {
+                    console.error("Error updating invoice status: ", error);
+                    showAlert("Gagal memperbarui status invoice: " + error.message, 'error');
+                }
+            });
         });
     </script>
 
@@ -2808,6 +2941,38 @@
             </form>
         </div>
     </div>
+
+    <!-- NEW Modal for Manual Status Update -->
+    <div id="status-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Ubah Status Invoice Manual</h2>
+            <form id="status-form">
+                <div class="form-group">
+                    <label for="status-no-invoice">No Invoice</label>
+                    <input type="text" id="status-no-invoice" class="filter-input" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="status-manual-select">Pilih Status Manual</label>
+                    <select id="status-manual-select" class="filter-input" required>
+                        <option value="">Pilih Status</option>
+                        <option value="Menunggu Pengajuan">Menunggu Pengajuan</option>
+                        <option value="Diajukan ke Finance">Diajukan ke Finance</option>
+                        <option value="Diterima Anggi">Diterima Anggi</option>
+                        <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+                        <option value="Dibayar">Dibayar</option>
+                        <option value="Jatuh Tempo">Jatuh Tempo</option>
+                        <option value="Dibatalkan">Dibatalkan</option>
+                        <option value="Belum Diproses">Belum Diproses</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Simpan Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Custom Alert Box -->
     <div id="custom-alert-box" class="custom-alert"></div>
 </body>
