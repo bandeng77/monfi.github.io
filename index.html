@@ -865,7 +865,7 @@
         let allInvoiceNumbers = [];
         let allInvoiceData = [];
         let filteredInvoiceData = []; // New array for filtered data
-        let currentPage = 1;
+        window.currentPage = 1; // Make currentPage global
         const itemsPerPage = 10; // Number of items per page
 
         // Global variables to store unsubscribe functions for realtime listeners
@@ -971,7 +971,7 @@
                 return;
             }
 
-            const startIndex = (currentPage - 1) * itemsPerPage;
+            const startIndex = (window.currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             const paginatedData = data.slice(startIndex, endIndex);
 
@@ -1012,7 +1012,7 @@
                 `);
             });
             invoiceTableBody.innerHTML = rowsHtml.join('');
-            renderPagination(data.length, currentPage);
+            renderPagination(data.length, window.currentPage); // Gunakan window.currentPage
         }
 
         // --- Render Pagination Controls ---
@@ -1020,7 +1020,7 @@
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             const pageControls = document.querySelector('.pagination .page-controls');
             const pageInfo = document.querySelector('.pagination .page-info');
-            pageControls.innerHTML = '';
+            pageControls.innerHTML = ''; // Bersihkan tombol paginasi yang ada
 
             if (totalItems === 0) {
                 pageInfo.textContent = 'Menampilkan 0-0 dari 0 data';
@@ -1037,8 +1037,8 @@
             prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
             prevBtn.disabled = currentPage === 1;
             prevBtn.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
+                if (window.currentPage > 1) { // Gunakan window.currentPage
+                    window.currentPage--; // Gunakan window.currentPage
                     renderInvoicesTable(filteredInvoiceData);
                 }
             });
@@ -1058,7 +1058,7 @@
                 firstPageBtn.className = 'page-btn';
                 firstPageBtn.textContent = '1';
                 firstPageBtn.addEventListener('click', () => {
-                    currentPage = 1;
+                    window.currentPage = 1; // Gunakan window.currentPage
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(firstPageBtn);
@@ -1074,7 +1074,7 @@
                 pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
                 pageBtn.textContent = i;
                 pageBtn.addEventListener('click', () => {
-                    currentPage = i;
+                    window.currentPage = i; // Gunakan window.currentPage
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(pageBtn);
@@ -1090,7 +1090,7 @@
                 lastPageBtn.className = 'page-btn';
                 lastPageBtn.textContent = totalPages;
                 lastPageBtn.addEventListener('click', () => {
-                    currentPage = totalPages;
+                    window.currentPage = totalPages; // Gunakan window.currentPage
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(lastPageBtn);
@@ -1102,8 +1102,8 @@
             nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
             nextBtn.disabled = currentPage === totalPages;
             nextBtn.addEventListener('click', () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
+                if (window.currentPage < totalPages) { // Gunakan window.currentPage
+                    window.currentPage++; // Gunakan window.currentPage
                     renderInvoicesTable(filteredInvoiceData);
                 }
             });
@@ -1252,7 +1252,7 @@
                 return matches;
             });
 
-            currentPage = 1; // Reset to first page after applying filters
+            window.currentPage = 1; // Reset to first page after applying filters
             renderInvoicesTable(filteredInvoiceData);
         }
 
