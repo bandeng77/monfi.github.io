@@ -35,16 +35,15 @@
             background-color: #f1f5f9;
             color: #334155;
             line-height: 1.6;
-            /* Menyesuaikan layout agar 90% di Chrome */
-            width: 90%; /* Mengatur lebar body menjadi 90% */
-            margin: 0 auto; /* Memusatkan body */
-            min-height: 100vh; /* Memastikan body tetap memiliki tinggi minimum */
+            width: 90%;
+            margin: 0 auto;
+            min-height: 100vh;
         }
 
         .container {
             display: flex;
             min-height: 100vh;
-            width: 100%; /* Container mengambil 100% dari body (yang sudah 90%) */
+            width: 100%;
         }
 
         /* Sidebar Styles */
@@ -55,13 +54,13 @@
             padding: 1.5rem 1rem;
             display: flex;
             flex-direction: column;
-            transition: width 0.3s ease; /* Transisi untuk lebar sidebar */
-            position: relative; /* Untuk tombol toggle */
-            flex-shrink: 0; /* Mencegah sidebar menyusut lebih jauh */
+            transition: width 0.3s ease;
+            position: relative;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed {
-            width: 60px; /* Lebar sidebar saat diperkecil */
+            width: 60px;
         }
 
         .logo {
@@ -78,19 +77,19 @@
         }
 
         .sidebar.collapsed .logo-icon {
-            margin-right: 0; /* Hapus margin saat collapsed */
+            margin-right: 0;
         }
 
         .logo-text {
             font-weight: 700;
             font-size: 1.25rem;
             color: var(--dark);
-            transition: opacity 0.3s ease; /* Transisi untuk teks logo */
+            transition: opacity 0.3s ease;
         }
 
         .sidebar.collapsed .logo-text {
-            opacity: 0; /* Sembunyikan teks logo */
-            width: 0; /* Pastikan tidak memakan ruang */
+            opacity: 0;
+            width: 0;
             overflow: hidden;
         }
 
@@ -123,17 +122,17 @@
         }
 
         .sidebar.collapsed .nav-icon {
-            margin-right: 0; /* Hapus margin saat collapsed */
+            margin-right: 0;
         }
 
         .nav-text {
             font-weight: 500;
-            transition: opacity 0.3s ease; /* Transisi untuk teks navigasi */
+            transition: opacity 0.3s ease;
         }
 
         .sidebar.collapsed .nav-text {
-            opacity: 0; /* Sembunyikan teks navigasi */
-            width: 0; /* Pastikan tidak memakan ruang */
+            opacity: 0;
+            width: 0;
             overflow: hidden;
         }
 
@@ -141,7 +140,7 @@
         .sidebar-toggle {
             position: absolute;
             top: 1.5rem;
-            right: -12px; /* Setengah dari lebar tombol agar terlihat di luar sidebar */
+            right: -12px;
             background-color: var(--primary);
             color: white;
             border: none;
@@ -158,8 +157,8 @@
         }
 
         .sidebar.collapsed .sidebar-toggle {
-            right: -12px; /* Tetap di posisi yang sama relatif terhadap sidebar yang diperkecil */
-            transform: rotate(180deg); /* Putar ikon saat collapsed */
+            right: -12px;
+            transform: rotate(180deg);
         }
 
         /* Main Content Styles */
@@ -167,7 +166,7 @@
             flex: 1;
             padding: 2rem;
             overflow-y: auto;
-            transition: margin-left 0.3s ease; /* Transisi untuk main content jika diperlukan */
+            transition: margin-left 0.3s ease;
         }
 
         /* Header Styles */
@@ -282,7 +281,7 @@
 
         /* Table Styles */
         .table-container {
-            overflow-x: auto; /* Keep overflow-x for very narrow screens or many columns */
+            overflow-x: auto;
             border-radius: 0.5rem;
             border: 1px solid var(--border);
         }
@@ -290,15 +289,14 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            /* Remove min-width to allow table to shrink */
-            table-layout: auto; /* Allow browser to determine column widths */
+            table-layout: auto;
         }
 
         th, td {
             padding: 0.875rem 1rem;
             text-align: left;
             border-bottom: 1px solid var(--border);
-            word-wrap: break-word; /* Allow long text to wrap */
+            word-wrap: break-word;
         }
 
         th {
@@ -319,14 +317,14 @@
             background-color: #f8fafc;
         }
 
-        .status-button { /* Gaya untuk tombol status */
+        .status-button {
             display: inline-block;
             padding: 0.35rem 0.75rem;
             border-radius: 1rem;
             font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
-            border: 1px solid transparent; /* Border transparan agar tidak ada perubahan layout saat hover */
+            border: 1px solid transparent;
             transition: all 0.2s ease;
             text-align: center;
             white-space: nowrap;
@@ -351,29 +349,31 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
-        /* Tambahkan gaya untuk status lain jika diperlukan */
+
         .status-diajukan-finance {
-            background-color: #bfdbfe; /* light blue */
-            color: #1e40af; /* dark blue */
-        }
-        .status-diterima-anggi {
-            background-color: #dbeafe; /* lighter blue */
-            color: #1e3a8a; /* darker blue */
-        }
-        .status-dibatalkan {
-            background-color: #fecaca; /* light red */
-            color: #b91c1c; /* dark red */
-        }
-        .status-belum-diproses, .status-menunggu-pengajuan { /* Gabungkan gaya untuk status serupa */
-            background-color: #e2e8f0; /* light gray */
-            color: #475569; /* dark gray */
+            background-color: #bfdbfe;
+            color: #1e40af;
         }
 
+        .status-diterima-anggi {
+            background-color: #dbeafe;
+            color: #1e3a8a;
+        }
+
+        .status-dibatalkan {
+            background-color: #fecaca;
+            color: #b91c1c;
+        }
+
+        .status-belum-diproses, .status-menunggu-pengajuan {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
 
         .action-cell {
             display: flex;
             gap: 0.5rem;
-            white-space: nowrap; /* Prevent action buttons from wrapping */
+            white-space: nowrap;
         }
 
         .action-btn {
@@ -431,15 +431,15 @@
 
         /* Modal Styles */
         .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
+            display: none;
+            position: fixed;
+            z-index: 1000;
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
             justify-content: center;
             align-items: center;
         }
@@ -452,8 +452,8 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             width: 90%;
             max-width: 700px;
-            max-height: 90vh; /* Set max-height to 90% of viewport height */
-            overflow-y: auto; /* Enable vertical scrolling for content if needed */
+            max-height: 90vh;
+            overflow-y: auto;
             position: relative;
         }
 
@@ -533,7 +533,7 @@
         }
 
         .detail-item strong {
-            width: 180px; /* Fixed width for labels */
+            width: 180px;
             flex-shrink: 0;
             color: var(--dark);
         }
@@ -541,126 +541,6 @@
         .detail-item span {
             flex-grow: 1;
             color: var(--secondary);
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 1024px) {
-            body {
-                width: 100%; /* Full width on smaller screens */
-            }
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid var(--border);
-                padding: 1rem;
-            }
-            
-            .nav-menu {
-                display: flex;
-                overflow-x: auto;
-                gap: 0.5rem;
-                padding-bottom: 0.5rem;
-            }
-            
-            .nav-item {
-                margin-bottom: 0;
-                white-space: nowrap;
-            }
-
-            .sidebar-toggle {
-                display: none; /* Sembunyikan tombol toggle di mode responsif vertikal */
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .filter-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .pagination {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .detail-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .detail-item strong {
-                width: auto;
-                margin-bottom: 0.25rem;
-            }
-
-            /* Adjust table for smaller screens */
-            .table-container {
-                overflow-x: auto; /* Ensure scrollbar appears if content is too wide */
-            }
-
-            table {
-                min-width: 600px; /* Set a minimum width for the table on small screens */
-            }
-
-            .page-controls {
-                flex-wrap: wrap; /* Allow pagination buttons to wrap */
-                justify-content: center;
-            }
-        }
-
-        /* Login/Register Form Styles */
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f1f5f9;
-        }
-
-        .auth-card {
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 2rem;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .auth-card h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 1.5rem;
-        }
-
-        .auth-card .form-group {
-            text-align: left;
-        }
-
-        .auth-card .btn {
-            width: 100%;
-            margin-top: 1rem;
-        }
-
-        .auth-card .error-message {
-            color: var(--danger);
-            margin-top: 1rem;
-            font-size: 0.9rem;
         }
 
         /* Autocomplete Styles */
@@ -671,16 +551,17 @@
         }
 
         .autocomplete-items {
+            position: absolute;
             border: 1px solid var(--border);
             border-bottom: none;
             border-top: none;
             z-index: 99;
-            /*position the autocomplete items to be the same width as the input:*/
             top: 100%;
             left: 0;
             right: 0;
-            max-height: 200px; /* Limit height */
-            overflow-y: auto; /* Add scroll if needed */
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
         }
 
         .autocomplete-items div {
@@ -691,12 +572,10 @@
         }
 
         .autocomplete-items div:hover {
-            /*when hovering an item:*/
             background-color: var(--hover);
         }
 
         .autocomplete-active {
-            /*when navigating through the items using the arrow keys:*/
             background-color: var(--primary) !important;
             color: #ffffff;
         }
@@ -771,17 +650,16 @@
         }
 
         /* Specific colors for summary items */
-        .summary-item:nth-child(1) .summary-value { color: var(--dark); } /* Total Invoice */
-        .summary-item:nth-child(2) .summary-value { color: var(--success); } /* Paid */
-        .summary-item:nth-child(3) .summary-value { color: var(--warning); } /* Pending */
-        .summary-item:nth-child(4) .summary-value { color: var(--primary); } /* Submission Pending */
-        .summary-item:nth-child(5) .summary-value { color: var(--danger); } /* Overdue */
-
+        .summary-item:nth-child(1) .summary-value { color: var(--dark); }
+        .summary-item:nth-child(2) .summary-value { color: var(--success); }
+        .summary-item:nth-child(3) .summary-value { color: var(--warning); }
+        .summary-item:nth-child(4) .summary-value { color: var(--primary); }
+        .summary-item:nth-child(5) .summary-value { color: var(--danger); }
 
         /* Settings Layout */
         .settings-layout {
             display: flex;
-            justify-content: center; /* Center the card */
+            justify-content: center;
             padding-top: 1rem;
         }
 
@@ -791,16 +669,84 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             padding: 2rem;
             width: 100%;
-            max-width: 500px; /* Adjust max-width as needed */
+            max-width: 500px;
         }
 
-        /* Responsive adjustments for settings */
-        @media (max-width: 768px) {
-            .settings-layout {
-                padding-top: 0; /* Remove padding on small screens */
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            body {
+                width: 100%;
             }
-            .settings-card {
-                padding: 1.5rem;
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1rem;
+            }
+            
+            .nav-menu {
+                display: flex;
+                overflow-x: auto;
+                gap: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+            
+            .nav-item {
+                margin-bottom: 0;
+                white-space: nowrap;
+            }
+
+            .sidebar-toggle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .filter-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-item strong {
+                width: auto;
+                margin-bottom: 0.25rem;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 600px;
+            }
+
+            .page-controls {
+                flex-wrap: wrap;
+                justify-content: center;
             }
         }
     </style>
@@ -845,7 +791,7 @@
             }
 
             alertBox.textContent = message;
-            alertBox.className = `custom-alert ${type}`; // Reset classes and add new type
+            alertBox.className = `custom-alert ${type}`;
             alertBox.style.display = 'block';
 
             // Trigger reflow to ensure transition plays
@@ -864,14 +810,140 @@
         // Global variables for invoice data and autocomplete
         let allInvoiceNumbers = [];
         let allInvoiceData = [];
-        let filteredInvoiceData = []; // New array for filtered data
-        window.currentPage = 1; // Make currentPage global
-        const itemsPerPage = 10; // Number of items per page
+        let filteredInvoiceData = [];
+        window.currentPage = 1;
+        const itemsPerPage = 10;
 
         // Global variables to store unsubscribe functions for realtime listeners
         window.invoiceUnsubscribe = null;
         window.dashboardUnsubscribe = null;
-        window.reportUnsubscribe = null; // If you decide to re-enable reports
+        window.reportUnsubscribe = null;
+
+        // Global variables for vendor data
+        let allVendorNames = [];
+
+        // Load vendor data from JSON file
+        async function loadVendorData() {
+            try {
+                // Using a sample vendor list - replace with actual JSON file path
+                const sampleVendors = [
+                    "ALARM SUPPLY PTE LTD",
+                    "ALLTECH SOLUSINDO",
+                    "ALVASTA TEKNOLOGI",
+                    "ARSITA UTAMA INDONESIA",
+                    "ARSITA UTAMA INDONESIA. PT",
+                    "ARTA KENCANA PRIMA MANDIRI",
+                    "ASIA CIPTA MANAGEMENT",
+                    "AUSTRALINDO GRAHA NUSA",
+                    "BUANA SUKSES ABADI",
+                    "CIPTA KREASI MANDIRI",
+                    "DIGITAL SOLUSI INDONESIA",
+                    "ELANG PRIMA TEKNOLOGI",
+                    "FORTUNA GLOBAL TEKNOLOGI",
+                    "GARUDA TEKNOLOGI INDONESIA",
+                    "HARMONI BANGUN PERSADA",
+                    "INDO TEKNOLOGI SOLUSI",
+                    "JAYA ABADI SENTOSA",
+                    "KARYA UTAMA TEKNOLOGI",
+                    "LINTAS MEDIA SOLUSI",
+                    "MANDIRI TEKNOLOGI INDONESIA"
+                ];
+                
+                allVendorNames = sampleVendors;
+                setupVendorAutocomplete();
+                
+                // Uncomment the following lines if you have a vendors.json file
+                /*
+                const response = await fetch('vendors.json');
+                if (!response.ok) {
+                    throw new Error('Gagal memuat data vendor');
+                }
+                allVendorNames = await response.json();
+                setupVendorAutocomplete();
+                */
+            } catch (error) {
+                console.error("Error loading vendor data:", error);
+                showAlert("Gagal memuat data vendor: " + error.message, 'error');
+            }
+        }
+
+        // Setup vendor autocomplete
+        function setupVendorAutocomplete() {
+            const vendorInput = document.getElementById('invoice-nama-vendor');
+            if (vendorInput && allVendorNames.length > 0) {
+                autocomplete(vendorInput, allVendorNames);
+            }
+        }
+
+        // Enhanced autocomplete function to handle multiple fields
+        function autocomplete(inp, arr) {
+            var currentFocus;
+            inp.addEventListener("input", function(e) {
+                var a, b, i, val = this.value;
+                closeAllLists();
+                // Trigger autocomplete if at least 1 character is entered
+                if (val.length < 1) { return false;}
+                currentFocus = -1;
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(a);
+                for (i = 0; i < arr.length; i++) {
+                    if (arr[i].toUpperCase().includes(val.toUpperCase())) {
+                        b = document.createElement("DIV");
+                        const matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
+                        b.innerHTML = arr[i].substring(0, matchIndex) +
+                            "<strong>" + arr[i].substring(matchIndex, matchIndex + val.length) + "</strong>" +
+                            arr[i].substring(matchIndex + val.length);
+                        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                        b.addEventListener("click", function(e) {
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            closeAllLists();
+                        });
+                        a.appendChild(b);
+                    }
+                }
+            });
+            inp.addEventListener("keydown", function(e) {
+                var x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    currentFocus++;
+                    addActive(x);
+                } else if (e.keyCode == 38) { //arrow UP
+                    currentFocus--;
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            function addActive(x) {
+                if (!x) return false;
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+            function removeActive(x) {
+                for (var i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            function closeAllLists(elmnt) {
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+        }
 
         // --- Fungsi untuk membersihkan No Invoice agar aman digunakan sebagai ID dokumen Firestore ---
         function sanitizeInvoiceNo(invoiceNo) {
@@ -1001,7 +1073,7 @@
             renderPagination(data.length, window.currentPage); // Gunakan window.currentPage
         }
 
-        // --- Render Pagination Controls --- (tetap sama)
+        // --- Render Pagination Controls ---
         function renderPagination(totalItems, currentPage) {
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             const pageControls = document.querySelector('.pagination .page-controls');
@@ -1202,7 +1274,7 @@
             }
         }
 
-        // --- Apply Filters Function --- (tetap sama)
+        // --- Apply Filters Function ---
         function applyFilters() {
             const startDate = document.getElementById('filter-start-date').value;
             const endDate = document.getElementById('filter-end-date').value;
@@ -1444,77 +1516,7 @@
         }
 
 
-        // --- Autocomplete Function --- (tetap sama)
-        function autocomplete(inp, arr) {
-            var currentFocus;
-            inp.addEventListener("input", function(e) {
-                var a, b, i, val = this.value;
-                closeAllLists();
-                // Trigger autocomplete if at least 1 character is entered
-                if (val.length < 1) { return false;}
-                currentFocus = -1;
-                a = document.createElement("DIV");
-                a.setAttribute("id", this.id + "autocomplete-list");
-                a.setAttribute("class", "autocomplete-items");
-                this.parentNode.appendChild(a);
-                for (i = 0; i < arr.length; i++) {
-                    if (arr[i].toUpperCase().includes(val.toUpperCase())) {
-                        b = document.createElement("DIV");
-                        const matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
-                        b.innerHTML = arr[i].substring(0, matchIndex) +
-                            "<strong>" + arr[i].substring(matchIndex, matchIndex + val.length) + "</strong>" +
-                            arr[i].substring(matchIndex + val.length);
-                        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-                        b.addEventListener("click", function(e) {
-                            inp.value = this.getElementsByTagName("input")[0].value;
-                            closeAllLists();
-                        });
-                        a.appendChild(b);
-                    }
-                }
-            });
-            inp.addEventListener("keydown", function(e) {
-                var x = document.getElementById(this.id + "autocomplete-list");
-                if (x) x = x.getElementsByTagName("div");
-                if (e.keyCode == 40) {
-                    currentFocus++;
-                    addActive(x);
-                } else if (e.keyCode == 38) { //arrow UP
-                    currentFocus--;
-                    addActive(x);
-                } else if (e.keyCode == 13) {
-                    e.preventDefault();
-                    if (currentFocus > -1) {
-                        if (x) x[currentFocus].click();
-                    }
-                }
-            });
-            function addActive(x) {
-                if (!x) return false;
-                removeActive(x);
-                if (currentFocus >= x.length) currentFocus = 0;
-                if (currentFocus < 0) currentFocus = (x.length - 1);
-                x[currentFocus].classList.add("autocomplete-active");
-            }
-            function removeActive(x) {
-                for (var i = 0; i < x.length; i++) {
-                    x[i].classList.remove("autocomplete-active");
-                }
-            }
-            function closeAllLists(elmnt) {
-                var x = document.getElementsByClassName("autocomplete-items");
-                for (var i = 0; i < x.length; i++) {
-                    if (elmnt != x[i] && elmnt != inp) {
-                        x[i].parentNode.removeChild(x[i]);
-                    }
-                }
-            }
-            document.addEventListener("click", function (e) {
-                closeAllLists(e.target);
-            });
-        }
-
-        // Apply autocomplete to relevant input fields (tetap sama)
+        // Apply autocomplete to relevant input fields
         function setupAllAutocompletes() {
             const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
             const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
@@ -1527,7 +1529,7 @@
             if (filterSearchInput) autocomplete(filterSearchInput, allInvoiceNumbers);
         }
 
-        // --- Format Rupiah Function --- (tetap sama)
+        // --- Format Rupiah Function ---
         function formatRupiah(angka, prefix = '') {
             let number_string = angka.toString().replace(/[^,\d]/g, ''),
                 split = number_string.split(','),
@@ -1544,7 +1546,7 @@
             return prefix == undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
         }
 
-        // --- Event Listener for Rupiah Input Formatting --- (tetap sama)
+        // --- Event Listener for Rupiah Input Formatting ---
         function setupRupiahInput(inputId) {
             const inputElement = document.getElementById(inputId);
             if (inputElement) {
@@ -1558,7 +1560,7 @@
         }
 
 
-        // --- Authentication UI --- (tetap sama)
+        // --- Authentication UI ---
         const authContainer = document.createElement('div');
         authContainer.className = 'auth-container';
         authContainer.innerHTML = `
@@ -1602,7 +1604,7 @@
             }
         });
 
-        // --- Auth State Listener --- (tetap sama)
+        // --- Auth State Listener ---
         auth.onAuthStateChanged((user) => {
             const mainAppContainer = document.querySelector('.container');
             const authContainerElement = document.querySelector('.auth-container');
@@ -1642,7 +1644,7 @@
             const sidebar = document.querySelector('.sidebar');
             const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
 
-            // --- Sidebar Toggle Functionality --- (tetap sama)
+            // --- Sidebar Toggle Functionality ---
             function toggleSidebar() {
                 sidebar.classList.toggle('collapsed');
                 const isCollapsed = sidebar.classList.contains('collapsed');
@@ -1659,7 +1661,7 @@
             }
 
 
-            // --- Fungsi Navigasi Sidebar --- (tetap sama)
+            // --- Fungsi Navigasi Sidebar ---
             function showSection(targetId) {
                 contentSections.forEach(section => {
                     section.style.display = 'none';
@@ -1707,7 +1709,7 @@
                 });
             });
 
-            // --- Modals Functionality --- (tetap sama)
+            // --- Modals Functionality ---
             const modals = document.querySelectorAll('.modal');
             const closeButtons = document.querySelectorAll('.modal-close-btn');
 
@@ -1725,7 +1727,7 @@
             }
 
             // Override openModal to handle fetching tglDiterima for pembayaran-modal
-            // dan memastikan noInvoice diisi dengan nilai asli (tetap sama)
+            // dan memastikan noInvoice diisi dengan nilai asli
             const originalOpenModal = window.openModal;
             window.openModal = async function(modalId, rawInvoiceNo = null) {
                 const modal = document.getElementById(modalId);
@@ -1778,7 +1780,7 @@
                 });
             });
 
-            // --- Invoice Modal Specifics --- (tetap sama)
+            // --- Invoice Modal Specifics ---
             document.getElementById('add-invoice-btn').addEventListener('click', function() {
                 window.openModal('invoice-modal');
                 document.getElementById('invoice-no-invoice').readOnly = false;
@@ -1881,7 +1883,7 @@
                 document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = rawInvoiceNo;
             }
 
-            // Event listeners for viewing invoice details (tetap sama)
+            // Event listeners for viewing invoice details
             if (invoiceTableBody) {
                 invoiceTableBody.addEventListener('click', function(e) {
                     const targetLink = e.target.closest('.view-invoice-detail');
@@ -1915,7 +1917,7 @@
                 });
             }
 
-            // Function to edit Invoice from table (tetap sama)
+            // Function to edit Invoice from table
             async function editInvoiceFromTable(rawInvoiceNo) {
                 const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
                 const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
@@ -1936,7 +1938,7 @@
                 }
             }
 
-            // Function to delete Invoice (tetap sama)
+            // Function to delete Invoice
             async function deleteInvoice(rawInvoiceNo) {
                 const userConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus invoice dengan No Invoice: ${rawInvoiceNo}? Ini akan menghapus semua data terkait (Faktur Pajak, Pembayaran, Keterangan).`);
 
@@ -1977,7 +1979,7 @@
                 showSection('invoice-list-section');
             });
 
-            // --- Edit Invoice from Detail Page --- (tetap sama)
+            // --- Edit Invoice from Detail Page ---
             document.getElementById('edit-full-invoice-btn').addEventListener('click', async function() {
                 const rawInvoiceNo = this.dataset.invoiceNo;
                 const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
@@ -1999,7 +2001,7 @@
                 }
             });
 
-            // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) --- (tetap sama)
+            // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) ---
             document.getElementById('add-edit-faktur-pajak-btn').addEventListener('click', function() {
                 window.openModal('faktur-pajak-modal', this.dataset.invoiceNo);
             });
@@ -2010,7 +2012,7 @@
                 window.openModal('keterangan-modal', this.dataset.invoiceNo);
             });
 
-            // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) --- (tetap sama)
+            // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
             document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
                 window.openModal('faktur-pajak-modal');
                 document.getElementById('fp-no-invoice').readOnly = false;
@@ -2027,7 +2029,7 @@
                 document.getElementById('keterangan-no-invoice').value = '';
             });
 
-            // --- Search functionality for standalone modals --- (tetap sama)
+            // --- Search functionality for standalone modals ---
             function setupSearchAndFillModal(searchBtnId, searchInputId, modalId) {
                 const searchBtn = document.getElementById(searchBtnId);
                 const searchInput = document.getElementById(searchInputId);
@@ -2113,7 +2115,7 @@
                 }
             }
 
-            // --- Form Submissions (Firestore) --- (tetap sama untuk Faktur Pajak dan Pembayaran)
+            // --- Form Submissions (Firestore) ---
             document.getElementById('faktur-pajak-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const rawNoInvoice = document.getElementById('fp-no-invoice').value;
@@ -2235,7 +2237,7 @@
                 }
             });
 
-            // --- Calculate Lama Pengajuan --- (tetap sama)
+            // --- Calculate Lama Pengajuan ---
             const tglPengajuanFinanceInput = document.getElementById('keterangan-tgl-pengajuan-finance');
             const tglDiterimaAnggiInput = document.getElementById('keterangan-tgl-diterima-anggi');
             const lamaPengajuanInput = document.getElementById('keterangan-lama-pengajuan');
@@ -2261,7 +2263,7 @@
             if (tglDiterimaAnggiInput) tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
 
 
-            // --- Auto-calculate Jatuh Tempo based on TOP --- (tetap sama)
+            // --- Auto-calculate Jatuh Tempo based on TOP ---
             const pembayaranTopInput = document.getElementById('pembayaran-top');
             const pembayaranJatuhTempoInput = document.getElementById('pembayaran-jatuh-tempo');
             const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima');
@@ -2312,7 +2314,7 @@
             }
 
 
-            // --- Export to Excel (CSV) --- (tetap sama)
+            // --- Export to Excel (CSV) ---
             document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     if (allInvoiceData.length === 0) {
@@ -2346,7 +2348,7 @@
                 });
             });
 
-            // --- Filter Event Listeners --- (tetap sama)
+            // --- Filter Event Listeners ---
             document.getElementById('filter-start-date').addEventListener('change', applyFilters);
             document.getElementById('filter-end-date').addEventListener('change', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
@@ -2361,7 +2363,7 @@
             }
 
 
-            // --- Pengaturan Akun (Settings) --- (tetap sama)
+            // --- Pengaturan Akun (Settings) ---
             const settingsForm = document.getElementById('settings-form');
             const settingsEmailInput = document.getElementById('settings-email');
             const settingsPasswordInput = document.getElementById('settings-password');
@@ -2469,7 +2471,7 @@
             }
 
 
-            // Setup Rupiah formatting for relevant inputs (tetap sama)
+            // Setup Rupiah formatting for relevant inputs
             setupRupiahInput('pembayaran-dpp-idr');
             setupRupiahInput('pembayaran-ppn-idr');
 
@@ -2543,6 +2545,9 @@
                     showAlert("Gagal memperbarui status invoice: " + error.message, 'error');
                 }
             });
+
+            // Load vendor data
+            loadVendorData();
         });
     </script>
 
@@ -2954,7 +2959,9 @@
                 </div>
                 <div class="form-group">
                     <label for="invoice-nama-vendor">Nama Vendor</label>
-                    <input type="text" id="invoice-nama-vendor" class="filter-input" required>
+                    <div class="autocomplete-container">
+                        <input type="text" id="invoice-nama-vendor" class="filter-input" required placeholder="Ketik untuk mencari vendor...">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="invoice-no-invoice">No Invoice</label>
