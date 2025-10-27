@@ -672,6 +672,27 @@
             max-width: 500px;
         }
 
+        /* Checkbox Styles */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
         /* Responsive Styles */
         @media (max-width: 1024px) {
             body {
@@ -1643,6 +1664,45 @@
             }
         }
 
+        // --- Fungsi untuk menghitung PPN otomatis ---
+        function calculatePPN() {
+            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
+            const ppnIdrInput = document.getElementById('pembayaran-ppn-idr');
+            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
+            
+            if (!dppIdrInput || !ppnIdrInput || !includePPNCheckbox) return;
+            
+            const dppValue = dppIdrInput.value.replace(/[^0-9]/g, '');
+            
+            if (dppValue && includePPNCheckbox.checked) {
+                const dppNumber = parseInt(dppValue);
+                const ppnAmount = Math.round(dppNumber * 0.11);
+                ppnIdrInput.value = formatRupiah(ppnAmount.toString());
+            } else if (includePPNCheckbox.checked === false) {
+                ppnIdrInput.value = '';
+            }
+        }
+
+        // --- Fungsi untuk menghitung total dengan PPN ---
+        function calculateTotalWithPPN() {
+            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
+            const ppnIdrInput = document.getElementById('pembayaran-ppn-idr');
+            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
+            
+            if (!dppIdrInput || !ppnIdrInput || !includePPNCheckbox) return;
+            
+            const dppValue = dppIdrInput.value.replace(/[^0-9]/g, '');
+            
+            if (dppValue && includePPNCheckbox.checked) {
+                const dppNumber = parseInt(dppValue);
+                const ppnAmount = Math.round(dppNumber * 0.11);
+                const totalWithPPN = dppNumber + ppnAmount;
+                return totalWithPPN;
+            }
+            
+            return dppValue ? parseInt(dppValue) : 0;
+        }
+
 
         // --- Authentication UI ---
         const authContainer = document.createElement('div');
@@ -1807,6 +1867,12 @@
                     autocompleteLists.forEach(list => {
                         if (list.parentNode) list.parentNode.removeChild(list);
                     });
+                    
+                    // Reset checkbox PPN
+                    const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
+                    if (includePPNCheckbox) {
+                        includePPNCheckbox.checked = false;
+                    }
                 }
             }
 
@@ -1945,8 +2011,21 @@
                 document.getElementById('detail-tgl-faktur-pajak').textContent = fpData.tglFakturPajak || 'Belum ada';
                 document.getElementById('add-edit-faktur-pajak-btn').dataset.invoiceNo = rawInvoiceNo;
 
-                document.getElementById('detail-dpp-idr').textContent = `Rp ${formatRupiah(pembayaranData.dppIdr || '0')}`;
-                document.getElementById('detail-ppn-idr').textContent = `Rp ${formatRupiah(pembayaranData.ppnIdr || '0')}`;
+                // Tampilkan DPP yang sudah termasuk PPN jika ada
+                let dppDisplay = 'Rp 0';
+                if (pembayaranData.dppIdr) {
+                    if (pembayaranData.includePPN) {
+                        // Jika include PPN, tampilkan total (DPP + PPN)
+                        const totalWithPPN = parseInt(pembayaranData.dppIdr) + parseInt(pembayaranData.ppnIdr || 0);
+                        dppDisplay = formatRupiah(totalWithPPN);
+                    } else {
+                        // Jika tidak include PPN, tampilkan DPP saja
+                        dppDisplay = formatRupiah(pembayaranData.dppIdr);
+                    }
+                }
+
+                document.getElementById('detail-dpp-idr').textContent = dppDisplay;
+                document.getElementById('detail-ppn-idr').textContent = pembayaranData.ppnIdr ? `Rp ${formatRupiah(pembayaranData.ppnIdr)}` : 'Rp 0';
                 document.getElementById('detail-dpp-usd').textContent = `$ ${pembayaranData.dppUsd || '0.00'}`;
                 document.getElementById('detail-keterangan-pembayaran').textContent = pembayaranData.keterangan || '-';
                 document.getElementById('detail-follow-up').textContent = pembayaranData.followUp || '-';
@@ -2182,6 +2261,12 @@
                         document.getElementById('pembayaran-hasil-follow-up').value = dataToFill.hasilFollowUp || '';
                         document.getElementById('pembayaran-top').value = dataToFill.top || '';
                         document.getElementById('pembayaran-jatuh-tempo').value = dataToFill.jatuhTempo || '';
+                        
+                        // Set checkbox PPN
+                        const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
+                        if (includePPNCheckbox) {
+                            includePPNCheckbox.checked = dataToFill.includePPN || false;
+                        }
                         break;
                     case 'keterangan-modal':
                         document.getElementById('keterangan-tgl-pengajuan-finance').value = dataToFill.tglPengajuanFinance || '';
@@ -2227,11 +2312,13 @@
                 }
             });
 
+            // --- Pembayaran Form Submission dengan PPN ---
             document.getElementById('pembayaran-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const rawNoInvoice = document.getElementById('pembayaran-no-invoice').value;
                 const dppIdrRaw = document.getElementById('pembayaran-dpp-idr').value.replace(/[^0-9]/g, '');
                 const ppnIdrRaw = document.getElementById('pembayaran-ppn-idr').value.replace(/[^0-9]/g, '');
+                const includePPN = document.getElementById('pembayaran-include-ppn').checked;
 
                 const formData = {
                     noInvoice: rawNoInvoice,
@@ -2243,6 +2330,7 @@
                     hasilFollowUp: document.getElementById('pembayaran-hasil-follow-up').value,
                     top: document.getElementById('pembayaran-top').value,
                     jatuhTempo: document.getElementById('pembayaran-jatuh-tempo').value,
+                    includePPN: includePPN // Simpan status checkbox PPN
                 };
 
                 try {
@@ -2395,6 +2483,16 @@
 
             if (pembayaranTopInput) {
                 pembayaranTopInput.addEventListener('change', calculateJatuhTempo);
+            }
+
+            // --- Event Listeners for PPN Calculation ---
+            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
+            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
+
+            if (includePPNCheckbox && dppIdrInput) {
+                includePPNCheckbox.addEventListener('change', calculatePPN);
+                dppIdrInput.addEventListener('input', calculatePPN);
+                dppIdrInput.addEventListener('blur', calculatePPN);
             }
 
 
@@ -3097,9 +3195,13 @@
                     <label for="pembayaran-dpp-idr">DPP (IDR)</label>
                     <input type="text" id="pembayaran-dpp-idr" class="filter-input rupiah-input" placeholder="Rp 0" required>
                 </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="pembayaran-include-ppn">
+                    <label for="pembayaran-include-ppn">Harga sudah termasuk PPN 11%</label>
+                </div>
                 <div class="form-group">
                     <label for="pembayaran-ppn-idr">PPn (IDR)</label>
-                    <input type="text" id="pembayaran-ppn-idr" class="filter-input rupiah-input" placeholder="Rp 0">
+                    <input type="text" id="pembayaran-ppn-idr" class="filter-input rupiah-input" placeholder="Rp 0" readonly>
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-dpp-usd">DPP (USD)</label>
