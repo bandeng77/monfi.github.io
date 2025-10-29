@@ -32,11 +32,9 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #ffffff;
+            background-color: #f1f5f9;
             color: #334155;
             line-height: 1.6;
-            width: 90%;
-            margin: 0 auto;
             min-height: 100vh;
         }
 
@@ -46,7 +44,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
             position: fixed;
             top: 0;
@@ -196,6 +194,7 @@
             margin-top: 0.5rem;
             display: none;
             border-left: 4px solid var(--danger);
+            text-align: center;
         }
 
         .auth-footer {
@@ -225,7 +224,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ========== EXISTING STYLES (SAMA DENGAN ASLI) ========== */
+        /* ========== EXISTING STYLES (FULL SCREEN) ========== */
         .container {
             display: flex;
             min-height: 100vh;
@@ -353,6 +352,7 @@
             padding: 2rem;
             overflow-y: auto;
             transition: margin-left 0.3s ease;
+            background-color: #f1f5f9;
         }
 
         /* Header Styles */
@@ -881,9 +881,6 @@
 
         /* Responsive Styles */
         @media (max-width: 1024px) {
-            body {
-                width: 100%;
-            }
             .container {
                 flex-direction: column;
             }
@@ -1909,9 +1906,10 @@
                     // User is signed in, hide login and show main content
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('main-container').style.display = 'flex';
-                    // Load initial data
+                    // Load initial data dan tampilkan dashboard
                     loadDashboardData();
                     loadVendorData();
+                    showSection('dashboard-section');
                 } else {
                     // User is signed out, show login
                     document.getElementById('auth-container').style.display = 'flex';
@@ -1939,7 +1937,19 @@
                 .catch((error) => {
                     // Login failed
                     loginBtn.classList.remove('loading');
-                    loginError.textContent = error.message;
+                    let errorMessage = 'Email atau password salah.';
+                    
+                    if (error.code === 'auth/wrong-password') {
+                        errorMessage = 'Password yang Anda masukkan salah.';
+                    } else if (error.code === 'auth/user-not-found') {
+                        errorMessage = 'Email tidak ditemukan.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Format email tidak valid.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMessage = 'Terlalu banyak percobaan login. Coba lagi nanti.';
+                    }
+                    
+                    loginError.textContent = errorMessage;
                     loginError.style.display = 'block';
                     console.error("Login error:", error);
                 });
@@ -1953,961 +1963,78 @@
             });
         }
 
+        // --- Fungsi Navigasi Sidebar ---
+        function showSection(targetId) {
+            const contentSections = document.querySelectorAll('.content-section');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            contentSections.forEach(section => {
+                section.style.display = 'none';
+            });
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+
+            navItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+
+            if (targetId === 'dashboard-section') {
+                loadDashboardData();
+            } else if (targetId === 'invoice-list-section') {
+                loadInvoicesToTable();
+            }
+        }
+        window.showSection = showSection;
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initLogin();
             
-            // The rest of your existing DOMContentLoaded code remains the same
-            const mainContent = document.querySelector('.main-content');
-            const contentSections = document.querySelectorAll('.content-section');
-            const navItems = document.querySelectorAll('.nav-item');
-            const invoiceTableBody = document.querySelector('#invoice-table tbody');
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            // Setup vendor data
+            loadVendorData();
 
-            // --- Sidebar Toggle Functionality ---
-            function toggleSidebar() {
-                sidebar.classList.toggle('collapsed');
-                const isCollapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', isCollapsed);
-            }
-
-            const savedSidebarState = localStorage.getItem('sidebarCollapsed');
-            if (savedSidebarState === 'true') {
-                sidebar.classList.add('collapsed');
-            }
-
-            if (sidebarToggleBtn) {
-                sidebarToggleBtn.addEventListener('click', toggleSidebar);
-            }
-
-
-            // --- Fungsi Navigasi Sidebar ---
-            function showSection(targetId) {
-                contentSections.forEach(section => {
-                    section.style.display = 'none';
-                });
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                }
-
-                navItems.forEach(item => item.classList.remove('active'));
-                const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
-                if (activeNavItem) {
-                    activeNavItem.classList.add('active');
-                }
-
-                if (targetId === 'dashboard-section') {
-                    loadDashboardData();
-                } else if (targetId === 'invoice-list-section') {
-                    loadInvoicesToTable();
-                } else if (targetId === 'laporan-section') {
-                    // loadReportData();
-                }
-            }
-            window.showSection = showSection;
-
-            if (auth.currentUser) {
-                showSection('dashboard-section');
-            }
-
-
-            navItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetId = this.dataset.target;
+            // Setup event listeners untuk navigasi setelah login
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.nav-item')) {
+                    const navItem = e.target.closest('.nav-item');
+                    const targetId = navItem.dataset.target;
                     if (targetId) {
+                        e.preventDefault();
                         showSection(targetId);
-                    } else if (this.id === 'logout-btn') {
-                        auth.signOut().then(() => {
-                            showAlert('Anda telah logout.', 'info');
-                        }).catch((error) => {
-                            console.error("Error logging out: ", error);
-                            showAlert("Gagal logout: " + error.message, 'error');
-                        });
-                    }
-                });
-            });
-
-            // --- Modals Functionality ---
-            const modals = document.querySelectorAll('.modal');
-            const closeButtons = document.querySelectorAll('.modal-close-btn');
-
-            function resetModalForm(modalId) {
-                const form = document.getElementById(modalId.replace('-modal', '-form'));
-                if (form) {
-                    form.reset();
-                    const noInvoiceInput = form.querySelector('input[id$="-no-invoice"]');
-                    if (noInvoiceInput) noInvoiceInput.readOnly = false;
-                    const autocompleteLists = form.querySelectorAll('.autocomplete-items');
-                    autocompleteLists.forEach(list => {
-                        if (list.parentNode) list.parentNode.removeChild(list);
-                    });
-                    
-                    // Reset checkbox PPN
-                    const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
-                    if (includePPNCheckbox) {
-                        includePPNCheckbox.checked = false;
-                    }
-                }
-            }
-
-            // Override openModal to handle fetching tglDiterima for pembayaran-modal
-            // dan memastikan noInvoice diisi dengan nilai asli
-            const originalOpenModal = window.openModal;
-            window.openModal = async function(modalId, rawInvoiceNo = null) {
-                const modal = document.getElementById(modalId);
-                resetModalForm(modalId);
-                modal.style.display = 'flex';
-
-                if (rawInvoiceNo) {
-                    const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
-                    const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                    if (invoiceDoc.exists) {
-                        const invoiceData = invoiceDoc.data();
-                        const noInvoiceInput = modal.querySelector(`input[id$="-no-invoice"]`);
-                        if (noInvoiceInput) {
-                            noInvoiceInput.value = rawInvoiceNo;
-                            noInvoiceInput.readOnly = true;
-                        }
-                        await fillModalWithExistingData(modalId, rawInvoiceNo);
-
-                        if (modalId === 'pembayaran-modal') {
-                            const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima');
-                            if (tempInvoiceTglDiterimaInput) {
-                                tempInvoiceTglDiterimaInput.value = invoiceData.tglDiterima || '';
-                            }
-                            calculateJatuhTempo();
-                        }
-                    } else {
-                        showAlert('Invoice tidak ditemukan untuk No Invoice ini.', 'error');
-                        closeModal(modalId);
-                    }
-                }
-            };
-
-
-            function closeModal(modalId) {
-                document.getElementById(modalId).style.display = 'none';
-                resetModalForm(modalId);
-            }
-
-            closeButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    closeModal(this.closest('.modal').id);
-                });
-            });
-
-            window.addEventListener('click', function(event) {
-                modals.forEach(modal => {
-                    if (event.target == modal) {
-                        closeModal(modal.id);
-                    }
-                });
-            });
-
-            // --- Invoice Modal Specifics ---
-            document.getElementById('add-invoice-btn').addEventListener('click', function() {
-                window.openModal('invoice-modal');
-                document.getElementById('invoice-no-invoice').readOnly = false;
-                document.getElementById('invoice-no-invoice').value = '';
-            });
-
-            document.getElementById('invoice-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rawNoInvoice = document.getElementById('invoice-no-invoice').value.trim();
-                if (!rawNoInvoice) {
-                    showAlert('No Invoice tidak boleh kosong.', 'error');
-                    return;
-                }
-                const noInvoiceDocId = sanitizeInvoiceNo(rawNoInvoice);
-
-                const formData = {
-                    emailHard: document.getElementById('invoice-email-hard').value,
-                    penerima: document.getElementById('invoice-penerima').value,
-                    corp: document.getElementById('invoice-corp').value,
-                    tglDiterima: document.getElementById('invoice-tgl-diterima').value,
-                    tglInvoice: document.getElementById('invoice-tgl-invoice').value,
-                    suratJalan: document.getElementById('invoice-surat-jalan').value,
-                    namaVendor: document.getElementById('invoice-nama-vendor').value,
-                    noInvoice: rawNoInvoice,
-                };
-
-                try {
-                    await invoicesCol.doc(noInvoiceDocId).set(formData, { merge: true });
-                    showAlert('Invoice berhasil disimpan!', 'success');
-                    closeModal('invoice-modal');
-                } catch (error) {
-                    console.error("Error saving invoice: ", error);
-                    showAlert("Gagal menyimpan invoice: " + error.message, 'error');
-                }
-            });
-
-            // --- View Invoice Detail Functionality (MODIFIED) ---
-            async function displayInvoiceDetail(rawInvoiceNo) {
-                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
-                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                if (!invoiceDoc.exists) {
-                    showAlert('Data invoice tidak ditemukan.', 'error');
-                    return;
-                }
-                const data = invoiceDoc.data();
-
-                const fpQuery = await fakturPajakCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
-                const fpData = fpQuery.empty ? {} : fpQuery.docs[0].data();
-
-                const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
-                const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
-
-                const keteranganQuery = await keteranganCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
-                const keterangan = keteranganQuery.empty ? {} : keteranganQuery.docs[0].data();
-
-                // MODIFIED: Pass isManualStatus to calculateStatus
-                const calculatedStatus = calculateStatus(
-                    data.tglDiterima,
-                    pembayaranData.jatuhTempo,
-                    keterangan.tglBayar,
-                    keterangan.statusAkhir,
-                    keterangan.isManualStatus || false
-                );
-
-                contentSections.forEach(section => section.style.display = 'none');
-                document.getElementById('invoice-detail-section').style.display = 'block';
-                document.getElementById('detail-invoice-no').textContent = rawInvoiceNo;
-
-                document.getElementById('detail-email-hard').textContent = data.emailHard || '-';
-                document.getElementById('detail-penerima').textContent = data.penerima || '-';
-                document.getElementById('detail-corp').textContent = data.corp || '-';
-                document.getElementById('detail-tgl-diterima').textContent = data.tglDiterima || '-';
-                document.getElementById('detail-tgl-invoice').textContent = data.tglInvoice || '-';
-                document.getElementById('detail-surat-jalan').textContent = data.suratJalan || '-';
-                document.getElementById('detail-nama-vendor').textContent = data.namaVendor || '-';
-
-                document.getElementById('detail-no-faktur-pajak').textContent = fpData.noFakturPajak || 'Belum ada';
-                document.getElementById('detail-tgl-faktur-pajak').textContent = fpData.tglFakturPajak || 'Belum ada';
-                document.getElementById('add-edit-faktur-pajak-btn').dataset.invoiceNo = rawInvoiceNo;
-
-                // Tampilkan DPP yang sudah termasuk PPN jika ada
-                let dppDisplay = 'Rp 0';
-                if (pembayaranData.dppIdr) {
-                    if (pembayaranData.includePPN) {
-                        // Jika include PPN, tampilkan total (DPP + PPN)
-                        const totalWithPPN = parseInt(pembayaranData.dppIdr) + parseInt(pembayaranData.ppnIdr || 0);
-                        dppDisplay = formatRupiah(totalWithPPN);
-                    } else {
-                        // Jika tidak include PPN, tampilkan DPP saja
-                        dppDisplay = formatRupiah(pembayaranData.dppIdr);
-                    }
-                }
-
-                document.getElementById('detail-dpp-idr').textContent = dppDisplay;
-                document.getElementById('detail-ppn-idr').textContent = pembayaranData.ppnIdr ? `Rp ${formatRupiah(pembayaranData.ppnIdr)}` : 'Rp 0';
-                document.getElementById('detail-dpp-usd').textContent = `$ ${pembayaranData.dppUsd || '0.00'}`;
-                document.getElementById('detail-keterangan-pembayaran').textContent = pembayaranData.keterangan || '-';
-                document.getElementById('detail-follow-up').textContent = pembayaranData.followUp || '-';
-                document.getElementById('detail-hasil-follow-up').textContent = pembayaranData.hasilFollowUp || '-';
-                document.getElementById('detail-top').textContent = pembayaranData.top || '-';
-                document.getElementById('detail-jatuh-tempo').textContent = pembayaranData.jatuhTempo || '-';
-                document.getElementById('add-edit-pembayaran-btn').dataset.invoiceNo = rawInvoiceNo;
-
-                document.getElementById('detail-tgl-pengajuan-finance').textContent = keterangan.tglPengajuanFinance || '-';
-                document.getElementById('detail-tgl-pengajuan-reni').textContent = keterangan.tglPengajuanReni || '-';
-                document.getElementById('detail-tgl-diterima-anggi').textContent = keterangan.tglDiterimaAnggi || '-';
-                document.getElementById('detail-lama-pengajuan').textContent = keterangan.lamaPengajuan || '-';
-                document.getElementById('detail-keterangan-proses').textContent = keterangan.keteranganProses || '-';
-                document.getElementById('detail-tgl-bayar').textContent = keterangan.tglBayar || '-';
-                document.getElementById('detail-status-akhir').textContent = calculatedStatus || '-';
-                document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = rawInvoiceNo;
-
-                document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = rawInvoiceNo;
-            }
-
-            // Event listeners for viewing invoice details
-            if (invoiceTableBody) {
-                invoiceTableBody.addEventListener('click', function(e) {
-                    const targetLink = e.target.closest('.view-invoice-detail');
-                    if (targetLink) {
+                    } else if (navItem.id === 'logout-btn') {
                         e.preventDefault();
-                        const invoiceNo = targetLink.dataset.invoiceNo;
-                        displayInvoiceDetail(invoiceNo);
+                        logout();
                     }
-
-                    const editBtn = e.target.closest('.edit-invoice-btn');
-                    if (editBtn) {
-                        e.preventDefault();
-                        const invoiceNo = editBtn.dataset.invoiceNo;
-                        editInvoiceFromTable(invoiceNo);
-                    }
-
-                    const deleteBtn = e.target.closest('.delete-invoice-btn');
-                    if (deleteBtn) {
-                        e.preventDefault();
-                        const invoiceNo = deleteBtn.dataset.invoiceNo;
-                        deleteInvoice(invoiceNo);
-                    }
-
-                    const statusButton = e.target.closest('.status-button');
-                    if (statusButton) {
-                        e.preventDefault();
-                        const invoiceNo = statusButton.dataset.invoiceNo;
-                        const currentStatus = statusButton.dataset.currentStatus;
-                        openStatusModal(invoiceNo, currentStatus);
-                    }
-                });
-            }
-
-            // Function to edit Invoice from table
-            async function editInvoiceFromTable(rawInvoiceNo) {
-                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
-                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                if (invoiceDoc.exists) {
-                    const invoiceData = invoiceDoc.data();
-                    window.openModal('invoice-modal', rawInvoiceNo);
-                    document.getElementById('invoice-no-invoice').readOnly = true;
-                    document.getElementById('invoice-email-hard').value = invoiceData.emailHard || '';
-                    document.getElementById('invoice-penerima').value = invoiceData.penerima || '';
-                    document.getElementById('invoice-corp').value = invoiceData.corp || '';
-                    document.getElementById('invoice-tgl-diterima').value = invoiceData.tglDiterima || '';
-                    document.getElementById('invoice-tgl-invoice').value = invoiceData.tglInvoice || '';
-                    document.getElementById('invoice-surat-jalan').value = invoiceData.suratJalan || '';
-                    document.getElementById('invoice-nama-vendor').value = invoiceData.namaVendor || '';
-                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || '';
-                } else {
-                    showAlert('Invoice tidak ditemukan.', 'error');
-                }
-            }
-
-            // Function to delete Invoice
-            async function deleteInvoice(rawInvoiceNo) {
-                const userConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus invoice dengan No Invoice: ${rawInvoiceNo}? Ini akan menghapus semua data terkait (Faktur Pajak, Pembayaran, Keterangan).`);
-
-                if (!userConfirmed) {
-                    showAlert('Penghapusan invoice dibatalkan.', 'info');
-                    return;
-                }
-
-                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
-
-                try {
-                    await invoicesCol.doc(invoiceNoDocId).delete();
-
-                    const fpDocs = await fakturPajakCol.where('noInvoice', '==', rawInvoiceNo).get();
-                    const fpBatch = db.batch();
-                    fpDocs.forEach(doc => fpBatch.delete(doc.ref));
-                    await fpBatch.commit();
-
-                    const pembayaranDocs = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).get();
-                    const pembayaranBatch = db.batch();
-                    pembayaranDocs.forEach(doc => pembayaranBatch.delete(doc.ref));
-                    await pembayaranBatch.commit();
-
-                    const keteranganDocs = await keteranganCol.where('noInvoice', '==', rawInvoiceNo).get();
-                    const keteranganBatch = db.batch();
-                    keteranganDocs.forEach(doc => keteranganBatch.delete(doc.ref));
-                    await keteranganBatch.commit();
-
-                    showAlert('Invoice dan data terkait berhasil dihapus!', 'success');
-                } catch (error) {
-                    console.error("Error deleting invoice: ", error);
-                    showAlert("Gagal menghapus invoice: " + error.message, 'error');
-                }
-            }
-
-
-            document.getElementById('back-to-list-btn').addEventListener('click', function() {
-                showSection('invoice-list-section');
-            });
-
-            // --- Edit Invoice from Detail Page ---
-            document.getElementById('edit-full-invoice-btn').addEventListener('click', async function() {
-                const rawInvoiceNo = this.dataset.invoiceNo;
-                const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
-                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                if (invoiceDoc.exists) {
-                    const invoiceData = invoiceDoc.data();
-                    window.openModal('invoice-modal', rawInvoiceNo);
-                    document.getElementById('invoice-no-invoice').readOnly = true;
-                    document.getElementById('invoice-email-hard').value = invoiceData.emailHard || '';
-                    document.getElementById('invoice-penerima').value = invoiceData.penerima || '';
-                    document.getElementById('invoice-corp').value = invoiceData.corp || '';
-                    document.getElementById('invoice-tgl-diterima').value = invoiceData.tglDiterima || '';
-                    document.getElementById('invoice-tgl-invoice').value = invoiceData.tglInvoice || '';
-                    document.getElementById('invoice-surat-jalan').value = invoiceData.suratJalan || '';
-                    document.getElementById('invoice-nama-vendor').value = invoiceData.namaVendor || '';
-                    document.getElementById('invoice-no-invoice').value = invoiceData.noInvoice || '';
-                } else {
-                    showAlert('Invoice tidak ditemukan.', 'error');
                 }
             });
 
-            // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) ---
-            document.getElementById('add-edit-faktur-pajak-btn').addEventListener('click', function() {
-                window.openModal('faktur-pajak-modal', this.dataset.invoiceNo);
-            });
-            document.getElementById('add-edit-pembayaran-btn').addEventListener('click', function() {
-                window.openModal('pembayaran-modal', this.dataset.invoiceNo);
-            });
-            document.getElementById('add-edit-keterangan-btn').addEventListener('click', function() {
-                window.openModal('keterangan-modal', this.dataset.invoiceNo);
-            });
-
-            // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
-            document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
-                window.openModal('faktur-pajak-modal');
-                document.getElementById('fp-no-invoice').readOnly = false;
-                document.getElementById('fp-no-invoice').value = '';
-            });
-            document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
-                window.openModal('pembayaran-modal');
-                document.getElementById('pembayaran-no-invoice').readOnly = false;
-                document.getElementById('pembayaran-no-invoice').value = '';
-            });
-            document.getElementById('add-keterangan-standalone-btn').addEventListener('click', function() {
-                window.openModal('keterangan-modal');
-                document.getElementById('keterangan-no-invoice').readOnly = false;
-                document.getElementById('keterangan-no-invoice').value = '';
-            });
-
-            // --- Search functionality for standalone modals ---
-            function setupSearchAndFillModal(searchBtnId, searchInputId, modalId) {
-                const searchBtn = document.getElementById(searchBtnId);
-                const searchInput = document.getElementById(searchInputId);
-
-                if (searchBtn && searchInput) {
-                    searchBtn.addEventListener('click', async function() {
-                        const rawInvoiceNo = searchInput.value.trim();
-                        if (rawInvoiceNo) {
-                            const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
-                            const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                            if (invoiceDoc.exists) {
-                                window.openModal(modalId, rawInvoiceNo);
-                            } else {
-                                showAlert('No Invoice tidak ditemukan. Silakan input data invoice terlebih dahulu.', 'error');
-                            }
-                        } else {
-                            showAlert('Harap masukkan No Invoice.', 'info');
-                        }
-                    });
-                }
-            }
-
-            setupSearchAndFillModal('search-faktur-pajak-btn', 'search-invoice-faktur-pajak', 'faktur-pajak-modal');
-            setupSearchAndFillModal('search-pembayaran-btn', 'search-invoice-pembayaran', 'pembayaran-modal');
-            setupSearchAndFillModal('search-keterangan-btn', 'search-invoice-keterangan', 'keterangan-modal');
-
-
-            // --- Fill Modal with Existing Data (for edit) (MODIFIED) ---
-            async function fillModalWithExistingData(modalId, rawInvoiceNo) {
-                let dataToFill = {};
-                let collectionRef;
-
-                switch (modalId) {
-                    case 'faktur-pajak-modal':
-                        collectionRef = fakturPajakCol;
-                        break;
-                    case 'pembayaran-modal':
-                        collectionRef = pembayaranCol;
-                        break;
-                    case 'keterangan-modal':
-                        collectionRef = keteranganCol;
-                        break;
-                    case 'status-modal':
-                        collectionRef = keteranganCol;
-                        break;
-                    default:
-                        return;
-                }
-
-                const existingDocQuery = await collectionRef.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
-                if (!existingDocQuery.empty) {
-                    dataToFill = existingDocQuery.docs[0].data();
-                }
-
-                switch (modalId) {
-                    case 'faktur-pajak-modal':
-                        document.getElementById('fp-tgl-faktur-pajak').value = dataToFill.tglFakturPajak || '';
-                        document.getElementById('fp-no-faktur-pajak').value = dataToFill.noFakturPajak || '';
-                        break;
-                    case 'pembayaran-modal':
-                        document.getElementById('pembayaran-dpp-idr').value = formatRupiah(dataToFill.dppIdr || '');
-                        document.getElementById('pembayaran-ppn-idr').value = formatRupiah(dataToFill.ppnIdr || '');
-                        document.getElementById('pembayaran-dpp-usd').value = dataToFill.dppUsd || '';
-                        document.getElementById('pembayaran-keterangan').value = dataToFill.keterangan || '';
-                        document.getElementById('pembayaran-follow-up').value = dataToFill.followUp || 'Tidak';
-                        document.getElementById('pembayaran-hasil-follow-up').value = dataToFill.hasilFollowUp || '';
-                        document.getElementById('pembayaran-top').value = dataToFill.top || '';
-                        document.getElementById('pembayaran-jatuh-tempo').value = dataToFill.jatuhTempo || '';
-                        
-                        // Set checkbox PPN
-                        const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
-                        if (includePPNCheckbox) {
-                            includePPNCheckbox.checked = dataToFill.includePPN || false;
-                        }
-                        break;
-                    case 'keterangan-modal':
-                        document.getElementById('keterangan-tgl-pengajuan-finance').value = dataToFill.tglPengajuanFinance || '';
-                        document.getElementById('keterangan-tgl-pengajuan-reni').value = dataToFill.tglPengajuanReni || '';
-                        document.getElementById('keterangan-tgl-diterima-anggi').value = dataToFill.tglDiterimaAnggi || '';
-                        document.getElementById('keterangan-keterangan-proses').value = dataToFill.keteranganProses || '';
-                        document.getElementById('keterangan-tgl-bayar').value = dataToFill.tglBayar || '';
-                        document.getElementById('keterangan-status-akhir').value = dataToFill.statusAkhir || '';
-                        calculateLamaPengajuan();
-                        break;
-                    case 'status-modal':
-                        document.getElementById('status-no-invoice').value = rawInvoiceNo;
-                        document.getElementById('status-manual-select').value = dataToFill.statusAkhir || '';
-                        break;
-                }
-            }
-
-            // --- Form Submissions (Firestore) ---
-            document.getElementById('faktur-pajak-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rawNoInvoice = document.getElementById('fp-no-invoice').value;
-                const formData = {
-                    noInvoice: rawNoInvoice,
-                    tglFakturPajak: document.getElementById('fp-tgl-faktur-pajak').value,
-                    noFakturPajak: document.getElementById('fp-no-faktur-pajak').value,
-                };
-
-                try {
-                    const existingDocQuery = await fakturPajakCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                    if (!existingDocQuery.empty) {
-                        await fakturPajakCol.doc(existingDocQuery.docs[0].id).update(formData);
-                    } else {
-                        await fakturPajakCol.add(formData);
-                    }
-                    showAlert('Faktur Pajak berhasil disimpan!', 'success');
-                    closeModal('faktur-pajak-modal');
-                    if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(rawNoInvoice);
-                    }
-                } catch (error) {
-                    console.error("Error saving Faktur Pajak: ", error);
-                    showAlert("Gagal menyimpan Faktur Pajak: " + error.message, 'error');
-                }
-            });
-
-            // --- Pembayaran Form Submission dengan PPN ---
-            document.getElementById('pembayaran-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rawNoInvoice = document.getElementById('pembayaran-no-invoice').value;
-                const dppIdrRaw = document.getElementById('pembayaran-dpp-idr').value.replace(/[^0-9]/g, '');
-                const ppnIdrRaw = document.getElementById('pembayaran-ppn-idr').value.replace(/[^0-9]/g, '');
-                const includePPN = document.getElementById('pembayaran-include-ppn').checked;
-
-                const formData = {
-                    noInvoice: rawNoInvoice,
-                    dppIdr: dppIdrRaw,
-                    ppnIdr: ppnIdrRaw,
-                    dppUsd: document.getElementById('pembayaran-dpp-usd').value,
-                    keterangan: document.getElementById('pembayaran-keterangan').value,
-                    followUp: document.getElementById('pembayaran-follow-up').value,
-                    hasilFollowUp: document.getElementById('pembayaran-hasil-follow-up').value,
-                    top: document.getElementById('pembayaran-top').value,
-                    jatuhTempo: document.getElementById('pembayaran-jatuh-tempo').value,
-                    includePPN: includePPN // Simpan status checkbox PPN
-                };
-
-                try {
-                    const existingDocQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                    if (!existingDocQuery.empty) {
-                        await pembayaranCol.doc(existingDocQuery.docs[0].id).update(formData);
-                    } else {
-                        await pembayaranCol.add(formData);
-                    }
-                    showAlert('Pembayaran berhasil disimpan!', 'success');
-                    closeModal('pembayaran-modal');
-                    if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(rawNoInvoice);
-                    }
-                } catch (error) {
-                    console.error("Error saving Pembayaran: ", error);
-                    showAlert("Gagal menyimpan Pembayaran: " + error.message, 'error');
-                }
-            });
-
-            // --- Keterangan Form Submission (MODIFIED) ---
-            document.getElementById('keterangan-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rawNoInvoice = document.getElementById('keterangan-no-invoice').value;
-
-                const invoiceNoDocId = sanitizeInvoiceNo(rawNoInvoice);
-                const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                const invoiceData = invoiceDoc.exists ? invoiceDoc.data() : {};
-
-                const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
-
-                const newTglBayar = document.getElementById('keterangan-tgl-bayar').value;
-                const selectedManualStatus = document.getElementById('keterangan-status-akhir').value;
-
-                // Jika pengguna memilih status dari dropdown, itu dianggap manual
-                const isManual = selectedManualStatus !== '';
-
-                // Calculate the final status using the new manual status as currentStatus
-                // dan flag isManual sebagai isManualStatusFromDB
-                const newStatusAkhir = calculateStatus(
-                    invoiceData.tglDiterima,
-                    pembayaranData.jatuhTempo,
-                    newTglBayar,
-                    selectedManualStatus, // Pass the manually selected status
-                    isManual // <--- Gunakan isManual di sini
-                );
-
-                const formData = {
-                    noInvoice: rawNoInvoice,
-                    tglPengajuanFinance: document.getElementById('keterangan-tgl-pengajuan-finance').value,
-                    tglPengajuanReni: document.getElementById('keterangan-tgl-pengajuan-reni').value,
-                    tglDiterimaAnggi: document.getElementById('keterangan-tgl-diterima-anggi').value,
-                    lamaPengajuan: document.getElementById('keterangan-lama-pengajuan').value,
-                    keteranganProses: document.getElementById('keterangan-keterangan-proses').value,
-                    tglBayar: newTglBayar,
-                    statusAkhir: newStatusAkhir,
-                    isManualStatus: isManual // <--- Simpan flag manual status
-                };
-
-                try {
-                    const existingDocQuery = await keteranganCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                    if (!existingDocQuery.empty) {
-                        await keteranganCol.doc(existingDocQuery.docs[0].id).update(formData);
-                    } else {
-                        await keteranganCol.add(formData);
-                    }
-                    showAlert('Keterangan & Status berhasil disimpan!', 'success');
-                    closeModal('keterangan-modal');
-                    if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(rawNoInvoice);
-                    }
-                } catch (error) {
-                    console.error("Error saving Keterangan: ", error);
-                    showAlert("Gagal menyimpan Keterangan: " + error.message, 'error');
-                }
-            });
-
-            // --- Calculate Lama Pengajuan ---
-            const tglPengajuanFinanceInput = document.getElementById('keterangan-tgl-pengajuan-finance');
-            const tglDiterimaAnggiInput = document.getElementById('keterangan-tgl-diterima-anggi');
-            const lamaPengajuanInput = document.getElementById('keterangan-lama-pengajuan');
-
-            function calculateLamaPengajuan() {
-                if (!tglPengajuanFinanceInput || !tglDiterimaAnggiInput || !lamaPengajuanInput) return;
-
-                const tglFinance = tglPengajuanFinanceInput.value;
-                const tglAnggi = tglDiterimaAnggiInput.value;
-
-                if (tglFinance && tglAnggi) {
-                    const date1 = new Date(tglFinance);
-                    const date2 = new Date(tglAnggi);
-                    const diffTime = Math.abs(date2 - date1);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    lamaPengajuanInput.value = `${diffDays} Hari`;
-                } else {
-                    lamaPengajuanInput.value = '';
-                }
-            }
-
-            if (tglPengajuanFinanceInput) tglPengajuanFinanceInput.addEventListener('change', calculateLamaPengajuan);
-            if (tglDiterimaAnggiInput) tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
-
-
-            // --- Auto-calculate Jatuh Tempo based on TOP ---
-            const pembayaranTopInput = document.getElementById('pembayaran-top');
-            const pembayaranJatuhTempoInput = document.getElementById('pembayaran-jatuh-tempo');
-            const tempInvoiceTglDiterimaInput = document.getElementById('invoice-tgl-diterima');
-
-            async function calculateJatuhTempo() {
-                const topValue = parseInt(pembayaranTopInput.value, 10);
-                const rawNoInvoice = document.getElementById('pembayaran-no-invoice').value;
-
-                if (isNaN(topValue) || topValue <= 0 || !rawNoInvoice) {
-                    pembayaranJatuhTempoInput.value = '';
-                    return;
-                }
-
-                let tglDiterimaInvoice = '';
-
-                if (tempInvoiceTglDiterimaInput && tempInvoiceTglDiterimaInput.value) {
-                    tglDiterimaInvoice = tempInvoiceTglDiterimaInput.value;
-                } else {
-                    try {
-                        const invoiceNoDocId = sanitizeInvoiceNo(rawNoInvoice);
-                        const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                        if (invoiceDoc.exists) {
-                            tglDiterimaInvoice = invoiceDoc.data().tglDiterima || '';
-                        }
-                    } catch (error) {
-                        console.error("Error fetching tglDiterima for Jatuh Tempo calculation:", error);
-                        showAlert("Gagal mengambil Tanggal Diterima untuk perhitungan Jatuh Tempo.", 'error');
-                        pembayaranJatuhTempoInput.value = '';
-                        return;
-                    }
-                }
-
-                if (tglDiterimaInvoice) {
-                    const receivedDate = new Date(tglDiterimaInvoice);
-                    receivedDate.setDate(receivedDate.getDate() + topValue);
-
-                    const year = receivedDate.getFullYear();
-                    const month = String(receivedDate.getMonth() + 1).padStart(2, '0');
-                    const day = String(receivedDate.getDate()).padStart(2, '0');
-                    pembayaranJatuhTempoInput.value = `${year}-${month}-${day}`;
-                } else {
-                    pembayaranJatuhTempoInput.value = '';
-                }
-            }
-
-            if (pembayaranTopInput) {
-                pembayaranTopInput.addEventListener('change', calculateJatuhTempo);
-            }
-
-            // --- Event Listeners for PPN Calculation ---
-            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
-            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
-
-            if (includePPNCheckbox && dppIdrInput) {
-                includePPNCheckbox.addEventListener('change', calculatePPN);
-                dppIdrInput.addEventListener('input', calculatePPN);
-                dppIdrInput.addEventListener('blur', calculatePPN);
-            }
-
-
-            // --- Export to Excel (CSV) ---
-            document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (allInvoiceData.length === 0) {
-                        showAlert('Tidak ada data untuk diekspor.', 'info');
-                        return;
-                    }
-
-                    const headers = Object.keys(allInvoiceData[0]);
-                    let csv = headers.join(',') + '\n';
-
-                    allInvoiceData.forEach(row => {
-                        const values = headers.map(header => {
-                            const value = row[header];
-                            return `"${String(value).replace(/"/g, '""')}"`;
-                        });
-                        csv += values.join(',') + '\n';
-                    });
-
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    if (link.download !== undefined) {
-                        const url = URL.createObjectURL(blob);
-                        link.setAttribute('href', url);
-                        link.setAttribute('download', 'finance_data.csv');
-                        link.style.visibility = 'hidden';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        showAlert('Data berhasil diekspor ke CSV.', 'success');
-                    }
-                });
-            });
-
-            // --- Filter Event Listeners ---
-            document.getElementById('filter-start-date').addEventListener('change', applyFilters);
-            document.getElementById('filter-end-date').addEventListener('change', applyFilters);
-            document.getElementById('filter-status').addEventListener('change', applyFilters);
-            document.getElementById('filter-search').addEventListener('keyup', applyFilters);
-
-            const applyFilterBtn = document.querySelector('#invoice-list-section .btn-primary');
-            if (applyFilterBtn) {
-                applyFilterBtn.addEventListener('click', function() {
-                    applyFilters();
-                    showAlert('Filter diterapkan.', 'info');
-                });
-            }
-
-
-            // --- Pengaturan Akun (Settings) ---
-            const settingsForm = document.getElementById('settings-form');
-            const settingsEmailInput = document.getElementById('settings-email');
-            const settingsPasswordInput = document.getElementById('settings-password');
-            const settingsConfirmPasswordInput = document.getElementById('settings-confirm-password');
-            const settingsErrorMessage = document.getElementById('settings-error-message');
-            const settingsSuccessMessage = document.getElementById('settings-success-message');
-            const forgotPasswordLink = document.getElementById('forgot-password-link');
-            const forgotPasswordErrorMessage = document.getElementById('forgot-password-error-message');
-            const forgotPasswordSuccessMessage = document.getElementById('forgot-password-success-message');
-
-            if (settingsForm) {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        settingsEmailInput.value = user.email;
-                    }
-                });
-
-                settingsForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    settingsErrorMessage.style.display = 'none';
-                    settingsSuccessMessage.style.display = 'none';
-
-                    const user = auth.currentUser;
-                    if (!user) {
-                        showAlert('Anda harus login untuk mengubah pengaturan.', 'error');
-                        return;
-                    }
-
-                    const newEmail = settingsEmailInput.value;
-                    const newPassword = settingsPasswordInput.value;
-                    const confirmPassword = settingsConfirmPasswordInput.value;
-
-                    let changesMade = false;
-
-                    if (newEmail && newEmail !== user.email) {
-                        try {
-                            await user.updateEmail(newEmail);
-                            showAlert('Email berhasil diperbarui.', 'success');
-                            changesMade = true;
-                        } catch (error) {
-                            console.error("Error updating email:", error);
-                            settingsErrorMessage.textContent = 'Gagal memperbarui email: ' + error.message + '. Harap login ulang jika Anda baru saja login.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                    }
-
-                    if (newPassword) {
-                        if (newPassword !== confirmPassword) {
-                            settingsErrorMessage.textContent = 'Konfirmasi password tidak cocok.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                        if (newPassword.length < 6) {
-                            settingsErrorMessage.textContent = 'Password baru minimal 6 karakter.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                        try {
-                            await user.updatePassword(newPassword);
-                            showAlert('Password berhasil diperbarui.', 'success');
-                            settingsPasswordInput.value = '';
-                            settingsConfirmPasswordInput.value = '';
-                            changesMade = true;
-                        } catch (error) {
-                            console.error("Error updating password:", error);
-                            settingsErrorMessage.textContent = 'Gagal memperbarui password: ' + error.message + '. Harap login ulang jika Anda baru saja login.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                    }
-
-                    if (changesMade) {
-                        settingsSuccessMessage.textContent = 'Pengaturan berhasil disimpan.';
-                        settingsSuccessMessage.style.display = 'block';
-                    } else {
-                        showAlert('Tidak ada perubahan yang disimpan.', 'info');
-                    }
-                });
-
-                forgotPasswordLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    forgotPasswordErrorMessage.style.display = 'none';
-                    forgotPasswordSuccessMessage.style.display = 'none';
-
-                    const email = settingsEmailInput.value;
-                    if (!email) {
-                        forgotPasswordErrorMessage.textContent = 'Harap masukkan email Anda untuk reset password.';
-                        forgotPasswordErrorMessage.style.display = 'block';
-                        return;
-                    }
-
-                    try {
-                        await auth.sendPasswordResetEmail(email);
-                        forgotPasswordSuccessMessage.textContent = 'Link reset password telah dikirim ke email Anda.';
-                        forgotPasswordSuccessMessage.style.display = 'block';
-                        showAlert('Link reset password telah dikirim.', 'success');
-                    } catch (error) {
-                        console.error("Error sending password reset email:", error);
-                        forgotPasswordErrorMessage.textContent = 'Gagal mengirim link reset password: ' + error.message;
-                        forgotPasswordErrorMessage.style.display = 'block';
-                        showAlert('Gagal mengirim link reset password: ' + error.message, 'error');
-                    }
-                });
-            }
-
-
-            // Setup Rupiah formatting for relevant inputs
+            // Setup Rupiah formatting
             setupRupiahInput('pembayaran-dpp-idr');
             setupRupiahInput('pembayaran-ppn-idr');
 
-            // --- Status Modal Specifics (MODIFIED) ---
-            const statusModal = document.getElementById('status-modal');
-            const statusNoInvoiceInput = document.getElementById('status-no-invoice');
-            const statusManualSelect = document.getElementById('status-manual-select');
-            const statusForm = document.getElementById('status-form');
+            // Setup sidebar toggle
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (sidebarToggleBtn && sidebar) {
+                sidebarToggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    const isCollapsed = sidebar.classList.contains('collapsed');
+                    localStorage.setItem('sidebarCollapsed', isCollapsed);
+                });
 
-            async function openStatusModal(rawInvoiceNo, currentStatus) {
-                statusNoInvoiceInput.value = rawInvoiceNo;
-                statusNoInvoiceInput.readOnly = true;
-                statusManualSelect.value = currentStatus || ''; // Set current status
-                statusModal.style.display = 'flex';
-            }
-
-            statusForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rawNoInvoice = statusNoInvoiceInput.value;
-                const newManualStatus = statusManualSelect.value;
-
-                try {
-                    const keteranganQuery = await keteranganCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                    let keteranganDocRef;
-                    let existingKeteranganData = {};
-
-                    if (!keteranganQuery.empty) {
-                        keteranganDocRef = keteranganQuery.docs[0].ref;
-                        existingKeteranganData = keteranganQuery.docs[0].data();
-                    } else {
-                        // If no existing keterangan, create a new one with manual status
-                        await keteranganCol.add({
-                            noInvoice: rawNoInvoice,
-                            statusAkhir: newManualStatus,
-                            isManualStatus: true // <--- Selalu true jika diatur dari modal status manual
-                        });
-                        showAlert('Keterangan baru dibuat dan status diperbarui!', 'success');
-                        closeModal('status-modal');
-                        return;
-                    }
-
-                    const invoiceNoDocId = sanitizeInvoiceNo(rawNoInvoice);
-                    const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
-                    const invoiceData = invoiceDoc.exists ? invoiceDoc.data() : {};
-
-                    const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                    const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
-
-                    // Calculate the final status using the new manual status as currentStatus
-                    // dan isManualStatusFromDB selalu true karena ini adalah update manual
-                    const finalStatus = calculateStatus(
-                        invoiceData.tglDiterima,
-                        pembayaranData.jatuhTempo,
-                        existingKeteranganData.tglBayar,
-                        newManualStatus, // Pass the manually selected status
-                        true // <--- Selalu true karena ini adalah update manual
-                    );
-
-                    const updateData = {
-                        ...existingKeteranganData, // Spread existing data first
-                        statusAkhir: finalStatus,
-                        isManualStatus: true // <--- Set isManualStatus menjadi true
-                    };
-
-                    await keteranganDocRef.update(updateData);
-
-                    showAlert('Status invoice berhasil diperbarui!', 'success');
-                    closeModal('status-modal');
-                } catch (error) {
-                    console.error("Error updating invoice status: ", error);
-                    showAlert("Gagal memperbarui status invoice: " + error.message, 'error');
+                // Load saved sidebar state
+                const savedSidebarState = localStorage.getItem('sidebarCollapsed');
+                if (savedSidebarState === 'true') {
+                    sidebar.classList.add('collapsed');
                 }
-            });
-
-            // Load vendor data
-            loadVendorData();
+            }
         });
+
     </script>
 
     <!-- Improved Login Screen -->
@@ -2917,11 +2044,11 @@
                 <i class="fas fa-chart-line auth-logo-icon"></i>
                 <span class="auth-logo-text">FinanceMonitor</span>
             </div>
-            <h2>Login to Your Account</h2>
+            <h2>Login ke Akun Anda</h2>
             <form id="login-form" class="auth-form">
                 <div class="auth-input-group">
                     <i class="fas fa-envelope auth-input-icon"></i>
-                    <input type="email" id="email" class="auth-input" placeholder="Email Address" required>
+                    <input type="email" id="email" class="auth-input" placeholder="Alamat Email" required>
                 </div>
                 <div class="auth-input-group">
                     <i class="fas fa-lock auth-input-icon"></i>
@@ -2931,14 +2058,13 @@
                 <button type="submit" id="login-btn" class="auth-submit-btn">Login</button>
             </form>
             <div class="auth-footer">
-                <p>Secure Finance Monitoring System</p>
+                <p>Sistem Monitoring Keuangan yang Aman</p>
             </div>
         </div>
     </div>
 
     <!-- Main Application (hidden until login) -->
     <div id="main-container" class="container" style="display: none;">
-        <!-- SIDEBAR DAN KONTEN UTAMA TETAP SAMA SEPERTI VERSI ASLI -->
         <!-- Sidebar -->
         <aside class="sidebar">
             <button id="sidebar-toggle-btn" class="sidebar-toggle">
@@ -2989,7 +2115,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Dashboard Section -->
-            <section id="dashboard-section" class="content-section" style="display: none;">
+            <section id="dashboard-section" class="content-section">
                 <div class="header">
                     <h1 class="page-title">Dashboard</h1>
                 </div>
@@ -3308,7 +2434,8 @@
         </main>
     </div>
 
-    <!-- MODALS TETAP SAMA SEPERTI VERSI ASLI -->
+    <!-- Modals -->
+
     <!-- Modal Tambah/Edit Invoice -->
     <div id="invoice-modal" class="modal">
         <div class="modal-content">
