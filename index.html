@@ -1886,7 +1886,6 @@
             return dppValue ? parseInt(dppValue) : 0;
         }
 
-
         // --- Improved Login Functionality ---
         function initLogin() {
             const loginForm = document.getElementById('login-form');
@@ -1990,6 +1989,348 @@
         }
         window.showSection = showSection;
 
+        // Setup modal functionality
+        function setupModals() {
+            // Modal elements
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.modal-close-btn');
+            
+            // Function to open modal
+            window.openModal = function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                }
+            };
+            
+            // Function to close modal
+            window.closeModal = function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = ''; // Restore scrolling
+                }
+            };
+            
+            // Close modal when clicking close button
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        closeModal(modal.id);
+                    }
+                });
+            });
+            
+            // Close modal when clicking outside content
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal(this.id);
+                    }
+                });
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    modals.forEach(modal => {
+                        if (modal.style.display === 'flex') {
+                            closeModal(modal.id);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Setup event listeners for buttons
+        function setupButtonListeners() {
+            // Tambah Invoice button
+            const addInvoiceBtn = document.getElementById('add-invoice-btn');
+            if (addInvoiceBtn) {
+                addInvoiceBtn.addEventListener('click', function() {
+                    openModal('invoice-modal');
+                    resetInvoiceForm();
+                });
+            }
+            
+            // Filter button
+            const filterBtn = document.querySelector('.btn-primary .fa-filter')?.closest('.btn');
+            if (filterBtn) {
+                filterBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    applyFilters();
+                });
+            }
+            
+            // Export button
+            const exportBtn = document.querySelector('.export-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    exportInvoices();
+                });
+            }
+
+            // Setup form submissions
+            const invoiceForm = document.getElementById('invoice-form');
+            if (invoiceForm) {
+                invoiceForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveInvoice();
+                });
+            }
+
+            const fakturPajakForm = document.getElementById('faktur-pajak-form');
+            if (fakturPajakForm) {
+                fakturPajakForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveFakturPajak();
+                });
+            }
+
+            const pembayaranForm = document.getElementById('pembayaran-form');
+            if (pembayaranForm) {
+                pembayaranForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    savePembayaran();
+                });
+            }
+
+            const keteranganForm = document.getElementById('keterangan-form');
+            if (keteranganForm) {
+                keteranganForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveKeterangan();
+                });
+            }
+
+            // Setup PPN calculation
+            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
+            if (includePPNCheckbox) {
+                includePPNCheckbox.addEventListener('change', calculatePPN);
+            }
+
+            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
+            if (dppIdrInput) {
+                dppIdrInput.addEventListener('input', calculatePPN);
+            }
+        }
+
+        // Reset invoice form
+        function resetInvoiceForm() {
+            const form = document.getElementById('invoice-form');
+            if (form) {
+                form.reset();
+                // Clear any hidden ID fields if present
+                const invoiceIdInput = document.getElementById('invoice-id');
+                if (invoiceIdInput) {
+                    invoiceIdInput.value = '';
+                }
+            }
+        }
+
+        // Save invoice function
+        async function saveInvoice() {
+            const emailHard = document.getElementById('invoice-email-hard').value;
+            const penerima = document.getElementById('invoice-penerima').value;
+            const corp = document.getElementById('invoice-corp').value;
+            const tglDiterima = document.getElementById('invoice-tgl-diterima').value;
+            const tglInvoice = document.getElementById('invoice-tgl-invoice').value;
+            const suratJalan = document.getElementById('invoice-surat-jalan').value;
+            const namaVendor = document.getElementById('invoice-nama-vendor').value;
+            const noInvoice = document.getElementById('invoice-no-invoice').value;
+
+            if (!emailHard || !penerima || !corp || !tglDiterima || !tglInvoice || !namaVendor || !noInvoice) {
+                showAlert('Harap isi semua field yang wajib diisi!', 'error');
+                return;
+            }
+
+            try {
+                // Sanitize invoice number for Firestore document ID
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
+                
+                await invoicesCol.doc(sanitizedInvoiceNo).set({
+                    emailHard: emailHard,
+                    penerima: penerima,
+                    corp: corp,
+                    tglDiterima: tglDiterima,
+                    tglInvoice: tglInvoice,
+                    suratJalan: suratJalan,
+                    namaVendor: namaVendor,
+                    noInvoice: noInvoice, // Store original invoice number
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showAlert('Invoice berhasil disimpan!', 'success');
+                closeModal('invoice-modal');
+                loadInvoicesToTable(); // Refresh the table
+            } catch (error) {
+                console.error("Error saving invoice: ", error);
+                showAlert('Gagal menyimpan invoice: ' + error.message, 'error');
+            }
+        }
+
+        // Save faktur pajak function
+        async function saveFakturPajak() {
+            const noInvoice = document.getElementById('fp-no-invoice').value;
+            const tglFakturPajak = document.getElementById('fp-tgl-faktur-pajak').value;
+            const noFakturPajak = document.getElementById('fp-no-faktur-pajak').value;
+
+            if (!noInvoice || !tglFakturPajak || !noFakturPajak) {
+                showAlert('Harap isi semua field yang wajib diisi!', 'error');
+                return;
+            }
+
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
+                
+                await fakturPajakCol.doc(sanitizedInvoiceNo).set({
+                    noInvoice: noInvoice,
+                    tglFakturPajak: tglFakturPajak,
+                    noFakturPajak: noFakturPajak,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                showAlert('Faktur Pajak berhasil disimpan!', 'success');
+                closeModal('faktur-pajak-modal');
+            } catch (error) {
+                console.error("Error saving faktur pajak: ", error);
+                showAlert('Gagal menyimpan faktur pajak: ' + error.message, 'error');
+            }
+        }
+
+        // Save pembayaran function
+        async function savePembayaran() {
+            const noInvoice = document.getElementById('pembayaran-no-invoice').value;
+            const dppIdr = document.getElementById('pembayaran-dpp-idr').value.replace(/[^0-9]/g, '');
+            const ppnIdr = document.getElementById('pembayaran-ppn-idr').value.replace(/[^0-9]/g, '');
+            const dppUsd = document.getElementById('pembayaran-dpp-usd').value;
+            const keterangan = document.getElementById('pembayaran-keterangan').value;
+            const followUp = document.getElementById('pembayaran-follow-up').value;
+            const hasilFollowUp = document.getElementById('pembayaran-hasil-follow-up').value;
+            const top = document.getElementById('pembayaran-top').value;
+            const jatuhTempo = document.getElementById('pembayaran-jatuh-tempo').value;
+
+            if (!noInvoice || !dppIdr) {
+                showAlert('Harap isi No Invoice dan DPP IDR!', 'error');
+                return;
+            }
+
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
+                
+                await pembayaranCol.doc(sanitizedInvoiceNo).set({
+                    noInvoice: noInvoice,
+                    dppIdr: parseInt(dppIdr) || 0,
+                    ppnIdr: parseInt(ppnIdr) || 0,
+                    dppUsd: parseFloat(dppUsd) || 0,
+                    keterangan: keterangan,
+                    followUp: followUp,
+                    hasilFollowUp: hasilFollowUp,
+                    top: top,
+                    jatuhTempo: jatuhTempo,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                showAlert('Data pembayaran berhasil disimpan!', 'success');
+                closeModal('pembayaran-modal');
+            } catch (error) {
+                console.error("Error saving pembayaran: ", error);
+                showAlert('Gagal menyimpan data pembayaran: ' + error.message, 'error');
+            }
+        }
+
+        // Save keterangan function
+        async function saveKeterangan() {
+            const noInvoice = document.getElementById('keterangan-no-invoice').value;
+            const tglPengajuanFinance = document.getElementById('keterangan-tgl-pengajuan-finance').value;
+            const tglPengajuanReni = document.getElementById('keterangan-tgl-pengajuan-reni').value;
+            const tglDiterimaAnggi = document.getElementById('keterangan-tgl-diterima-anggi').value;
+            const keteranganProses = document.getElementById('keterangan-keterangan-proses').value;
+            const tglBayar = document.getElementById('keterangan-tgl-bayar').value;
+            const statusAkhir = document.getElementById('keterangan-status-akhir').value;
+
+            if (!noInvoice) {
+                showAlert('Harap isi No Invoice!', 'error');
+                return;
+            }
+
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
+                
+                // Calculate lama pengajuan if both dates are provided
+                let lamaPengajuan = '';
+                if (tglPengajuanFinance && tglDiterimaAnggi) {
+                    const startDate = new Date(tglPengajuanFinance);
+                    const endDate = new Date(tglDiterimaAnggi);
+                    const diffTime = Math.abs(endDate - startDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    lamaPengajuan = diffDays + ' hari';
+                }
+
+                await keteranganCol.doc(sanitizedInvoiceNo).set({
+                    noInvoice: noInvoice,
+                    tglPengajuanFinance: tglPengajuanFinance,
+                    tglPengajuanReni: tglPengajuanReni,
+                    tglDiterimaAnggi: tglDiterimaAnggi,
+                    lamaPengajuan: lamaPengajuan,
+                    keteranganProses: keteranganProses,
+                    tglBayar: tglBayar,
+                    statusAkhir: statusAkhir,
+                    isManualStatus: !!statusAkhir, // Set to true if status is manually selected
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                showAlert('Data keterangan berhasil disimpan!', 'success');
+                closeModal('keterangan-modal');
+            } catch (error) {
+                console.error("Error saving keterangan: ", error);
+                showAlert('Gagal menyimpan data keterangan: ' + error.message, 'error');
+            }
+        }
+
+        // Export invoices function
+        function exportInvoices() {
+            if (filteredInvoiceData.length === 0) {
+                showAlert('Tidak ada data untuk diexport!', 'warning');
+                return;
+            }
+
+            // Create CSV content
+            let csvContent = "No,Email/Hard,Penerima,Corp,Tanggal Diterima,No Invoice,Nama Vendor,DPP,Status\n";
+            
+            filteredInvoiceData.forEach((invoice, index) => {
+                const row = [
+                    index + 1,
+                    `"${invoice.Email_Hard || ''}"`,
+                    `"${invoice.Penerima || ''}"`,
+                    `"${invoice.Corp || ''}"`,
+                    `"${invoice.Tanggal_Diterima || ''}"`,
+                    `"${invoice.No_Invoice || ''}"`,
+                    `"${invoice.Nama_Vendor || ''}"`,
+                    `"${invoice.DPP_IDR || ''}"`,
+                    `"${invoice.Status || ''}"`
+                ].join(',');
+                csvContent += row + '\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `invoices_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('Data berhasil diexport!', 'success');
+        }
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initLogin();
@@ -2033,6 +2374,10 @@
                     sidebar.classList.add('collapsed');
                 }
             }
+
+            // Setup modals and button listeners
+            setupModals();
+            setupButtonListeners();
         });
 
     </script>
