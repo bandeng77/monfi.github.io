@@ -1026,129 +1026,116 @@
         // Global variables for vendor data
         let allVendorNames = [];
 
-        // Load vendor data from JSON file
+        // Load vendor data
         async function loadVendorData() {
             try {
-                // Using a sample vendor list - replace with actual JSON file path
                 const sampleVendors = [
                    "ALARM SUPPLY PTE LTD",
-"ALLTECH SOLUSINDO",
-"ALVASTA TEKNOLOGI",
-"ARSITA UTAMA INDONESIA",
-"ARSITA UTAMA INDONESIA. PT",
-"ARTA KENCANA PRIMA MANDIRI",
-"ASIA CIPTA MANAGEMENT",
-"AUSTRALINDO GRAHA NUSA",
-"BUANA SUKSES ABADI",
-"BUANA SUKSES BERSAMA. PT",
-"BUMEN CITRA MANDIRI",
-"CAHAYA BUANA INDOABADI",
-"CAHAYA KALIMAS UTAMA",
-"CAKRA MITRA SENTOSA",
-"CECEP DENI SAPUTRA ",
-"CITRA INTI SEMESTA",
-"CITRA MAKMUR BINA SAHABAT HOOSEKI BUILDING. PT",
-"CV. BELTECHINDO",
-"CV. PRIMA TIMUR JAYA",
-"DAITO ELEKTRINDO",
-"DENKO WAHANA SAKTI ",
-"DEXTRANS WORLWIDE INDONESIA. PT",
-"ECONOMIE MANDIRI",
-"ETIQA ASURANSI ",
-"FEDEX EXPRESS INTERNATIONAL ",
-"FFE LIMITED",
-"GECA S.r.I",
-"GENAIR NUSAINDO",
-"GENAIR NUSAINDO ",
-"HASEA CIPTA KARYA",
-"HIKARI INDO SARANA. PT",
-"HONEYWELL",
-"HONEYWELL INDONESIA. PT",
-"INTIKABEL METALINDO",
-"ISTANA KEBON JERUK",
-"KAMIL PUTRA PROTEKSINDO",
-"KARYA GRAHA CAHAYA",
-"KARYA GRAHA COMPUTER SUPERMALL",
-"KIJANG SOLIDEO TEKNIK",
-"LENTERA TILAS TEHNIK",
-"MACRON SAFETY SYSTEMS (UK) LIMITED",
-"MASTER INDO LOGISTICS. PT",
-"MEDIA MITRA PRATAMA",
-"METRO JAYA TEKNIK",
-"MID SOLUSI NUSANTARA. PT",
-"MITRA MAKMUR SOLUSINDO",
-"MUHAMMAD FAIK",
-"MULTRON SYSTEMS PTE. LTD",
-"OBAY",
-"PANAH PERDANA LOGISINDO. PT",
-"PASKALIS ",
-"PETRA CONDUIT",
-"PRIMA TIMUR JAYA",
-"PRIMA TUNGGAL JAVALAND",
-"PROTOCONVERT",
-"PT TUNAS RIDEAN",
-"SETYA REKAT ABADI. PT",
-"SHOPPE INDONESIA",
-"TEKNIK MAKMUR MANDIRI",
-"TEPG",
-"TOKOPEDIA",
-"VINOTI (VIVERE MULTI KREASI)",
-"WIDJAJA TEKNIK UTAMA. PT",
-"YANTO. BPK",
-"TIRTA INVESTAMA. PT",
-"FATHONA MARFAZRINA",
-"HEBEI J&R TRADING CO. LTD",
-"CAHAYA DELTA MANDIRI",
-"PRIMACIPTA UNGGUL KARYA",
-"DATA INTEGRASI SEMESTA",
-"GLOBAL SECURITY SERVICE INDONESIA",
-"BERKAH MANDIRI PROTECTION",
-"PELOPOR PRATAMA LANCAR ABADI",
-"BETA PANEL",
-"WARUNG NASI PASUNDAN",
-"LUBNA PERKASA ABADI",
-"SIBALEC. PT",
-"13ROTHER MAFIA KONVEKSI",
-"UNI NETWORK COMMUNICATIONS",
-"DENKO WAHANA SAKTI",
-"ISS INDONESIA",
-"HORING LIH INDUSTRIAL",
-"AKARA DIRAYA NAWASENA",
-"PANDU BINA SENTOSA",
-"KSO SUCOFINDO - SURVEYOR INDONESIA",
-"CV KARYA HADIAH KREATIF",
-"ALFIRE PRIMA INDONEISA",
-"CITRA INTI SEMESTA ",
-"BAMBANG WINARNO. BPK",
-"UMROTA KARYA UTAMA",
-"KAP PIETER. UWAYS & REKAN",
-"ELPRIMA KENCANA",
-"BAHTERA BINA SELARAS",
-"BINEX LOGISTIC",
-"HOME CENTER INDONESIA RETAIL",
-"BARAYA PROTEKSINDO ABADI", 
-"ERAFONE ARTHA RETAILINDO",
-"CV. AZZA BARAKAH SEJAHTERA",
-"REJEKI PRIMA STEEL",
-"SAMSIRA TEKNOLOGI INDONESIA",
-"BINA GLOBAL TRANSPORT",
-"ASENWARE INDONESIA JAYA",
-"AZBIL BERCA INDONESIA",
-"TEMAN BAIK. CV"
+                   "ALLTECH SOLUSINDO",
+                   "ALVASTA TEKNOLOGI",
+                   "ARSITA UTAMA INDONESIA",
+                   "ARSITA UTAMA INDONESIA. PT",
+                   "ARTA KENCANA PRIMA MANDIRI",
+                   "ASIA CIPTA MANAGEMENT",
+                   "AUSTRALINDO GRAHA NUSA",
+                   "BUANA SUKSES ABADI",
+                   "BUANA SUKSES BERSAMA. PT",
+                   "BUMEN CITRA MANDIRI",
+                   "CAHAYA BUANA INDOABADI",
+                   "CAHAYA KALIMAS UTAMA",
+                   "CAKRA MITRA SENTOSA",
+                   "CECEP DENI SAPUTRA",
+                   "CITRA INTI SEMESTA",
+                   "CV. BELTECHINDO",
+                   "CV. PRIMA TIMUR JAYA",
+                   "DAITO ELEKTRINDO",
+                   "DENKO WAHANA SAKTI",
+                   "DEXTRANS WORLWIDE INDONESIA. PT",
+                   "ECONOMIE MANDIRI",
+                   "ETIQA ASURANSI",
+                   "FEDEX EXPRESS INTERNATIONAL",
+                   "FFE LIMITED",
+                   "GECA S.r.I",
+                   "GENAIR NUSAINDO",
+                   "HASEA CIPTA KARYA",
+                   "HIKARI INDO SARANA. PT",
+                   "HONEYWELL",
+                   "HONEYWELL INDONESIA. PT",
+                   "INTIKABEL METALINDO",
+                   "ISTANA KEBON JERUK",
+                   "KAMIL PUTRA PROTEKSINDO",
+                   "KARYA GRAHA CAHAYA",
+                   "KARYA GRAHA COMPUTER SUPERMALL",
+                   "KIJANG SOLIDEO TEKNIK",
+                   "LENTERA TILAS TEHNIK",
+                   "MACRON SAFETY SYSTEMS (UK) LIMITED",
+                   "MASTER INDO LOGISTICS. PT",
+                   "MEDIA MITRA PRATAMA",
+                   "METRO JAYA TEKNIK",
+                   "MID SOLUSI NUSANTARA. PT",
+                   "MITRA MAKMUR SOLUSINDO",
+                   "MUHAMMAD FAIK",
+                   "MULTRON SYSTEMS PTE. LTD",
+                   "OBAY",
+                   "PANAH PERDANA LOGISINDO. PT",
+                   "PASKALIS",
+                   "PETRA CONDUIT",
+                   "PRIMA TIMUR JAYA",
+                   "PRIMA TUNGGAL JAVALAND",
+                   "PROTOCONVERT",
+                   "PT TUNAS RIDEAN",
+                   "SETYA REKAT ABADI. PT",
+                   "SHOPPE INDONESIA",
+                   "TEKNIK MAKMUR MANDIRI",
+                   "TEPG",
+                   "TOKOPEDIA",
+                   "VINOTI (VIVERE MULTI KREASI)",
+                   "WIDJAJA TEKNIK UTAMA. PT",
+                   "YANTO. BPK",
+                   "TIRTA INVESTAMA. PT",
+                   "FATHONA MARFAZRINA",
+                   "HEBEI J&R TRADING CO. LTD",
+                   "CAHAYA DELTA MANDIRI",
+                   "PRIMACIPTA UNGGUL KARYA",
+                   "DATA INTEGRASI SEMESTA",
+                   "GLOBAL SECURITY SERVICE INDONESIA",
+                   "BERKAH MANDIRI PROTECTION",
+                   "PELOPOR PRATAMA LANCAR ABADI",
+                   "BETA PANEL",
+                   "WARUNG NASI PASUNDAN",
+                   "LUBNA PERKASA ABADI",
+                   "SIBALEC. PT",
+                   "13ROTHER MAFIA KONVEKSI",
+                   "UNI NETWORK COMMUNICATIONS",
+                   "DENKO WAHANA SAKTI",
+                   "ISS INDONESIA",
+                   "HORING LIH INDUSTRIAL",
+                   "AKARA DIRAYA NAWASENA",
+                   "PANDU BINA SENTOSA",
+                   "KSO SUCOFINDO - SURVEYOR INDONESIA",
+                   "CV KARYA HADIAH KREATIF",
+                   "ALFIRE PRIMA INDONEISA",
+                   "CITRA INTI SEMESTA",
+                   "BAMBANG WINARNO. BPK",
+                   "UMROTA KARYA UTAMA",
+                   "KAP PIETER. UWAYS & REKAN",
+                   "ELPRIMA KENCANA",
+                   "BAHTERA BINA SELARAS",
+                   "BINEX LOGISTIC",
+                   "HOME CENTER INDONESIA RETAIL",
+                   "BARAYA PROTEKSINDO ABADI", 
+                   "ERAFONE ARTHA RETAILINDO",
+                   "CV. AZZA BARAKAH SEJAHTERA",
+                   "REJEKI PRIMA STEEL",
+                   "SAMSIRA TEKNOLOGI INDONESIA",
+                   "BINA GLOBAL TRANSPORT",
+                   "ASENWARE INDONESIA JAYA",
+                   "AZBIL BERCA INDONESIA",
+                   "TEMAN BAIK. CV"
                 ];
                 
                 allVendorNames = sampleVendors;
                 setupVendorAutocomplete();
-                
-                // Uncomment the following lines if you have a vendors.json file
-                /*
-                const response = await fetch('vendors.json');
-                if (!response.ok) {
-                    throw new Error('Gagal memuat data vendor');
-                }
-                allVendorNames = await response.json();
-                setupVendorAutocomplete();
-                */
             } catch (error) {
                 console.error("Error loading vendor data:", error);
                 showAlert("Gagal memuat data vendor: " + error.message, 'error');
@@ -1169,7 +1156,6 @@
             inp.addEventListener("input", function(e) {
                 var a, b, i, val = this.value;
                 closeAllLists();
-                // Trigger autocomplete if at least 1 character is entered
                 if (val.length < 1) { return false;}
                 currentFocus = -1;
                 a = document.createElement("DIV");
@@ -1198,7 +1184,7 @@
                 if (e.keyCode == 40) {
                     currentFocus++;
                     addActive(x);
-                } else if (e.keyCode == 38) { //arrow UP
+                } else if (e.keyCode == 38) {
                     currentFocus--;
                     addActive(x);
                 } else if (e.keyCode == 13) {
@@ -1235,38 +1221,25 @@
 
         // --- Fungsi untuk membersihkan No Invoice agar aman digunakan sebagai ID dokumen Firestore ---
         function sanitizeInvoiceNo(invoiceNo) {
-            // Mengganti semua '/' dengan '-'
             return invoiceNo.replace(/\//g, '-');
         }
 
-        // --- Fungsi untuk mengembalikan No Invoice ke format aslinya (jika diperlukan untuk tampilan) ---
-        function desanitizeInvoiceNo(sanitizedInvoiceNo) {
-            // Mengganti semua '-' kembali ke '/'
-            return sanitizedInvoiceNo.replace(/-/g, '/');
-        }
-
-        // --- Calculate Status Based on Dates (MODIFIED) ---
+        // --- Calculate Status Based on Dates ---
         function calculateStatus(tglDiterima, jatuhTempo, tglBayar, currentStatus, isManualStatusFromDB) {
-            // 1. Prioritas tertinggi: Jika sudah dibayar, statusnya 'Dibayar'
             if (tglBayar) {
                 return 'Dibayar';
             }
 
-            // 2. Jika status saat ini diatur secara manual (isManualStatusFromDB adalah true),
-            //    maka pertahankan status manual tersebut.
-            //    Ini meng-override perhitungan otomatis.
             if (isManualStatusFromDB && currentStatus) {
                 return currentStatus;
             }
 
-            // 3. Jika belum dibayar dan bukan status manual yang dipertahankan,
-            //    hitung status otomatis berdasarkan tanggal
             if (!tglDiterima || !jatuhTempo) {
-                return currentStatus || 'Belum Diproses'; // Fallback if dates are missing
+                return currentStatus || 'Belum Diproses';
             }
 
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize today's date to start of day
+            today.setHours(0, 0, 0, 0);
 
             const receivedDate = new Date(tglDiterima);
             receivedDate.setHours(0, 0, 0, 0);
@@ -1274,12 +1247,10 @@
             const dueDate = new Date(jatuhTempo);
             dueDate.setHours(0, 0, 0, 0);
 
-            // Calculate 'Jatuh Tempo' (Overdue)
             if (today > dueDate) {
                 return 'Jatuh Tempo';
             }
 
-            // Calculate 'Menunggu Pembayaran' (3 days before due date)
             const threeDaysBeforeDueDate = new Date(dueDate);
             threeDaysBeforeDueDate.setDate(dueDate.getDate() - 3);
             threeDaysBeforeDueDate.setHours(0, 0, 0, 0);
@@ -1288,7 +1259,6 @@
                 return 'Menunggu Pembayaran';
             }
 
-            // Calculate 'Menunggu Pengajuan' (7 days before due date)
             const sevenDaysBeforeDueDate = new Date(dueDate);
             sevenDaysBeforeDueDate.setDate(dueDate.getDate() - 7);
             sevenDaysBeforeDueDate.setHours(0, 0, 0, 0);
@@ -1297,23 +1267,19 @@
                 return 'Menunggu Pengajuan';
             }
 
-            // Default: If none of the above conditions are met,
-            // return the existing status or 'Belum Diproses'
             return currentStatus || 'Belum Diproses';
         }
 
-        // --- Functions moved to global scope for accessibility ---
-
-        // --- Render Invoices to Table (with pagination and filter) (MODIFIED) ---
+        // --- Render Invoices to Table ---
         function renderInvoicesTable(data) {
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
             if (!invoiceTableBody) return;
 
-            invoiceTableBody.innerHTML = ''; // Clear existing rows
+            invoiceTableBody.innerHTML = '';
 
             if (data.length === 0) {
                 invoiceTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Tidak ada data invoice yang cocok.</td></tr>';
-                renderPagination(0, 0); // Render empty pagination
+                renderPagination(0, 0);
                 return;
             }
 
@@ -1333,7 +1299,6 @@
                 else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                 else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                 else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
-
 
                 rowsHtml.push(`
                     <tr data-invoice-id="${invoice.No_Invoice}">
@@ -1358,7 +1323,49 @@
                 `);
             });
             invoiceTableBody.innerHTML = rowsHtml.join('');
-            renderPagination(data.length, window.currentPage); // Gunakan window.currentPage
+            renderPagination(data.length, window.currentPage);
+            
+            // Add event listeners to action buttons
+            setTimeout(() => {
+                setupTableActionListeners();
+            }, 100);
+        }
+
+        // --- Setup Table Action Listeners ---
+        function setupTableActionListeners() {
+            // Edit buttons
+            document.querySelectorAll('.edit-invoice-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const invoiceNo = this.getAttribute('data-invoice-no');
+                    editInvoice(invoiceNo);
+                });
+            });
+
+            // Delete buttons
+            document.querySelectorAll('.delete-invoice-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const invoiceNo = this.getAttribute('data-invoice-no');
+                    deleteInvoice(invoiceNo);
+                });
+            });
+
+            // Status buttons
+            document.querySelectorAll('.status-button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const invoiceNo = this.getAttribute('data-invoice-no');
+                    const currentStatus = this.getAttribute('data-current-status');
+                    openStatusModal(invoiceNo, currentStatus);
+                });
+            });
+
+            // View detail links
+            document.querySelectorAll('.view-invoice-detail').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const invoiceNo = this.getAttribute('data-invoice-no');
+                    viewInvoiceDetail(invoiceNo);
+                });
+            });
         }
 
         // --- Render Pagination Controls ---
@@ -1366,7 +1373,7 @@
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             const pageControls = document.querySelector('.pagination .page-controls');
             const pageInfo = document.querySelector('.pagination .page-info');
-            pageControls.innerHTML = ''; // Bersihkan tombol paginasi yang ada
+            pageControls.innerHTML = '';
 
             if (totalItems === 0) {
                 pageInfo.textContent = 'Menampilkan 0-0 dari 0 data';
@@ -1383,15 +1390,15 @@
             prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
             prevBtn.disabled = currentPage === 1;
             prevBtn.addEventListener('click', () => {
-                if (window.currentPage > 1) { // Gunakan window.currentPage
-                    window.currentPage--; // Gunakan window.currentPage
+                if (window.currentPage > 1) {
+                    window.currentPage--;
                     renderInvoicesTable(filteredInvoiceData);
                 }
             });
             pageControls.appendChild(prevBtn);
 
             // Page numbers
-            const maxPageButtons = 5; // Max number of page buttons to show
+            const maxPageButtons = 5;
             let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
             let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
@@ -1404,7 +1411,7 @@
                 firstPageBtn.className = 'page-btn';
                 firstPageBtn.textContent = '1';
                 firstPageBtn.addEventListener('click', () => {
-                    window.currentPage = 1; // Gunakan window.currentPage
+                    window.currentPage = 1;
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(firstPageBtn);
@@ -1420,7 +1427,7 @@
                 pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
                 pageBtn.textContent = i;
                 pageBtn.addEventListener('click', () => {
-                    window.currentPage = i; // Gunakan window.currentPage
+                    window.currentPage = i;
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(pageBtn);
@@ -1436,7 +1443,7 @@
                 lastPageBtn.className = 'page-btn';
                 lastPageBtn.textContent = totalPages;
                 lastPageBtn.addEventListener('click', () => {
-                    window.currentPage = totalPages; // Gunakan window.currentPage
+                    window.currentPage = totalPages;
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(lastPageBtn);
@@ -1448,25 +1455,23 @@
             nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
             nextBtn.disabled = currentPage === totalPages;
             nextBtn.addEventListener('click', () => {
-                if (window.currentPage < totalPages) { // Gunakan window.currentPage
-                    window.currentPage++; // Gunakan window.currentPage
+                if (window.currentPage < totalPages) {
+                    window.currentPage++;
                     renderInvoicesTable(filteredInvoiceData);
                 }
             });
             pageControls.appendChild(nextBtn);
         }
 
-
-        // --- Load Invoices to Table (Initial Load and Refresh) (MODIFIED) ---
+        // --- Load Invoices to Table ---
         async function loadInvoicesToTable() {
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
             if (!invoiceTableBody) return;
 
             invoiceTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Memuat data...</td></tr>';
-            allInvoiceNumbers = []; // Reset for fresh load
+            allInvoiceNumbers = [];
 
             try {
-                // Unsubscribe previous listener if exists
                 if (window.invoiceUnsubscribe) {
                     window.invoiceUnsubscribe();
                 }
@@ -1482,10 +1487,9 @@
                     }
 
                     let rowNum = 1;
-                    const currentAllInvoiceData = []; // Temporary array for current snapshot
-                    const currentInvoiceNumbers = []; // Temporary array for current invoice numbers
+                    const currentAllInvoiceData = [];
+                    const currentInvoiceNumbers = [];
 
-                    // Fetch all related data once to optimize
                     const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
                         pembayaranCol.get(),
                         keteranganCol.get()
@@ -1503,21 +1507,19 @@
 
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
-                        // Gunakan nilai 'noInvoice' yang disimpan di dalam dokumen, yang merupakan nilai asli
                         const noInvoice = invoice.noInvoice;
-                        currentInvoiceNumbers.push(noInvoice); // Add to autocomplete list
+                        currentInvoiceNumbers.push(noInvoice);
 
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
 
                         const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
-                        // Calculate status dynamically (MODIFIED: pass isManualStatus)
                         const statusDisplay = calculateStatus(
                             invoice.tglDiterima,
                             pembayaran.jatuhTempo,
                             keterangan.tglBayar,
                             keterangan.statusAkhir,
-                            keterangan.isManualStatus || false // Default to false if not set
+                            keterangan.isManualStatus || false
                         );
                         
                         currentAllInvoiceData.push({
@@ -1526,9 +1528,9 @@
                             Penerima: invoice.penerima || '',
                             Corp: invoice.corp || '',
                             Tanggal_Diterima: invoice.tglDiterima || '',
-                            No_Invoice: noInvoice, // <--- Gunakan nilai asli untuk tampilan
+                            No_Invoice: noInvoice,
                             Nama_Vendor: invoice.namaVendor || '',
-                            DPP_IDR: dppDisplay, // Store formatted for display
+                            DPP_IDR: dppDisplay,
                             PPn_IDR: pembayaran.ppnIdr || '0',
                             DPP_USD: pembayaran.dppUsd || '0',
                             Keterangan_Pembayaran: pembayaran.keterangan || '',
@@ -1543,13 +1545,13 @@
                             Keterangan_Proses: keterangan.keteranganProses || '',
                             Tanggal_Bayar: keterangan.tglBayar || '',
                             Status: statusDisplay,
-                            Is_Manual_Status: keterangan.isManualStatus || false // Store for reference
+                            Is_Manual_Status: keterangan.isManualStatus || false
                         });
                     });
-                    allInvoiceData = currentAllInvoiceData; // Update global data for export
-                    allInvoiceNumbers = currentInvoiceNumbers; // Update global invoice numbers for autocomplete
-                    setupAllAutocompletes(); // Setup autocomplete after data is loaded
-                    applyFilters(); // Apply filters after data is loaded
+                    allInvoiceData = currentAllInvoiceData;
+                    allInvoiceNumbers = currentInvoiceNumbers;
+                    setupAllAutocompletes();
+                    applyFilters();
                 }, (error) => {
                     console.error("Error loading invoices: ", error);
                     invoiceTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`;
@@ -1572,7 +1574,6 @@
             filteredInvoiceData = allInvoiceData.filter(invoice => {
                 let matches = true;
 
-                // Date filter (Tanggal Diterima)
                 if (startDate && invoice.Tanggal_Diterima < startDate) {
                     matches = false;
                 }
@@ -1580,12 +1581,10 @@
                     matches = false;
                 }
 
-                // Status filter
                 if (statusFilter && statusFilter !== '' && invoice.Status !== statusFilter) {
                     matches = false;
                 }
 
-                // Keyword search (across multiple fields)
                 if (searchKeyword) {
                     const searchableFields = [
                         invoice.No_Invoice,
@@ -1605,31 +1604,27 @@
                 return matches;
             });
 
-            window.currentPage = 1; // Reset to first page after applying filters
+            window.currentPage = 1;
             renderInvoicesTable(filteredInvoiceData);
         }
 
-
-        // --- Load Dashboard Data (MODIFIED) ---
+        // --- Load Dashboard Data ---
         async function loadDashboardData() {
             const totalInvoiceEl = document.getElementById('dashboard-total-invoice');
             const paidInvoiceEl = document.getElementById('dashboard-paid-invoice');
             const pendingInvoiceEl = document.getElementById('dashboard-pending-invoice');
-            const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice'); // New element
+            const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice');
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
-
 
             if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl) return;
 
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
-            submissionPendingInvoiceEl.textContent = '...'; // Initialize new element
+            submissionPendingInvoiceEl.textContent = '...';
             overdueInvoiceEl.textContent = '...';
 
-
             try {
-                // Unsubscribe previous listener if exists
                 if (window.dashboardUnsubscribe) {
                     window.dashboardUnsubscribe();
                 }
@@ -1637,13 +1632,12 @@
                 window.dashboardUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
                     let total = 0;
                     let paid = 0;
-                    let pending = 0; // Menunggu Pembayaran
-                    let submissionPending = 0; // Menunggu Pengajuan
+                    let pending = 0;
+                    let submissionPending = 0;
                     let overdue = 0;
 
                     if (!snapshot.empty) {
                         total = snapshot.size;
-                        // Fetch all keterangan documents once to optimize
                         const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
                             pembayaranCol.get(),
                             keteranganCol.get()
@@ -1660,18 +1654,17 @@
                         });
 
                         snapshot.forEach(doc => {
-                            const noInvoice = doc.data().noInvoice; // Gunakan nilai asli dari field
-                            const invoiceData = doc.data(); // Get full invoice data
+                            const noInvoice = doc.data().noInvoice;
+                            const invoiceData = doc.data();
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
 
-                            // Calculate status dynamically using the new logic (MODIFIED: pass isManualStatus)
                             const status = calculateStatus(
                                 invoiceData.tglDiterima,
                                 pembayaran.jatuhTempo,
                                 keterangan.tglBayar,
                                 keterangan.statusAkhir,
-                                keterangan.isManualStatus || false // Default to false if not set
+                                keterangan.isManualStatus || false
                             );
 
                             if (status === 'Dibayar') {
@@ -1683,16 +1676,13 @@
                             } else if (status === 'Jatuh Tempo') {
                                 overdue++;
                             }
-                            // Statuses like 'Diajukan ke Finance', 'Diterima Anggi', 'Dibatalkan', 'Belum Diproses'
-                            // are not explicitly counted in these summary numbers unless you add specific logic for them.
-                            // For simplicity, they are not added to any of the above counters.
                         });
                     }
 
                     totalInvoiceEl.textContent = total;
                     paidInvoiceEl.textContent = paid;
                     pendingInvoiceEl.textContent = pending;
-                    submissionPendingInvoiceEl.textContent = submissionPending; // Update new element
+                    submissionPendingInvoiceEl.textContent = submissionPending;
                     overdueInvoiceEl.textContent = overdue;
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
@@ -1700,7 +1690,7 @@
                     totalInvoiceEl.textContent = 'Error';
                     paidInvoiceEl.textContent = 'Error';
                     pendingInvoiceEl.textContent = 'Error';
-                    submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
+                    submissionPendingInvoiceEl.textContent = 'Error';
                     overdueInvoiceEl.textContent = 'Error';
                 });
 
@@ -1710,99 +1700,10 @@
                 totalInvoiceEl.textContent = 'Error';
                 paidInvoiceEl.textContent = 'Error';
                 pendingInvoiceEl.textContent = 'Error';
-                submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
+                submissionPendingInvoiceEl.textContent = 'Error';
                 overdueInvoiceEl.textContent = 'Error';
             }
         }
-
-
-        // --- Laporan Section Data Loading --- (Jika diaktifkan kembali) (MODIFIED)
-        async function loadReportData() {
-            const reportTableBody = document.querySelector('#report-invoice-table tbody');
-            if (!reportTableBody) return;
-
-            reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
-
-            try {
-                // Unsubscribe previous listener if exists
-                if (window.reportUnsubscribe) {
-                    window.reportUnsubscribe();
-                }
-
-                window.reportUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
-                    if (snapshot.empty) {
-                        reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data laporan.</td></tr>';
-                        return;
-                    }
-
-                    const reportRowsHtml = [];
-                    let rowNum = 1;
-
-                    // Fetch all related data once to optimize
-                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
-                        pembayaranCol.get(),
-                        keteranganCol.get()
-                    ]);
-
-                    const pembayaranMap = new Map();
-                    pembayaranSnapshot.forEach(doc => {
-                        pembayaranMap.set(doc.data().noInvoice, doc.data());
-                    });
-
-                    const keteranganMap = new Map();
-                    keteranganSnapshot.forEach(doc => {
-                        keteranganMap.set(doc.data().noInvoice, doc.data());
-                    });
-
-                    snapshot.forEach(doc => {
-                        const invoice = doc.data();
-                        const noInvoice = invoice.noInvoice; // Gunakan nilai asli dari field
-
-                        const pembayaran = pembayaranMap.get(noInvoice) || {};
-                        const keterangan = keteranganMap.get(noInvoice) || {};
-
-                        const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : '0';
-                        // Use calculated status (MODIFIED: pass isManualStatus)
-                        const statusDisplay = calculateStatus(
-                            invoice.tglDiterima,
-                            pembayaran.jatuhTempo,
-                            keterangan.tglBayar,
-                            keterangan.statusAkhir,
-                            keterangan.isManualStatus || false // Default to false if not set
-                        );
-                        const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
-                        const tglBayarDisplay = keterangan.tglBayar || '-';
-
-                        let statusClass = '';
-                        if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
-                        else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
-                        else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
-
-                        reportRowsHtml.push(`
-                            <tr>
-                                <td>${rowNum++}</td>
-                                <td>${noInvoice}</td>
-                                <td>${invoice.namaVendor || '-'}</td>
-                                <td>${dppDisplay}</td>
-                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                                <td>${jatuhTempoDisplay}</td>
-                                <td>${tglBayarDisplay}</td>
-                            </tr>
-                        `);
-                    });
-                    reportTableBody.innerHTML = reportRowsHtml.join('');
-                }, (error) => {
-                    console.error("Error loading report data: ", error);
-                    reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                    showAlert("Gagal memuat data laporan: " + error.message, 'error');
-                });
-            } catch (error) {
-                console.error("Error setting up report listener: ", error);
-                reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                showAlert("Gagal memuat data laporan: " + error.message, 'error');
-            }
-        }
-
 
         // Apply autocomplete to relevant input fields
         function setupAllAutocompletes() {
@@ -1866,26 +1767,6 @@
             }
         }
 
-        // --- Fungsi untuk menghitung total dengan PPN ---
-        function calculateTotalWithPPN() {
-            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
-            const ppnIdrInput = document.getElementById('pembayaran-ppn-idr');
-            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
-            
-            if (!dppIdrInput || !ppnIdrInput || !includePPNCheckbox) return;
-            
-            const dppValue = dppIdrInput.value.replace(/[^0-9]/g, '');
-            
-            if (dppValue && includePPNCheckbox.checked) {
-                const dppNumber = parseInt(dppValue);
-                const ppnAmount = Math.round(dppNumber * 0.11);
-                const totalWithPPN = dppNumber + ppnAmount;
-                return totalWithPPN;
-            }
-            
-            return dppValue ? parseInt(dppValue) : 0;
-        }
-
         // --- Improved Login Functionality ---
         function initLogin() {
             const loginForm = document.getElementById('login-form');
@@ -1902,15 +1783,12 @@
             // Check if user is already logged in
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // User is signed in, hide login and show main content
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('main-container').style.display = 'flex';
-                    // Load initial data dan tampilkan dashboard
                     loadDashboardData();
                     loadVendorData();
                     showSection('dashboard-section');
                 } else {
-                    // User is signed out, show login
                     document.getElementById('auth-container').style.display = 'flex';
                     document.getElementById('main-container').style.display = 'none';
                 }
@@ -1923,18 +1801,15 @@
             const loginBtn = document.getElementById('login-btn');
             const loginError = document.getElementById('login-error');
 
-            // Show loading state
             loginBtn.classList.add('loading');
             loginError.style.display = 'none';
 
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    // Login successful
                     loginBtn.classList.remove('loading');
                     showAlert('Login berhasil!', 'success');
                 })
                 .catch((error) => {
-                    // Login failed
                     loginBtn.classList.remove('loading');
                     let errorMessage = 'Email atau password salah.';
                     
@@ -1987,33 +1862,28 @@
                 loadInvoicesToTable();
             }
         }
-        window.showSection = showSection;
 
         // Setup modal functionality
         function setupModals() {
-            // Modal elements
             const modals = document.querySelectorAll('.modal');
             const closeButtons = document.querySelectorAll('.modal-close-btn');
             
-            // Function to open modal
             window.openModal = function(modalId) {
                 const modal = document.getElementById(modalId);
                 if (modal) {
                     modal.style.display = 'flex';
-                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                    document.body.style.overflow = 'hidden';
                 }
             };
             
-            // Function to close modal
             window.closeModal = function(modalId) {
                 const modal = document.getElementById(modalId);
                 if (modal) {
                     modal.style.display = 'none';
-                    document.body.style.overflow = ''; // Restore scrolling
+                    document.body.style.overflow = '';
                 }
             };
             
-            // Close modal when clicking close button
             closeButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const modal = this.closest('.modal');
@@ -2023,7 +1893,6 @@
                 });
             });
             
-            // Close modal when clicking outside content
             modals.forEach(modal => {
                 modal.addEventListener('click', function(e) {
                     if (e.target === this) {
@@ -2032,7 +1901,6 @@
                 });
             });
             
-            // Close modal with Escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     modals.forEach(modal => {
@@ -2073,6 +1941,69 @@
                 });
             }
 
+            // Faktur Pajak buttons
+            const searchFakturPajakBtn = document.getElementById('search-faktur-pajak-btn');
+            if (searchFakturPajakBtn) {
+                searchFakturPajakBtn.addEventListener('click', function() {
+                    const invoiceNo = document.getElementById('search-invoice-faktur-pajak').value;
+                    if (invoiceNo) {
+                        openFakturPajakModal(invoiceNo);
+                    } else {
+                        showAlert('Harap pilih invoice terlebih dahulu!', 'error');
+                    }
+                });
+            }
+
+            const addFakturPajakStandaloneBtn = document.getElementById('add-faktur-pajak-standalone-btn');
+            if (addFakturPajakStandaloneBtn) {
+                addFakturPajakStandaloneBtn.addEventListener('click', function() {
+                    openModal('faktur-pajak-modal');
+                    resetFakturPajakForm();
+                });
+            }
+
+            // Pembayaran buttons
+            const searchPembayaranBtn = document.getElementById('search-pembayaran-btn');
+            if (searchPembayaranBtn) {
+                searchPembayaranBtn.addEventListener('click', function() {
+                    const invoiceNo = document.getElementById('search-invoice-pembayaran').value;
+                    if (invoiceNo) {
+                        openPembayaranModal(invoiceNo);
+                    } else {
+                        showAlert('Harap pilih invoice terlebih dahulu!', 'error');
+                    }
+                });
+            }
+
+            const addPembayaranStandaloneBtn = document.getElementById('add-pembayaran-standalone-btn');
+            if (addPembayaranStandaloneBtn) {
+                addPembayaranStandaloneBtn.addEventListener('click', function() {
+                    openModal('pembayaran-modal');
+                    resetPembayaranForm();
+                });
+            }
+
+            // Keterangan buttons
+            const searchKeteranganBtn = document.getElementById('search-keterangan-btn');
+            if (searchKeteranganBtn) {
+                searchKeteranganBtn.addEventListener('click', function() {
+                    const invoiceNo = document.getElementById('search-invoice-keterangan').value;
+                    if (invoiceNo) {
+                        openKeteranganModal(invoiceNo);
+                    } else {
+                        showAlert('Harap pilih invoice terlebih dahulu!', 'error');
+                    }
+                });
+            }
+
+            const addKeteranganStandaloneBtn = document.getElementById('add-keterangan-standalone-btn');
+            if (addKeteranganStandaloneBtn) {
+                addKeteranganStandaloneBtn.addEventListener('click', function() {
+                    openModal('keterangan-modal');
+                    resetKeteranganForm();
+                });
+            }
+
             // Setup form submissions
             const invoiceForm = document.getElementById('invoice-form');
             if (invoiceForm) {
@@ -2106,6 +2037,14 @@
                 });
             }
 
+            const statusForm = document.getElementById('status-form');
+            if (statusForm) {
+                statusForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveStatusManual();
+                });
+            }
+
             // Setup PPN calculation
             const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
             if (includePPNCheckbox) {
@@ -2118,20 +2057,121 @@
             }
         }
 
-        // Reset invoice form
+        // Reset forms
         function resetInvoiceForm() {
             const form = document.getElementById('invoice-form');
             if (form) {
                 form.reset();
-                // Clear any hidden ID fields if present
-                const invoiceIdInput = document.getElementById('invoice-id');
-                if (invoiceIdInput) {
-                    invoiceIdInput.value = '';
-                }
             }
         }
 
-        // Save invoice function
+        function resetFakturPajakForm() {
+            const form = document.getElementById('faktur-pajak-form');
+            if (form) {
+                form.reset();
+            }
+        }
+
+        function resetPembayaranForm() {
+            const form = document.getElementById('pembayaran-form');
+            if (form) {
+                form.reset();
+            }
+        }
+
+        function resetKeteranganForm() {
+            const form = document.getElementById('keterangan-form');
+            if (form) {
+                form.reset();
+            }
+        }
+
+        // Open modals with data
+        function openFakturPajakModal(invoiceNo) {
+            document.getElementById('fp-no-invoice').value = invoiceNo;
+            openModal('faktur-pajak-modal');
+            
+            // Load existing data if available
+            loadFakturPajakData(invoiceNo);
+        }
+
+        function openPembayaranModal(invoiceNo) {
+            document.getElementById('pembayaran-no-invoice').value = invoiceNo;
+            openModal('pembayaran-modal');
+            
+            // Load existing data if available
+            loadPembayaranData(invoiceNo);
+        }
+
+        function openKeteranganModal(invoiceNo) {
+            document.getElementById('keterangan-no-invoice').value = invoiceNo;
+            openModal('keterangan-modal');
+            
+            // Load existing data if available
+            loadKeteranganData(invoiceNo);
+        }
+
+        function openStatusModal(invoiceNo, currentStatus) {
+            document.getElementById('status-no-invoice').value = invoiceNo;
+            document.getElementById('status-manual-select').value = currentStatus;
+            openModal('status-modal');
+        }
+
+        // Load existing data functions
+        async function loadFakturPajakData(invoiceNo) {
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(invoiceNo);
+                const doc = await fakturPajakCol.doc(sanitizedInvoiceNo).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('fp-tgl-faktur-pajak').value = data.tglFakturPajak || '';
+                    document.getElementById('fp-no-faktur-pajak').value = data.noFakturPajak || '';
+                }
+            } catch (error) {
+                console.error("Error loading faktur pajak data:", error);
+            }
+        }
+
+        async function loadPembayaranData(invoiceNo) {
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(invoiceNo);
+                const doc = await pembayaranCol.doc(sanitizedInvoiceNo).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('pembayaran-dpp-idr').value = data.dppIdr ? formatRupiah(data.dppIdr.toString()) : '';
+                    document.getElementById('pembayaran-ppn-idr').value = data.ppnIdr ? formatRupiah(data.ppnIdr.toString()) : '';
+                    document.getElementById('pembayaran-dpp-usd').value = data.dppUsd || '';
+                    document.getElementById('pembayaran-keterangan').value = data.keterangan || '';
+                    document.getElementById('pembayaran-follow-up').value = data.followUp || 'Tidak';
+                    document.getElementById('pembayaran-hasil-follow-up').value = data.hasilFollowUp || '';
+                    document.getElementById('pembayaran-top').value = data.top || '';
+                    document.getElementById('pembayaran-jatuh-tempo').value = data.jatuhTempo || '';
+                }
+            } catch (error) {
+                console.error("Error loading pembayaran data:", error);
+            }
+        }
+
+        async function loadKeteranganData(invoiceNo) {
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(invoiceNo);
+                const doc = await keteranganCol.doc(sanitizedInvoiceNo).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('keterangan-tgl-pengajuan-finance').value = data.tglPengajuanFinance || '';
+                    document.getElementById('keterangan-tgl-pengajuan-reni').value = data.tglPengajuanReni || '';
+                    document.getElementById('keterangan-tgl-diterima-anggi').value = data.tglDiterimaAnggi || '';
+                    document.getElementById('keterangan-lama-pengajuan').value = data.lamaPengajuan || '';
+                    document.getElementById('keterangan-keterangan-proses').value = data.keteranganProses || '';
+                    document.getElementById('keterangan-tgl-bayar').value = data.tglBayar || '';
+                    document.getElementById('keterangan-status-akhir').value = data.statusAkhir || '';
+                }
+            } catch (error) {
+                console.error("Error loading keterangan data:", error);
+            }
+        }
+
+        // Save functions
         async function saveInvoice() {
             const emailHard = document.getElementById('invoice-email-hard').value;
             const penerima = document.getElementById('invoice-penerima').value;
@@ -2148,7 +2188,6 @@
             }
 
             try {
-                // Sanitize invoice number for Firestore document ID
                 const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
                 
                 await invoicesCol.doc(sanitizedInvoiceNo).set({
@@ -2159,21 +2198,20 @@
                     tglInvoice: tglInvoice,
                     suratJalan: suratJalan,
                     namaVendor: namaVendor,
-                    noInvoice: noInvoice, // Store original invoice number
+                    noInvoice: noInvoice,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 showAlert('Invoice berhasil disimpan!', 'success');
                 closeModal('invoice-modal');
-                loadInvoicesToTable(); // Refresh the table
+                loadInvoicesToTable();
             } catch (error) {
                 console.error("Error saving invoice: ", error);
                 showAlert('Gagal menyimpan invoice: ' + error.message, 'error');
             }
         }
 
-        // Save faktur pajak function
         async function saveFakturPajak() {
             const noInvoice = document.getElementById('fp-no-invoice').value;
             const tglFakturPajak = document.getElementById('fp-tgl-faktur-pajak').value;
@@ -2202,7 +2240,6 @@
             }
         }
 
-        // Save pembayaran function
         async function savePembayaran() {
             const noInvoice = document.getElementById('pembayaran-no-invoice').value;
             const dppIdr = document.getElementById('pembayaran-dpp-idr').value.replace(/[^0-9]/g, '');
@@ -2243,7 +2280,6 @@
             }
         }
 
-        // Save keterangan function
         async function saveKeterangan() {
             const noInvoice = document.getElementById('keterangan-no-invoice').value;
             const tglPengajuanFinance = document.getElementById('keterangan-tgl-pengajuan-finance').value;
@@ -2261,7 +2297,6 @@
             try {
                 const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
                 
-                // Calculate lama pengajuan if both dates are provided
                 let lamaPengajuan = '';
                 if (tglPengajuanFinance && tglDiterimaAnggi) {
                     const startDate = new Date(tglPengajuanFinance);
@@ -2280,7 +2315,7 @@
                     keteranganProses: keteranganProses,
                     tglBayar: tglBayar,
                     statusAkhir: statusAkhir,
-                    isManualStatus: !!statusAkhir, // Set to true if status is manually selected
+                    isManualStatus: !!statusAkhir,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
 
@@ -2292,14 +2327,82 @@
             }
         }
 
-        // Export invoices function
+        async function saveStatusManual() {
+            const noInvoice = document.getElementById('status-no-invoice').value;
+            const statusManual = document.getElementById('status-manual-select').value;
+
+            if (!noInvoice || !statusManual) {
+                showAlert('Harap isi semua field!', 'error');
+                return;
+            }
+
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(noInvoice);
+                
+                await keteranganCol.doc(sanitizedInvoiceNo).set({
+                    noInvoice: noInvoice,
+                    statusAkhir: statusManual,
+                    isManualStatus: true,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                showAlert('Status berhasil diperbarui!', 'success');
+                closeModal('status-modal');
+                loadInvoicesToTable();
+            } catch (error) {
+                console.error("Error saving status: ", error);
+                showAlert('Gagal menyimpan status: ' + error.message, 'error');
+            }
+        }
+
+        // Other functions
+        async function editInvoice(invoiceNo) {
+            try {
+                const sanitizedInvoiceNo = sanitizeInvoiceNo(invoiceNo);
+                const doc = await invoicesCol.doc(sanitizedInvoiceNo).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('invoice-email-hard').value = data.emailHard || '';
+                    document.getElementById('invoice-penerima').value = data.penerima || '';
+                    document.getElementById('invoice-corp').value = data.corp || '';
+                    document.getElementById('invoice-tgl-diterima').value = data.tglDiterima || '';
+                    document.getElementById('invoice-tgl-invoice').value = data.tglInvoice || '';
+                    document.getElementById('invoice-surat-jalan').value = data.suratJalan || '';
+                    document.getElementById('invoice-nama-vendor').value = data.namaVendor || '';
+                    document.getElementById('invoice-no-invoice').value = data.noInvoice || '';
+                    
+                    openModal('invoice-modal');
+                }
+            } catch (error) {
+                console.error("Error loading invoice for edit:", error);
+                showAlert('Gagal memuat data invoice untuk diedit', 'error');
+            }
+        }
+
+        async function deleteInvoice(invoiceNo) {
+            if (confirm(`Apakah Anda yakin ingin menghapus invoice ${invoiceNo}?`)) {
+                try {
+                    const sanitizedInvoiceNo = sanitizeInvoiceNo(invoiceNo);
+                    await invoicesCol.doc(sanitizedInvoiceNo).delete();
+                    showAlert('Invoice berhasil dihapus!', 'success');
+                    loadInvoicesToTable();
+                } catch (error) {
+                    console.error("Error deleting invoice:", error);
+                    showAlert('Gagal menghapus invoice: ' + error.message, 'error');
+                }
+            }
+        }
+
+        function viewInvoiceDetail(invoiceNo) {
+            showAlert(`Membuka detail invoice: ${invoiceNo}`, 'info');
+        }
+
         function exportInvoices() {
             if (filteredInvoiceData.length === 0) {
                 showAlert('Tidak ada data untuk diexport!', 'warning');
                 return;
             }
 
-            // Create CSV content
             let csvContent = "No,Email/Hard,Penerima,Corp,Tanggal Diterima,No Invoice,Nama Vendor,DPP,Status\n";
             
             filteredInvoiceData.forEach((invoice, index) => {
@@ -2317,7 +2420,6 @@
                 csvContent += row + '\n';
             });
 
-            // Create download link
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -2334,11 +2436,8 @@
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initLogin();
-            
-            // Setup vendor data
             loadVendorData();
 
-            // Setup event listeners untuk navigasi setelah login
             document.addEventListener('click', function(e) {
                 if (e.target.closest('.nav-item')) {
                     const navItem = e.target.closest('.nav-item');
@@ -2353,11 +2452,9 @@
                 }
             });
 
-            // Setup Rupiah formatting
             setupRupiahInput('pembayaran-dpp-idr');
             setupRupiahInput('pembayaran-ppn-idr');
 
-            // Setup sidebar toggle
             const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
             const sidebar = document.querySelector('.sidebar');
             
@@ -2368,14 +2465,12 @@
                     localStorage.setItem('sidebarCollapsed', isCollapsed);
                 });
 
-                // Load saved sidebar state
                 const savedSidebarState = localStorage.getItem('sidebarCollapsed');
                 if (savedSidebarState === 'true') {
                     sidebar.classList.add('collapsed');
                 }
             }
 
-            // Setup modals and button listeners
             setupModals();
             setupButtonListeners();
         });
@@ -2441,11 +2536,6 @@
                     <div class="nav-icon"><i class="fas fa-info-circle"></i></div>
                     <div class="nav-text">Keterangan</div>
                 </a>
-                <!-- Laporan Section (currently hidden) -->
-                <!-- <a href="#" class="nav-item" data-target="laporan-section">
-                    <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
-                    <div class="nav-text">Laporan</div>
-                </a> -->
                 <a href="#" class="nav-item" data-target="pengaturan-section">
                     <div class="nav-icon"><i class="fas fa-cog"></i></div>
                     <div class="nav-text">Pengaturan Akun</div>
@@ -2590,84 +2680,7 @@
                 </div>
             </section>
 
-            <!-- Invoice Detail Section (Hidden by default) -->
-            <section id="invoice-detail-section" class="content-section" style="display: none;">
-                <div class="header">
-                    <h1 class="page-title">Detail Invoice: <span id="detail-invoice-no"></span></h1>
-                    <div class="header-actions">
-                        <button class="btn btn-outline" id="back-to-list-btn">
-                            <i class="fas fa-arrow-left btn-icon"></i> Kembali ke Daftar
-                        </button>
-                        <button class="btn btn-outline" id="export-detail-btn">
-                            <i class="fas fa-download btn-icon"></i> Export Detail
-                        </button>
-                        <button class="btn btn-primary" id="edit-full-invoice-btn">
-                            <i class="fas fa-edit btn-icon"></i> Edit Invoice
-                        </button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-body">
-                        <div class="detail-section">
-                            <h3>Informasi Dasar Invoice</h3>
-                            <div class="detail-item"><strong>Email/Hard:</strong> <span id="detail-email-hard"></span></div>
-                            <div class="detail-item"><strong>Penerima:</strong> <span id="detail-penerima"></span></div>
-                            <div class="detail-item"><strong>Corp:</strong> <span id="detail-corp"></span></div>
-                            <div class="detail-item"><strong>Tanggal Diterima:</strong> <span id="detail-tgl-diterima"></span></div>
-                            <div class="detail-item"><strong>Tanggal Invoice:</strong> <span id="detail-tgl-invoice"></span></div>
-                            <div class="detail-item"><strong>Surat Jalan/BA:</strong> <span id="detail-surat-jalan"></span></div>
-                            <div class="detail-item"><strong>Nama Vendor:</strong> <span id="detail-nama-vendor"></span></div>
-                        </div>
-
-                        <div class="detail-section">
-                            <h3>Detail Faktur Pajak</h3>
-                            <div class="detail-item"><strong>No Faktur Pajak:</strong> <span id="detail-no-faktur-pajak"></span></div>
-                            <div class="detail-item"><strong>Tanggal Faktur Pajak:</strong> <span id="detail-tgl-faktur-pajak"></span></div>
-                            <div class="detail-item">
-                                <button class="btn btn-outline btn-sm" id="add-edit-faktur-pajak-btn">
-                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Faktur Pajak
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="detail-section">
-                            <h3>Detail Pembayaran</h3>
-                            <div class="detail-item"><strong>DPP (IDR):</strong> <span id="detail-dpp-idr"></span></div>
-                            <div class="detail-item"><strong>PPn (IDR):</strong> <span id="detail-ppn-idr"></span></div>
-                            <div class="detail-item"><strong>DPP (USD):</strong> <span id="detail-dpp-usd"></span></div>
-                            <div class="detail-item"><strong>Keterangan Pembayaran:</strong> <span id="detail-keterangan-pembayaran"></span></div>
-                            <div class="detail-item"><strong>Follow Up:</strong> <span id="detail-follow-up"></span></div>
-                            <div class="detail-item"><strong>Hasil Follow Up:</strong> <span id="detail-hasil-follow-up"></span></div>
-                            <div class="detail-item"><strong>TOP:</strong> <span id="detail-top"></span></div>
-                            <div class="detail-item"><strong>Jatuh Tempo:</strong> <span id="detail-jatuh-tempo"></span></div>
-                            <div class="detail-item">
-                                <button class="btn btn-outline btn-sm" id="add-edit-pembayaran-btn">
-                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Pembayaran
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="detail-section">
-                            <h3>Status & Proses Internal</h3>
-                            <div class="detail-item"><strong>Tanggal Pengajuan ke Finance:</strong> <span id="detail-tgl-pengajuan-finance"></span></div>
-                            <div class="detail-item"><strong>Tanggal Pengajuan (Reni):</strong> <span id="detail-tgl-pengajuan-reni"></span></div>
-                            <div class="detail-item"><strong>Tanggal Diterima (Anggi):</strong> <span id="detail-tgl-diterima-anggi"></span></div>
-                            <div class="detail-item"><strong>Lama Pengajuan:</strong> <span id="detail-lama-pengajuan"></span></div>
-                            <div class="detail-item"><strong>Keterangan Proses:</strong> <span id="detail-keterangan-proses"></span></div>
-                            <div class="detail-item"><strong>Tanggal Bayar:</strong> <span id="detail-tgl-bayar"></span></div>
-                            <div class="detail-item"><strong>Status Akhir:</strong> <span id="detail-status-akhir"></span></div>
-                            <div class="detail-item">
-                                <button class="btn btn-outline btn-sm" id="add-edit-keterangan-btn">
-                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Keterangan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Faktur Pajak Section (Standalone for direct access from sidebar) -->
+            <!-- Faktur Pajak Section -->
             <section id="faktur-pajak-section" class="content-section" style="display: none;">
                 <div class="header">
                     <h1 class="page-title">Manajemen Faktur Pajak</h1>
@@ -2691,7 +2704,7 @@
                 </div>
             </section>
 
-            <!-- Pembayaran Section (Standalone for direct access from sidebar) -->
+            <!-- Pembayaran Section -->
             <section id="pembayaran-section" class="content-section" style="display: none;">
                 <div class="header">
                     <h1 class="page-title">Manajemen Pembayaran</h1>
@@ -2715,7 +2728,7 @@
                 </div>
             </section>
 
-            <!-- Keterangan Section (Standalone for direct access from sidebar) -->
+            <!-- Keterangan Section -->
             <section id="keterangan-section" class="content-section" style="display: none;">
                 <div class="header">
                     <h1 class="page-title">Manajemen Keterangan & Status</h1>
