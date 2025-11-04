@@ -40,6 +40,192 @@
             min-height: 100vh;
         }
 
+        /* ========== IMPROVED LOGIN STYLES ========== */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+        }
+
+        .auth-card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 1.75rem;
+        }
+
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-logo-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-right: 0.75rem;
+        }
+
+        .auth-logo-text {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .auth-input-group {
+            position: relative;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: #f8fafc;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .auth-input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+            font-size: 1rem;
+        }
+
+        .auth-submit-btn {
+            padding: 0.9rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-submit-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .auth-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .auth-submit-btn.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .auth-submit-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .auth-error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+            border-left: 4px solid var(--danger);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ========== EXISTING STYLES (SAMA DENGAN ASLI) ========== */
         .container {
             display: flex;
             min-height: 100vh;
@@ -1704,83 +1890,74 @@
         }
 
 
-        // --- Authentication UI ---
-        const authContainer = document.createElement('div');
-        authContainer.className = 'auth-container';
-        authContainer.innerHTML = `
-            <div class="auth-card">
-                <h2 id="auth-title">Login</h2>
-                <form id="auth-form">
-                    <div class="form-group">
-                        <label for="auth-email">Email</label>
-                        <input type="email" id="auth-email" class="filter-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="auth-password">Password</label>
-                        <input type="password" id="auth-password" class="filter-input" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="auth-submit-btn">Login</button>
-                    <p class="error-message" id="auth-error-message" style="display: none;"></p>
-                </form>
-            </div>
-        `;
-        document.body.prepend(authContainer);
+        // --- Improved Login Functionality ---
+        function initLogin() {
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const loginError = document.getElementById('login-error');
 
-        const authTitle = document.getElementById('auth-title');
-        const authForm = document.getElementById('auth-form');
-        const authEmail = document.getElementById('auth-email');
-        const authPassword = document.getElementById('auth-password');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const authErrorMessage = document.getElementById('auth-error-message');
-
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = authEmail.value;
-            const password = authPassword.value;
-            authErrorMessage.style.display = 'none';
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (error) {
-                showAlert('Login gagal. Periksa kembali email dan password Anda.', 'error');
-                authErrorMessage.textContent = 'Email atau password salah.';
-                authErrorMessage.style.display = 'block';
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    handleLogin();
+                });
             }
-        });
 
-        // --- Auth State Listener ---
-        auth.onAuthStateChanged((user) => {
-            const mainAppContainer = document.querySelector('.container');
-            const authContainerElement = document.querySelector('.auth-container');
-
-            if (user) {
-                if (authContainerElement) authContainerElement.style.display = 'none';
-                if (mainAppContainer) mainAppContainer.style.display = 'flex';
-                console.log('User logged in:', user.email);
-
-                showSection('dashboard-section');
-
-            } else {
-                if (authContainerElement) authContainerElement.style.display = 'flex';
-                if (mainAppContainer) mainAppContainer.style.display = 'none';
-                console.log('User logged out');
-
-                if (window.invoiceUnsubscribe) {
-                    window.invoiceUnsubscribe();
-                    window.invoiceUnsubscribe = null;
+            // Check if user is already logged in
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in, hide login and show main content
+                    document.getElementById('auth-container').style.display = 'none';
+                    document.getElementById('main-container').style.display = 'flex';
+                    // Load initial data
+                    loadDashboardData();
+                    loadVendorData();
+                } else {
+                    // User is signed out, show login
+                    document.getElementById('auth-container').style.display = 'flex';
+                    document.getElementById('main-container').style.display = 'none';
                 }
-                if (window.dashboardUnsubscribe) {
-                    window.dashboardUnsubscribe();
-                    window.dashboardUnsubscribe = null;
-                }
-                if (window.reportUnsubscribe) {
-                    window.reportUnsubscribe();
-                    window.reportUnsubscribe = null;
-                }
-            }
-        });
+            });
+        }
 
+        function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('login-btn');
+            const loginError = document.getElementById('login-error');
+
+            // Show loading state
+            loginBtn.classList.add('loading');
+            loginError.style.display = 'none';
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Login successful
+                    loginBtn.classList.remove('loading');
+                    showAlert('Login berhasil!', 'success');
+                })
+                .catch((error) => {
+                    // Login failed
+                    loginBtn.classList.remove('loading');
+                    loginError.textContent = error.message;
+                    loginError.style.display = 'block';
+                    console.error("Login error:", error);
+                });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                showAlert('Logout berhasil!', 'success');
+            }).catch((error) => {
+                console.error("Logout error:", error);
+            });
+        }
+
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            initLogin();
+            
+            // The rest of your existing DOMContentLoaded code remains the same
             const mainContent = document.querySelector('.main-content');
             const contentSections = document.querySelectorAll('.content-section');
             const navItems = document.querySelectorAll('.nav-item');
@@ -2733,7 +2910,35 @@
         });
     </script>
 
-    <div class="container">
+    <!-- Improved Login Screen -->
+    <div id="auth-container" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fas fa-chart-line auth-logo-icon"></i>
+                <span class="auth-logo-text">FinanceMonitor</span>
+            </div>
+            <h2>Login to Your Account</h2>
+            <form id="login-form" class="auth-form">
+                <div class="auth-input-group">
+                    <i class="fas fa-envelope auth-input-icon"></i>
+                    <input type="email" id="email" class="auth-input" placeholder="Email Address" required>
+                </div>
+                <div class="auth-input-group">
+                    <i class="fas fa-lock auth-input-icon"></i>
+                    <input type="password" id="password" class="auth-input" placeholder="Password" required>
+                </div>
+                <div id="login-error" class="auth-error-message"></div>
+                <button type="submit" id="login-btn" class="auth-submit-btn">Login</button>
+            </form>
+            <div class="auth-footer">
+                <p>Secure Finance Monitoring System</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (hidden until login) -->
+    <div id="main-container" class="container" style="display: none;">
+        <!-- SIDEBAR DAN KONTEN UTAMA TETAP SAMA SEPERTI VERSI ASLI -->
         <!-- Sidebar -->
         <aside class="sidebar">
             <button id="sidebar-toggle-btn" class="sidebar-toggle">
@@ -3103,8 +3308,7 @@
         </main>
     </div>
 
-    <!-- Modals -->
-
+    <!-- MODALS TETAP SAMA SEPERTI VERSI ASLI -->
     <!-- Modal Tambah/Edit Invoice -->
     <div id="invoice-modal" class="modal">
         <div class="modal-content">
