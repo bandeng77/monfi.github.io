@@ -35,9 +35,10 @@
             background-color: #ffffff;
             color: #334155;
             line-height: 1.6;
-            width: 90%;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* ========== IMPROVED LOGIN STYLES ========== */
@@ -225,11 +226,12 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ========== EXISTING STYLES (SAMA DENGAN ASLI) ========== */
+        /* ========== FULL SCREEN CONTAINER ========== */
         .container {
             display: flex;
             min-height: 100vh;
             width: 100%;
+            margin: 0;
         }
 
         /* Sidebar Styles */
@@ -243,6 +245,8 @@
             transition: width 0.3s ease;
             position: relative;
             flex-shrink: 0;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         .sidebar.collapsed {
@@ -347,12 +351,18 @@
             transform: rotate(180deg);
         }
 
-        /* Main Content Styles */
+        /* Main Content Styles - FULL WIDTH */
         .main-content {
             flex: 1;
             padding: 2rem;
             overflow-y: auto;
             transition: margin-left 0.3s ease;
+            width: calc(100vw - 260px);
+            height: 100vh;
+        }
+
+        .sidebar.collapsed + .main-content {
+            width: calc(100vw - 60px);
         }
 
         /* Header Styles */
@@ -893,6 +903,7 @@
                 border-right: none;
                 border-bottom: 1px solid var(--border);
                 padding: 1rem;
+                height: auto;
             }
             
             .nav-menu {
@@ -909,6 +920,11 @@
 
             .sidebar-toggle {
                 display: none;
+            }
+            
+            .main-content {
+                width: 100%;
+                height: auto;
             }
         }
 
@@ -2803,7 +2819,7 @@
                     }
                 });
 
-                forgotPasswordLink.addEventListener('click', async (e) => {
+                forgotPasswordLink.addEventListener('click', async (e) {
                     e.preventDefault();
                     forgotPasswordErrorMessage.style.display = 'none';
                     forgotPasswordSuccessMessage.style.display = 'none';
