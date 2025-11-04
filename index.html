@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* ALL THE ORIGINAL STYLES REMAIN UNCHANGED */
         :root {
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
@@ -1219,6 +1220,46 @@
             });
         }
 
+        // --- PERBAIKAN 1: Fungsi untuk membersihkan form saat modal dibuka ---
+        function clearFormOnModalOpen(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                // Reset form ketika modal dibuka
+                const form = modal.querySelector('form');
+                if (form) {
+                    form.reset();
+                }
+                
+                // Setup autocomplete untuk input invoice number
+                const invoiceInputs = modal.querySelectorAll('input[type="text"]');
+                invoiceInputs.forEach(input => {
+                    if (input.id.includes('invoice') || input.id.includes('search')) {
+                        // Setup autocomplete untuk input invoice
+                        autocomplete(input, allInvoiceNumbers);
+                    }
+                });
+            }
+        }
+
+        // --- PERBAIKAN 2: Enhanced autocomplete setup untuk semua input invoice ---
+        function setupAllAutocompletes() {
+            const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
+            const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
+            const searchInvoiceKeteranganInput = document.getElementById('search-invoice-keterangan');
+            const filterSearchInput = document.getElementById('filter-search');
+
+            if (searchInvoiceFakturPajakInput) autocomplete(searchInvoiceFakturPajakInput, allInvoiceNumbers);
+            if (searchInvoicePembayaranInput) autocomplete(searchInvoicePembayaranInput, allInvoiceNumbers);
+            if (searchInvoiceKeteranganInput) autocomplete(searchInvoiceKeteranganInput, allInvoiceNumbers);
+            if (filterSearchInput) autocomplete(filterSearchInput, allInvoiceNumbers);
+            
+            // Juga setup untuk input di modal
+            const modalInvoiceInputs = document.querySelectorAll('#fp-no-invoice, #pembayaran-no-invoice, #keterangan-no-invoice');
+            modalInvoiceInputs.forEach(input => {
+                if (input) autocomplete(input, allInvoiceNumbers);
+            });
+        }
+
         // --- Fungsi untuk membersihkan No Invoice agar aman digunakan sebagai ID dokumen Firestore ---
         function sanitizeInvoiceNo(invoiceNo) {
             return invoiceNo.replace(/\//g, '-');
@@ -1705,19 +1746,6 @@
             }
         }
 
-        // Apply autocomplete to relevant input fields
-        function setupAllAutocompletes() {
-            const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
-            const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
-            const searchInvoiceKeteranganInput = document.getElementById('search-invoice-keterangan');
-            const filterSearchInput = document.getElementById('filter-search');
-
-            if (searchInvoiceFakturPajakInput) autocomplete(searchInvoiceFakturPajakInput, allInvoiceNumbers);
-            if (searchInvoicePembayaranInput) autocomplete(searchInvoicePembayaranInput, allInvoiceNumbers);
-            if (searchInvoiceKeteranganInput) autocomplete(searchInvoiceKeteranganInput, allInvoiceNumbers);
-            if (filterSearchInput) autocomplete(filterSearchInput, allInvoiceNumbers);
-        }
-
         // --- Format Rupiah Function ---
         function formatRupiah(angka, prefix = '') {
             let number_string = angka.toString().replace(/[^,\d]/g, ''),
@@ -1871,6 +1899,9 @@
             window.openModal = function(modalId) {
                 const modal = document.getElementById(modalId);
                 if (modal) {
+                    // --- PERBAIKAN 1: Clear form saat modal dibuka ---
+                    clearFormOnModalOpen(modalId);
+                    
                     modal.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
                 }
@@ -2401,7 +2432,7 @@
             }
         }
 
-        // FIXED: Complete implementation of viewInvoiceDetail function
+        // --- PERBAIKAN 3: Enhanced viewInvoiceDetail function ---
         async function viewInvoiceDetail(invoiceNo) {
             try {
                 const sanitizedInvoiceNo = sanitizeInvoiceNo(invoiceNo);
@@ -2751,7 +2782,7 @@
                 </div>
             </section>
 
-            <!-- Invoice Detail Section (Fixed and now functional) -->
+            <!-- Invoice Detail Section -->
             <section id="invoice-detail-section" class="content-section" style="display: none;">
                 <div class="header">
                     <h1 class="page-title">Detail Invoice: <span id="detail-invoice-no"></span></h1>
@@ -3128,7 +3159,7 @@
         </div>
     </div>
 
-    <!-- NEW Modal for Manual Status Update -->
+    <!-- Modal for Manual Status Update -->
     <div id="status-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close-btn">&times;</span>
