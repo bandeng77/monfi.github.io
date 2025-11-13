@@ -225,7 +225,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ========== EXISTING STYLES (SAMA DENGAN ASLI) ========== */
+        /* ========== EXISTING STYLES ========== */
         .container {
             display: flex;
             min-height: 100vh;
@@ -748,6 +748,8 @@
             max-height: 200px;
             overflow-y: auto;
             background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 0.5rem 0.5rem;
         }
 
         .autocomplete-items div {
@@ -755,6 +757,7 @@
             cursor: pointer;
             background-color: #fff;
             border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s ease;
         }
 
         .autocomplete-items div:hover {
@@ -764,6 +767,13 @@
         .autocomplete-active {
             background-color: var(--primary) !important;
             color: #ffffff;
+        }
+
+        .autocomplete-new-vendor {
+            background-color: #f0f9ff !important;
+            color: var(--primary);
+            font-weight: 600;
+            border-left: 3px solid var(--primary);
         }
 
         /* Custom Alert/Notification Styles */
@@ -1029,158 +1039,198 @@
         // Global variables for vendor data
         let allVendorNames = [];
 
-        // Load vendor data from JSON file
+        // --- VENDOR MANAGEMENT FUNCTIONS ---
+        // Load vendor data from localStorage or default sample
         async function loadVendorData() {
             try {
-                // Using a sample vendor list - replace with actual JSON file path
-                const sampleVendors = [
-                   "ALARM SUPPLY PTE LTD",
-"ALLTECH SOLUSINDO",
-"ALVASTA TEKNOLOGI",
-"ARSITA UTAMA INDONESIA",
-"ARSITA UTAMA INDONESIA. PT",
-"ARTA KENCANA PRIMA MANDIRI",
-"ASIA CIPTA MANAGEMENT",
-"AUSTRALINDO GRAHA NUSA",
-"BUANA SUKSES ABADI",
-"BUANA SUKSES BERSAMA. PT",
-"BUMEN CITRA MANDIRI",
-"CAHAYA BUANA INDOABADI",
-"CAHAYA KALIMAS UTAMA",
-"CAKRA MITRA SENTOSA",
-"CECEP DENI SAPUTRA ",
-"CITRA INTI SEMESTA",
-"CITRA MAKMUR BINA SAHABAT HOOSEKI BUILDING. PT",
-"CV. BELTECHINDO",
-"CV. PRIMA TIMUR JAYA",
-"DAITO ELEKTRINDO",
-"DENKO WAHANA SAKTI ",
-"DEXTRANS WORLWIDE INDONESIA. PT",
-"ECONOMIE MANDIRI",
-"ETIQA ASURANSI ",
-"FEDEX EXPRESS INTERNATIONAL ",
-"FFE LIMITED",
-"GECA S.r.I",
-"GENAIR NUSAINDO",
-"GENAIR NUSAINDO ",
-"HASEA CIPTA KARYA",
-"HIKARI INDO SARANA. PT",
-"HONEYWELL",
-"HONEYWELL INDONESIA. PT",
-"INTIKABEL METALINDO",
-"ISTANA KEBON JERUK",
-"KAMIL PUTRA PROTEKSINDO",
-"KARYA GRAHA CAHAYA",
-"KARYA GRAHA COMPUTER SUPERMALL",
-"KIJANG SOLIDEO TEKNIK",
-"LENTERA TILAS TEHNIK",
-"MACRON SAFETY SYSTEMS (UK) LIMITED",
-"MASTER INDO LOGISTICS. PT",
-"MEDIA MITRA PRATAMA",
-"METRO JAYA TEKNIK",
-"MID SOLUSI NUSANTARA. PT",
-"MITRA MAKMUR SOLUSINDO",
-"MUHAMMAD FAIK",
-"MULTRON SYSTEMS PTE. LTD",
-"OBAY",
-"PANAH PERDANA LOGISINDO. PT",
-"PASKALIS ",
-"PETRA CONDUIT",
-"PRIMA TIMUR JAYA",
-"PRIMA TUNGGAL JAVALAND",
-"PROTOCONVERT",
-"PT TUNAS RIDEAN",
-"SETYA REKAT ABADI. PT",
-"SHOPPE INDONESIA",
-"TEKNIK MAKMUR MANDIRI",
-"TEPG",
-"TOKOPEDIA",
-"VINOTI (VIVERE MULTI KREASI)",
-"WIDJAJA TEKNIK UTAMA. PT",
-"YANTO. BPK",
-"TIRTA INVESTAMA. PT",
-"FATHONA MARFAZRINA",
-"HEBEI J&R TRADING CO. LTD",
-"CAHAYA DELTA MANDIRI",
-"PRIMACIPTA UNGGUL KARYA",
-"DATA INTEGRASI SEMESTA",
-"GLOBAL SECURITY SERVICE INDONESIA",
-"BERKAH MANDIRI PROTECTION",
-"PELOPOR PRATAMA LANCAR ABADI",
-"BETA PANEL",
-"WARUNG NASI PASUNDAN",
-"LUBNA PERKASA ABADI",
-"SIBALEC. PT",
-"13ROTHER MAFIA KONVEKSI",
-"UNI NETWORK COMMUNICATIONS",
-"DENKO WAHANA SAKTI",
-"ISS INDONESIA",
-"HORING LIH INDUSTRIAL",
-"AKARA DIRAYA NAWASENA",
-"PANDU BINA SENTOSA",
-"KSO SUCOFINDO - SURVEYOR INDONESIA",
-"CV KARYA HADIAH KREATIF",
-"ALFIRE PRIMA INDONEISA",
-"CITRA INTI SEMESTA ",
-"BAMBANG WINARNO. BPK",
-"UMROTA KARYA UTAMA",
-"KAP PIETER. UWAYS & REKAN",
-"ELPRIMA KENCANA",
-"BAHTERA BINA SELARAS",
-"BINEX LOGISTIC",
-"HOME CENTER INDONESIA RETAIL",
-"BARAYA PROTEKSINDO ABADI", 
-"ERAFONE ARTHA RETAILINDO",
-"CV. AZZA BARAKAH SEJAHTERA",
-"REJEKI PRIMA STEEL",
-"SAMSIRA TEKNOLOGI INDONESIA",
-"BINA GLOBAL TRANSPORT",
-"ASENWARE INDONESIA JAYA",
-"AZBIL BERCA INDONESIA",
-"TEMAN BAIK. CV"
-                ];
+                // Coba load dari localStorage dulu
+                const savedVendors = localStorage.getItem('vendorList');
                 
-                allVendorNames = sampleVendors;
-                setupVendorAutocomplete();
-                
-                // Uncomment the following lines if you have a vendors.json file
-                /*
-                const response = await fetch('vendors.json');
-                if (!response.ok) {
-                    throw new Error('Gagal memuat data vendor');
+                if (savedVendors) {
+                    allVendorNames = JSON.parse(savedVendors);
+                } else {
+                    // Jika tidak ada di localStorage, gunakan sample vendors
+                    const sampleVendors = [
+                       "ALARM SUPPLY PTE LTD",
+                       "ALLTECH SOLUSINDO",
+                       "ALVASTA TEKNOLOGI",
+                       "ARSITA UTAMA INDONESIA",
+                       "ARSITA UTAMA INDONESIA. PT",
+                       "ARTA KENCANA PRIMA MANDIRI",
+                       "ASIA CIPTA MANAGEMENT",
+                       "AUSTRALINDO GRAHA NUSA",
+                       "BUANA SUKSES ABADI",
+                       "BUANA SUKSES BERSAMA. PT",
+                       "BUMEN CITRA MANDIRI",
+                       "CAHAYA BUANA INDOABADI",
+                       "CAHAYA KALIMAS UTAMA",
+                       "CAKRA MITRA SENTOSA",
+                       "CECEP DENI SAPUTRA ",
+                       "CITRA INTI SEMESTA",
+                       "CITRA MAKMUR BINA SAHABAT HOOSEKI BUILDING. PT",
+                       "CV. BELTECHINDO",
+                       "CV. PRIMA TIMUR JAYA",
+                       "DAITO ELEKTRINDO",
+                       "DENKO WAHANA SAKTI ",
+                       "DEXTRANS WORLWIDE INDONESIA. PT",
+                       "ECONOMIE MANDIRI",
+                       "ETIQA ASURANSI ",
+                       "FEDEX EXPRESS INTERNATIONAL ",
+                       "FFE LIMITED",
+                       "GECA S.r.I",
+                       "GENAIR NUSAINDO",
+                       "GENAIR NUSAINDO ",
+                       "HASEA CIPTA KARYA",
+                       "HIKARI INDO SARANA. PT",
+                       "HONEYWELL",
+                       "HONEYWELL INDONESIA. PT",
+                       "INTIKABEL METALINDO",
+                       "ISTANA KEBON JERUK",
+                       "KAMIL PUTRA PROTEKSINDO",
+                       "KARYA GRAHA CAHAYA",
+                       "KARYA GRAHA COMPUTER SUPERMALL",
+                       "KIJANG SOLIDEO TEKNIK",
+                       "LENTERA TILAS TEHNIK",
+                       "MACRON SAFETY SYSTEMS (UK) LIMITED",
+                       "MASTER INDO LOGISTICS. PT",
+                       "MEDIA MITRA PRATAMA",
+                       "METRO JAYA TEKNIK",
+                       "MID SOLUSI NUSANTARA. PT",
+                       "MITRA MAKMUR SOLUSINDO",
+                       "MUHAMMAD FAIK",
+                       "MULTRON SYSTEMS PTE. LTD",
+                       "OBAY",
+                       "PANAH PERDANA LOGISINDO. PT",
+                       "PASKALIS ",
+                       "PETRA CONDUIT",
+                       "PRIMA TIMUR JAYA",
+                       "PRIMA TUNGGAL JAVALAND",
+                       "PROTOCONVERT",
+                       "PT TUNAS RIDEAN",
+                       "SETYA REKAT ABADI. PT",
+                       "SHOPPE INDONESIA",
+                       "TEKNIK MAKMUR MANDIRI",
+                       "TEPG",
+                       "TOKOPEDIA",
+                       "VINOTI (VIVERE MULTI KREASI)",
+                       "WIDJAJA TEKNIK UTAMA. PT",
+                       "YANTO. BPK",
+                       "TIRTA INVESTAMA. PT",
+                       "FATHONA MARFAZRINA",
+                       "HEBEI J&R TRADING CO. LTD",
+                       "CAHAYA DELTA MANDIRI",
+                       "PRIMACIPTA UNGGUL KARYA",
+                       "DATA INTEGRASI SEMESTA",
+                       "GLOBAL SECURITY SERVICE INDONESIA",
+                       "BERKAH MANDIRI PROTECTION",
+                       "PELOPOR PRATAMA LANCAR ABADI",
+                       "BETA PANEL",
+                       "WARUNG NASI PASUNDAN",
+                       "LUBNA PERKASA ABADI",
+                       "SIBALEC. PT",
+                       "13ROTHER MAFIA KONVEKSI",
+                       "UNI NETWORK COMMUNICATIONS",
+                       "DENKO WAHANA SAKTI",
+                       "ISS INDONESIA",
+                       "HORING LIH INDUSTRIAL",
+                       "AKARA DIRAYA NAWASENA",
+                       "PANDU BINA SENTOSA",
+                       "KSO SUCOFINDO - SURVEYOR INDONESIA",
+                       "CV KARYA HADIAH KREATIF",
+                       "ALFIRE PRIMA INDONEISA",
+                       "CITRA INTI SEMESTA ",
+                       "BAMBANG WINARNO. BPK",
+                       "UMROTA KARYA UTAMA",
+                       "KAP PIETER. UWAYS & REKAN",
+                       "ELPRIMA KENCANA",
+                       "BAHTERA BINA SELARAS",
+                       "BINEX LOGISTIC",
+                       "HOME CENTER INDONESIA RETAIL",
+                       "BARAYA PROTEKSINDO ABADI", 
+                       "ERAFONE ARTHA RETAILINDO",
+                       "CV. AZZA BARAKAH SEJAHTERA",
+                       "REJEKI PRIMA STEEL",
+                       "SAMSIRA TEKNOLOGI INDONESIA",
+                       "BINA GLOBAL TRANSPORT",
+                       "ASENWARE INDONESIA JAYA",
+                       "AZBIL BERCA INDONESIA",
+                       "TEMAN BAIK. CV"
+                    ];
+                    
+                    allVendorNames = sampleVendors;
+                    // Simpan ke localStorage untuk pertama kali
+                    localStorage.setItem('vendorList', JSON.stringify(allVendorNames));
                 }
-                allVendorNames = await response.json();
+                
                 setupVendorAutocomplete();
-                */
+                
             } catch (error) {
                 console.error("Error loading vendor data:", error);
                 showAlert("Gagal memuat data vendor: " + error.message, 'error');
             }
         }
 
+        // Function to add new vendor to the list
+        function addNewVendor(vendorName) {
+            if (!vendorName || vendorName.trim() === '') return false;
+            
+            const trimmedVendor = vendorName.trim();
+            
+            // Check if vendor already exists (case insensitive)
+            const vendorExists = allVendorNames.some(vendor => 
+                vendor.toLowerCase() === trimmedVendor.toLowerCase()
+            );
+            
+            if (!vendorExists) {
+                // Add new vendor to the beginning of the array
+                allVendorNames.unshift(trimmedVendor);
+                
+                // Save updated list to localStorage
+                localStorage.setItem('vendorList', JSON.stringify(allVendorNames));
+                
+                // Update autocomplete
+                setupVendorAutocomplete();
+                
+                console.log("New vendor added:", trimmedVendor);
+                return true;
+            }
+            
+            return false;
+        }
+
         // Setup vendor autocomplete
         function setupVendorAutocomplete() {
             const vendorInput = document.getElementById('invoice-nama-vendor');
             if (vendorInput && allVendorNames.length > 0) {
-                autocomplete(vendorInput, allVendorNames);
+                autocomplete(vendorInput, allVendorNames, true); // true = allow new vendors
             }
         }
 
-        // Enhanced autocomplete function to handle multiple fields
-        function autocomplete(inp, arr) {
-            var currentFocus;
+        // Enhanced autocomplete function with add new vendor capability
+        function autocomplete(inp, arr, allowNew = false) {
+            let currentFocus;
+            
             inp.addEventListener("input", function(e) {
-                var a, b, i, val = this.value;
+                var a, b, i, val = this.value.trim();
                 closeAllLists();
-                // Trigger autocomplete if at least 1 character is entered
-                if (val.length < 1) { return false;}
+                
+                // Don't show autocomplete if input is empty
+                if (val.length < 1) { 
+                    return false;
+                }
+                
                 currentFocus = -1;
                 a = document.createElement("DIV");
                 a.setAttribute("id", this.id + "autocomplete-list");
                 a.setAttribute("class", "autocomplete-items");
                 this.parentNode.appendChild(a);
+                
+                let hasMatches = false;
+                
+                // Show matching vendors
                 for (i = 0; i < arr.length; i++) {
                     if (arr[i].toUpperCase().includes(val.toUpperCase())) {
+                        hasMatches = true;
                         b = document.createElement("DIV");
                         const matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
                         b.innerHTML = arr[i].substring(0, matchIndex) +
@@ -1194,23 +1244,47 @@
                         a.appendChild(b);
                     }
                 }
+                
+                // Add "Add new vendor" option if no matches and allowNew is true
+                if (!hasMatches && allowNew && val.length > 0) {
+                    b = document.createElement("DIV");
+                    b.className = "autocomplete-new-vendor";
+                    b.innerHTML = "<i class='fas fa-plus-circle'></i> Tambah vendor baru: \"" + val + "\"";
+                    b.innerHTML += "<input type='hidden' value='" + val + "'>";
+                    b.addEventListener("click", function(e) {
+                        inp.value = this.getElementsByTagName("input")[0].value;
+                        closeAllLists();
+                        // Automatically add the new vendor when selected
+                        addNewVendor(val);
+                        showAlert('Vendor baru "' + val + '" telah ditambahkan ke daftar', 'success');
+                    });
+                    a.appendChild(b);
+                }
             });
+            
             inp.addEventListener("keydown", function(e) {
                 var x = document.getElementById(this.id + "autocomplete-list");
                 if (x) x = x.getElementsByTagName("div");
-                if (e.keyCode == 40) {
+                if (e.keyCode == 40) { // arrow DOWN
                     currentFocus++;
                     addActive(x);
-                } else if (e.keyCode == 38) { //arrow UP
+                } else if (e.keyCode == 38) { // arrow UP
                     currentFocus--;
                     addActive(x);
-                } else if (e.keyCode == 13) {
+                } else if (e.keyCode == 13) { // ENTER
                     e.preventDefault();
                     if (currentFocus > -1) {
                         if (x) x[currentFocus].click();
+                    } else if (allowNew && this.value.trim().length > 0) {
+                        // If no selection and allowNew, add the new vendor
+                        const newVendor = this.value.trim();
+                        if (addNewVendor(newVendor)) {
+                            showAlert('Vendor baru "' + newVendor + '" telah ditambahkan ke daftar', 'success');
+                        }
                     }
                 }
             });
+            
             function addActive(x) {
                 if (!x) return false;
                 removeActive(x);
@@ -1218,11 +1292,13 @@
                 if (currentFocus < 0) currentFocus = (x.length - 1);
                 x[currentFocus].classList.add("autocomplete-active");
             }
+            
             function removeActive(x) {
                 for (var i = 0; i < x.length; i++) {
                     x[i].classList.remove("autocomplete-active");
                 }
             }
+            
             function closeAllLists(elmnt) {
                 var x = document.getElementsByClassName("autocomplete-items");
                 for (var i = 0; i < x.length; i++) {
@@ -1231,6 +1307,7 @@
                     }
                 }
             }
+            
             document.addEventListener("click", function (e) {
                 closeAllLists(e.target);
             });
@@ -2123,6 +2200,12 @@
                 }
                 const noInvoiceDocId = sanitizeInvoiceNo(rawNoInvoice);
 
+                const vendorName = document.getElementById('invoice-nama-vendor').value.trim();
+                if (vendorName) {
+                    // Automatically add new vendor if it doesn't exist
+                    addNewVendor(vendorName);
+                }
+
                 const formData = {
                     emailHard: document.getElementById('invoice-email-hard').value,
                     penerima: document.getElementById('invoice-penerima').value,
@@ -2130,7 +2213,7 @@
                     tglDiterima: document.getElementById('invoice-tgl-diterima').value,
                     tglInvoice: document.getElementById('invoice-tgl-invoice').value,
                     suratJalan: document.getElementById('invoice-surat-jalan').value,
-                    namaVendor: document.getElementById('invoice-nama-vendor').value,
+                    namaVendor: vendorName,
                     noInvoice: rawNoInvoice,
                 };
 
