@@ -966,6 +966,27 @@
                 justify-content: center;
             }
         }
+
+        /* Currency indicator styles */
+        .currency-indicator {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: var(--light);
+            color: var(--secondary);
+        }
+
+        .currency-idr {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .currency-usd {
+            background-color: #f0fdf4;
+            color: #15803d;
+        }
     </style>
 </head>
 <body>
@@ -1414,6 +1435,20 @@
                 else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                 else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
 
+                // Determine which DPP to display and add currency indicator
+                let dppDisplay = 'N/A';
+                let currencyClass = '';
+                let currencyText = '';
+                
+                if (invoice.DPP_IDR && invoice.DPP_IDR !== 'N/A' && invoice.DPP_IDR !== '0') {
+                    dppDisplay = invoice.DPP_IDR;
+                    currencyClass = 'currency-idr';
+                    currencyText = 'IDR';
+                } else if (invoice.DPP_USD && invoice.DPP_USD !== '0') {
+                    dppDisplay = `$ ${invoice.DPP_USD}`;
+                    currencyClass = 'currency-usd';
+                    currencyText = 'USD';
+                }
 
                 rowsHtml.push(`
                     <tr data-invoice-id="${invoice.No_Invoice}">
@@ -1424,7 +1459,10 @@
                         <td>${invoice.Tanggal_Diterima || '-'}</td>
                         <td><a href="#" class="view-invoice-detail" data-invoice-no="${invoice.No_Invoice}">${invoice.No_Invoice}</a></td>
                         <td>${invoice.Nama_Vendor || '-'}</td>
-                        <td>${invoice.DPP_IDR}</td>
+                        <td>
+                            ${dppDisplay}
+                            ${currencyText ? `<span class="currency-indicator ${currencyClass}">${currencyText}</span>` : ''}
+                        </td>
                         <td>
                             <button class="status-button ${statusClass}" data-invoice-no="${invoice.No_Invoice}" data-current-status="${invoice.Status}">
                                 ${invoice.Status}
@@ -3480,7 +3518,7 @@
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-dpp-idr">DPP (IDR)</label>
-                    <input type="text" id="pembayaran-dpp-idr" class="filter-input rupiah-input" placeholder="Rp 0" required>
+                    <input type="text" id="pembayaran-dpp-idr" class="filter-input rupiah-input" placeholder="Rp 0">
                 </div>
                 <div class="checkbox-group">
                     <input type="checkbox" id="pembayaran-include-ppn">
