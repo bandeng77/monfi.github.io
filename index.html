@@ -1049,7 +1049,7 @@
         let allInvoiceData = [];
         let filteredInvoiceData = [];
         window.currentPage = 1;
-        const itemsPerPage = 10;
+        const itemsPerPage = 25; // DIUBAH: dari 10 menjadi 25
 
         // Global variables to store unsubscribe functions for realtime listeners
         window.invoiceUnsubscribe = null;
@@ -2258,6 +2258,14 @@
                     await invoicesCol.doc(noInvoiceDocId).set(formData, { merge: true });
                     showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
+                    
+                    // DIUBAH: Tidak reset halaman ke 1, tetap di halaman terakhir
+                    // Hitung halaman terakhir berdasarkan data yang ada
+                    const totalPages = Math.ceil((filteredInvoiceData.length + 1) / itemsPerPage);
+                    window.currentPage = totalPages; // Set ke halaman terakhir
+                    
+                    // Refresh data untuk menampilkan invoice baru
+                    loadInvoicesToTable();
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
                     showAlert("Gagal menyimpan invoice: " + error.message, 'error');
@@ -2944,7 +2952,7 @@
                         console.error("Error sending password reset email:", error);
                         forgotPasswordErrorMessage.textContent = 'Gagal mengirim link reset password: ' + error.message;
                         forgotPasswordErrorMessage.style.display = 'block';
-                        showAlert('Gagal mengirim link reset password: ' + error.message, 'error');
+                        showAlert('Gagal mengirim link reset password: " + error.message, 'error');
                     }
                 });
             }
