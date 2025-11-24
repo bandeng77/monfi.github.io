@@ -2168,26 +2168,34 @@
 
         // --- Dashboard Detail Modal Functions ---
         function openDashboardDetail(statusType) {
-            // Filter data berdasarkan status
-            const filteredData = allInvoiceData.filter(invoice => invoice.Status === statusType);
-            
-            // Set judul modal berdasarkan status
+            let filteredData = [];
             let modalTitle = '';
-            switch(statusType) {
-                case 'Dibayar':
-                    modalTitle = 'Invoice Telah Dibayar';
-                    break;
-                case 'Menunggu Pembayaran':
-                    modalTitle = 'Invoice Menunggu Pembayaran';
-                    break;
-                case 'Menunggu Pengajuan':
-                    modalTitle = 'Invoice Menunggu Pengajuan';
-                    break;
-                case 'Jatuh Tempo':
-                    modalTitle = 'Invoice Jatuh Tempo';
-                    break;
-                default:
-                    modalTitle = 'Semua Invoice';
+            
+            if (statusType === 'All') {
+                // Show all invoices
+                filteredData = allInvoiceData;
+                modalTitle = 'Semua Invoice';
+            } else {
+                // Filter data berdasarkan status
+                filteredData = allInvoiceData.filter(invoice => invoice.Status === statusType);
+                
+                // Set judul modal berdasarkan status
+                switch(statusType) {
+                    case 'Dibayar':
+                        modalTitle = 'Invoice Telah Dibayar';
+                        break;
+                    case 'Menunggu Pembayaran':
+                        modalTitle = 'Invoice Menunggu Pembayaran';
+                        break;
+                    case 'Menunggu Pengajuan':
+                        modalTitle = 'Invoice Menunggu Pengajuan';
+                        break;
+                    case 'Jatuh Tempo':
+                        modalTitle = 'Invoice Jatuh Tempo';
+                        break;
+                    default:
+                        modalTitle = 'Invoice';
+                }
             }
             
             // Update konten modal
@@ -2201,8 +2209,8 @@
             if (filteredData.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="no-data-message">
-                            Tidak ada invoice dengan status "${statusType}"
+                        <td colspan="9" class="no-data-message">
+                            Tidak ada invoice${statusType !== 'All' ? ` dengan status "${statusType}"` : ''}
                         </td>
                     </tr>
                 `;
@@ -2216,7 +2224,7 @@
                     else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                     else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                     else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
-
+        
                     // Determine which DPP to display and add currency indicator
                     let dppDisplay = 'N/A';
                     let currencyClass = '';
@@ -2231,7 +2239,7 @@
                         currencyClass = 'currency-usd';
                         currencyText = 'USD';
                     }
-
+        
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${index + 1}</td>
@@ -2254,6 +2262,10 @@
                     tableBody.appendChild(row);
                 });
             }
+            
+            // Tampilkan modal
+            document.getElementById('dashboard-detail-modal').style.display = 'block';
+        }
             
             // Tampilkan modal
             document.getElementById('dashboard-detail-modal').style.display = 'block';
@@ -2341,26 +2353,44 @@
             });
 
             // --- Dashboard Summary Click Handlers ---
-            document.getElementById('dashboard-total-invoice').closest('.summary-item').addEventListener('click', function() {
-                // Show all invoices
-                openDashboardDetail('All');
-            });
-
-            document.getElementById('dashboard-paid-invoice').closest('.summary-item').addEventListener('click', function() {
-                openDashboardDetail('Dibayar');
-            });
-
-            document.getElementById('dashboard-pending-invoice').closest('.summary-item').addEventListener('click', function() {
-                openDashboardDetail('Menunggu Pembayaran');
-            });
-
-            document.getElementById('dashboard-submission-pending-invoice').closest('.summary-item').addEventListener('click', function() {
-                openDashboardDetail('Menunggu Pengajuan');
-            });
-
-            document.getElementById('dashboard-overdue-invoice').closest('.summary-item').addEventListener('click', function() {
-                openDashboardDetail('Jatuh Tempo');
-            });
+                function setupDashboardClickHandlers() {
+                const totalInvoiceItem = document.getElementById('dashboard-total-invoice')?.closest('.summary-item');
+                const paidInvoiceItem = document.getElementById('dashboard-paid-invoice')?.closest('.summary-item');
+                const pendingInvoiceItem = document.getElementById('dashboard-pending-invoice')?.closest('.summary-item');
+                const submissionPendingItem = document.getElementById('dashboard-submission-pending-invoice')?.closest('.summary-item');
+                const overdueInvoiceItem = document.getElementById('dashboard-overdue-invoice')?.closest('.summary-item');
+            
+                if (totalInvoiceItem) {
+                    totalInvoiceItem.addEventListener('click', function() {
+                        // Show all invoices
+                        openDashboardDetail('All');
+                    });
+                }
+            
+                if (paidInvoiceItem) {
+                    paidInvoiceItem.addEventListener('click', function() {
+                        openDashboardDetail('Dibayar');
+                    });
+                }
+            
+                if (pendingInvoiceItem) {
+                    pendingInvoiceItem.addEventListener('click', function() {
+                        openDashboardDetail('Menunggu Pembayaran');
+                    });
+                }
+            
+                if (submissionPendingItem) {
+                    submissionPendingItem.addEventListener('click', function() {
+                        openDashboardDetail('Menunggu Pengajuan');
+                    });
+                }
+            
+                if (overdueInvoiceItem) {
+                    overdueInvoiceItem.addEventListener('click', function() {
+                        openDashboardDetail('Jatuh Tempo');
+                    });
+                }
+            }
 
             // Close dashboard detail modal
             document.getElementById('dashboard-detail-close').addEventListener('click', closeDashboardDetail);
