@@ -2964,7 +2964,7 @@
                         console.error("Error sending password reset email:", error);
                         forgotPasswordErrorMessage.textContent = 'Gagal mengirim link reset password: ' + error.message;
                         forgotPasswordErrorMessage.style.display = 'block';
-                        showAlert('Gagal mengirim link reset password: " + error.message, 'error');
+                        showAlert('Gagal mengirim link reset password: ' + error.message, 'error');
                     }
                 });
             }
@@ -3078,7 +3078,6 @@
 
     <!-- Main Application (hidden until login) -->
     <div id="main-container" class="container" style="display: none;">
-        <!-- SIDEBAR DAN KONTEN UTAMA TETAP SAMA SEPERTI VERSI ASLI -->
         <!-- Sidebar -->
         <aside class="sidebar">
             <button id="sidebar-toggle-btn" class="sidebar-toggle">
@@ -3110,11 +3109,6 @@
                     <div class="nav-icon"><i class="fas fa-info-circle"></i></div>
                     <div class="nav-text">Keterangan</div>
                 </a>
-                <!-- Laporan Section (currently hidden) -->
-                <!-- <a href="#" class="nav-item" data-target="laporan-section">
-                    <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
-                    <div class="nav-text">Laporan</div>
-                </a> -->
                 <a href="#" class="nav-item" data-target="pengaturan-section">
                     <div class="nav-icon"><i class="fas fa-cog"></i></div>
                     <div class="nav-text">Pengaturan Akun</div>
@@ -3448,7 +3442,7 @@
         </main>
     </div>
 
-    <!-- MODALS TETAP SAMA SEPERTI VERSI ASLI -->
+    <!-- MODALS -->
     <!-- Modal Tambah/Edit Invoice -->
     <div id="invoice-modal" class="modal">
         <div class="modal-content">
@@ -3629,7 +3623,7 @@
                     </select>
                 </div>
                 <div class="form-actions">
-                    <button type="submit", class="btn btn-primary">Simpan Keterangan</button>
+                    <button type="submit" class="btn btn-primary">Simpan Keterangan</button>
                 </div>
             </form>
         </div>
