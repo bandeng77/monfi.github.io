@@ -2259,13 +2259,17 @@
                     showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
                     
-                    // DIUBAH: Tidak reset halaman ke 1, tetap di halaman terakhir
-                    // Hitung halaman terakhir berdasarkan data yang ada
-                    const totalPages = Math.ceil((filteredInvoiceData.length + 1) / itemsPerPage);
-                    window.currentPage = totalPages; // Set ke halaman terakhir
+                    // PERBAIKAN: Simpan halaman saat ini sebelum refresh
+                    const currentPageBeforeRefresh = window.currentPage;
                     
                     // Refresh data untuk menampilkan invoice baru
                     loadInvoicesToTable();
+                    
+                    // Kembalikan ke halaman yang sama setelah refresh
+                    setTimeout(() => {
+                        window.currentPage = currentPageBeforeRefresh;
+                        renderInvoicesTable(filteredInvoiceData);
+                    }, 500);
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
                     showAlert("Gagal menyimpan invoice: " + error.message, 'error');
@@ -2436,6 +2440,14 @@
                     await keteranganBatch.commit();
 
                     showAlert('Invoice dan data terkait berhasil dihapus!', 'success');
+                    
+                    // PERBAIKAN: Tetap di halaman yang sama setelah hapus
+                    const currentPageBeforeDelete = window.currentPage;
+                    loadInvoicesToTable();
+                    setTimeout(() => {
+                        window.currentPage = currentPageBeforeDelete;
+                        renderInvoicesTable(filteredInvoiceData);
+                    }, 500);
                 } catch (error) {
                     console.error("Error deleting invoice: ", error);
                     showAlert("Gagal menghapus invoice: " + error.message, 'error');
@@ -3617,7 +3629,7 @@
                     </select>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Simpan Keterangan</button>
+                    <button type="submit", class="btn btn-primary">Simpan Keterangan</button>
                 </div>
             </form>
         </div>
