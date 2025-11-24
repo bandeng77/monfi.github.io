@@ -825,6 +825,7 @@
             text-align: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
             transition: transform 0.2s ease;
+            cursor: pointer;
         }
 
         .summary-item:hover {
@@ -985,6 +986,69 @@
         .currency-usd {
             background-color: #f0fdf4;
             color: #15803d;
+        }
+
+        /* Status Summary Modal */
+        .status-summary-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .status-summary-content {
+            background-color: var(--card-bg);
+            margin: auto;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .status-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .status-summary-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .status-summary-close-btn {
+            color: var(--secondary);
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .status-summary-close-btn:hover {
+            color: var(--dark);
+        }
+
+        .status-summary-table-container {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            margin-top: 1rem;
         }
     </style>
 </head>
@@ -2026,6 +2090,8 @@
                     // Load initial data
                     loadDashboardData();
                     loadVendorData();
+                    // PERBAIKAN: Tampilkan dashboard secara otomatis
+                    showSection('dashboard-section');
                 } else {
                     // User is signed out, show login
                     document.getElementById('auth-container').style.display = 'flex';
@@ -2065,6 +2131,95 @@
             }).catch((error) => {
                 console.error("Logout error:", error);
             });
+        }
+
+        // --- Status Summary Modal Functions ---
+        function openStatusSummaryModal(statusType) {
+            const modal = document.getElementById('status-summary-modal');
+            const title = document.getElementById('status-summary-title');
+            const tableBody = document.querySelector('#status-summary-table tbody');
+            
+            // Set title based on status type
+            let statusText = '';
+            switch(statusType) {
+                case 'total':
+                    statusText = 'Total Invoice';
+                    break;
+                case 'paid':
+                    statusText = 'Invoice Telah Dibayar';
+                    break;
+                case 'pending':
+                    statusText = 'Invoice Menunggu Pembayaran';
+                    break;
+                case 'submission-pending':
+                    statusText = 'Invoice Menunggu Pengajuan';
+                    break;
+                case 'overdue':
+                    statusText = 'Invoice Jatuh Tempo';
+                    break;
+                default:
+                    statusText = 'Invoice';
+            }
+            
+            title.textContent = `Daftar ${statusText}`;
+            
+            // Filter data based on status type
+            let filteredData = [];
+            switch(statusType) {
+                case 'total':
+                    filteredData = allInvoiceData;
+                    break;
+                case 'paid':
+                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Dibayar');
+                    break;
+                case 'pending':
+                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Menunggu Pembayaran');
+                    break;
+                case 'submission-pending':
+                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Menunggu Pengajuan');
+                    break;
+                case 'overdue':
+                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Jatuh Tempo');
+                    break;
+                default:
+                    filteredData = allInvoiceData;
+            }
+            
+            // Render table rows
+            tableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data.</td></tr>';
+            } else {
+                filteredData.forEach((invoice, index) => {
+                    let statusClass = '';
+                    if (invoice.Status === 'Dibayar') statusClass = 'status-paid';
+                    else if (['Menunggu Pembayaran'].includes(invoice.Status)) statusClass = 'status-pending';
+                    else if (invoice.Status === 'Jatuh Tempo') statusClass = 'status-overdue';
+                    else if (['Diajukan ke Finance'].includes(invoice.Status)) statusClass = 'status-diajukan-finance';
+                    else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
+                    else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
+                    else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${invoice.No_Invoice}</td>
+                        <td>${invoice.Nama_Vendor || '-'}</td>
+                        <td>${invoice.DPP_IDR || '-'}</td>
+                        <td><span class="status-button ${statusClass}">${invoice.Status}</span></td>
+                        <td>${invoice.Jatuh_Tempo || '-'}</td>
+                        <td>${invoice.Tanggal_Bayar || '-'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            // Show modal
+            modal.style.display = 'flex';
+        }
+
+        function closeStatusSummaryModal() {
+            document.getElementById('status-summary-modal').style.display = 'none';
         }
 
         // Initialize the application
@@ -2122,9 +2277,10 @@
             }
             window.showSection = showSection;
 
-            if (auth.currentUser) {
-                showSection('dashboard-section');
-            }
+            // PERBAIKAN: Pindahkan ini ke dalam initLogin agar dashboard langsung tampil setelah login
+            // if (auth.currentUser) {
+            //     showSection('dashboard-section');
+            // }
 
 
             navItems.forEach(item => {
@@ -2853,11 +3009,13 @@
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('filter-search').addEventListener('keyup', applyFilters);
 
+            // PERBAIKAN: Hapus event listener yang menyebabkan notifikasi "Filter diterapkan" saat tambah invoice
             const applyFilterBtn = document.querySelector('#invoice-list-section .btn-primary');
             if (applyFilterBtn) {
                 applyFilterBtn.addEventListener('click', function() {
                     applyFilters();
-                    showAlert('Filter diterapkan.', 'info');
+                    // PERBAIKAN: Hapus showAlert agar tidak muncul notifikasi saat tambah invoice
+                    // showAlert('Filter diterapkan.', 'info');
                 });
             }
 
@@ -3043,6 +3201,32 @@
                     console.error("Error updating invoice status: ", error);
                     showAlert("Gagal memperbarui status invoice: " + error.message, 'error');
                 }
+            });
+
+            // --- Status Summary Click Handlers ---
+            document.getElementById('dashboard-total-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('total');
+            });
+            
+            document.getElementById('dashboard-paid-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('paid');
+            });
+            
+            document.getElementById('dashboard-pending-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('pending');
+            });
+            
+            document.getElementById('dashboard-submission-pending-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('submission-pending');
+            });
+            
+            document.getElementById('dashboard-overdue-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('overdue');
+            });
+
+            // Status Summary Modal Close Button
+            document.getElementById('status-summary-close-btn').addEventListener('click', function() {
+                closeStatusSummaryModal();
             });
 
             // Load vendor data
@@ -3657,6 +3841,34 @@
                     <button type="submit" class="btn btn-primary">Simpan Status</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- NEW Modal for Status Summary -->
+    <div id="status-summary-modal" class="status-summary-modal">
+        <div class="status-summary-content">
+            <div class="status-summary-header">
+                <h2 class="status-summary-title" id="status-summary-title">Daftar Invoice</h2>
+                <button class="status-summary-close-btn" id="status-summary-close-btn">&times;</button>
+            </div>
+            <div class="status-summary-table-container">
+                <table id="status-summary-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>No Invoice</th>
+                            <th>Nama Vendor</th>
+                            <th>DPP</th>
+                            <th>Status</th>
+                            <th>Jatuh Tempo</th>
+                            <th>Tanggal Bayar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
