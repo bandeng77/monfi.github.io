@@ -2126,6 +2126,8 @@
                     // Load initial data
                     loadDashboardData();
                     loadVendorData();
+                    // PERBAIKAN: Tampilkan dashboard secara otomatis
+                    showSection('dashboard-section');
                 } else {
                     // User is signed out, show login
                     document.getElementById('auth-container').style.display = 'flex';
@@ -2366,10 +2368,8 @@
             }
             window.showSection = showSection;
 
-            if (auth.currentUser) {
-                showSection('dashboard-section');
-            }
-
+            // PERBAIKAN: Dashboard akan ditampilkan otomatis saat login berhasil
+            // Pindahkan pemanggilan showSection ke dalam initLogin
 
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
