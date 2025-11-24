@@ -1826,23 +1826,21 @@
         }
 
 
-        // --- Load Dashboard Data (MODIFIED) ---
+        // --- Load Dashboard Data (FIXED) ---
         async function loadDashboardData() {
             const totalInvoiceEl = document.getElementById('dashboard-total-invoice');
             const paidInvoiceEl = document.getElementById('dashboard-paid-invoice');
             const pendingInvoiceEl = document.getElementById('dashboard-pending-invoice');
-            const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice'); // New element
+            const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice');
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
-
 
             if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl) return;
 
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
-            submissionPendingInvoiceEl.textContent = '...'; // Initialize new element
+            submissionPendingInvoiceEl.textContent = '...';
             overdueInvoiceEl.textContent = '...';
-
 
             try {
                 // Unsubscribe previous listener if exists
@@ -1851,64 +1849,73 @@
                 }
 
                 window.dashboardUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
+                    if (snapshot.empty) {
+                        totalInvoiceEl.textContent = '0';
+                        paidInvoiceEl.textContent = '0';
+                        pendingInvoiceEl.textContent = '0';
+                        submissionPendingInvoiceEl.textContent = '0';
+                        overdueInvoiceEl.textContent = '0';
+                        return;
+                    }
+
+                    // Fetch all related data once to optimize
+                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                        pembayaranCol.get(),
+                        keteranganCol.get()
+                    ]);
+
+                    const pembayaranMap = new Map();
+                    pembayaranSnapshot.forEach(doc => {
+                        pembayaranMap.set(doc.data().noInvoice, doc.data());
+                    });
+
+                    const keteranganMap = new Map();
+                    keteranganSnapshot.forEach(doc => {
+                        keteranganMap.set(doc.data().noInvoice, doc.data());
+                    });
+
                     let total = 0;
                     let paid = 0;
                     let pending = 0; // Menunggu Pembayaran
                     let submissionPending = 0; // Menunggu Pengajuan
                     let overdue = 0;
 
-                    if (!snapshot.empty) {
-                        total = snapshot.size;
-                        // Fetch all keterangan documents once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
-                            pembayaranCol.get(),
-                            keteranganCol.get()
-                        ]);
+                    snapshot.forEach(doc => {
+                        const invoice = doc.data();
+                        const noInvoice = invoice.noInvoice; // Gunakan nilai asli dari field
 
-                        const pembayaranMap = new Map();
-                        pembayaranSnapshot.forEach(doc => {
-                            pembayaranMap.set(doc.data().noInvoice, doc.data());
-                        });
+                        const pembayaran = pembayaranMap.get(noInvoice) || {};
+                        const keterangan = keteranganMap.get(noInvoice) || {};
 
-                        const keteranganMap = new Map();
-                        keteranganSnapshot.forEach(doc => {
-                            keteranganMap.set(doc.data().noInvoice, doc.data());
-                        });
+                        // Calculate status dynamically using the new logic (MODIFIED: pass isManualStatus)
+                        const status = calculateStatus(
+                            invoice.tglDiterima,
+                            pembayaran.jatuhTempo,
+                            keterangan.tglBayar,
+                            keterangan.statusAkhir,
+                            keterangan.isManualStatus || false // Default to false if not set
+                        );
 
-                        snapshot.forEach(doc => {
-                            const noInvoice = doc.data().noInvoice; // Gunakan nilai asli dari field
-                            const invoiceData = doc.data(); // Get full invoice data
-                            const pembayaran = pembayaranMap.get(noInvoice) || {};
-                            const keterangan = keteranganMap.get(noInvoice) || {};
+                        total++; // Count all invoices
 
-                            // Calculate status dynamically using the new logic (MODIFIED: pass isManualStatus)
-                            const status = calculateStatus(
-                                invoiceData.tglDiterima,
-                                pembayaran.jatuhTempo,
-                                keterangan.tglBayar,
-                                keterangan.statusAkhir,
-                                keterangan.isManualStatus || false // Default to false if not set
-                            );
-
-                            if (status === 'Dibayar') {
-                                paid++;
-                            } else if (status === 'Menunggu Pembayaran') {
-                                pending++;
-                            } else if (status === 'Menunggu Pengajuan') {
-                                submissionPending++;
-                            } else if (status === 'Jatuh Tempo') {
-                                overdue++;
-                            }
-                            // Statuses like 'Diajukan ke Finance', 'Diterima Anggi', 'Dibatalkan', 'Belum Diproses'
-                            // are not explicitly counted in these summary numbers unless you add specific logic for them.
-                            // For simplicity, they are not added to any of the above counters.
-                        });
-                    }
+                        if (status === 'Dibayar') {
+                            paid++;
+                        } else if (status === 'Menunggu Pembayaran') {
+                            pending++;
+                        } else if (status === 'Menunggu Pengajuan') {
+                            submissionPending++;
+                        } else if (status === 'Jatuh Tempo') {
+                            overdue++;
+                        }
+                        // Statuses like 'Diajukan ke Finance', 'Diterima Anggi', 'Dibatalkan', 'Belum Diproses'
+                        // are not explicitly counted in these summary numbers unless you add specific logic for them.
+                        // For simplicity, they are not added to any of the above counters.
+                    });
 
                     totalInvoiceEl.textContent = total;
                     paidInvoiceEl.textContent = paid;
                     pendingInvoiceEl.textContent = pending;
-                    submissionPendingInvoiceEl.textContent = submissionPending; // Update new element
+                    submissionPendingInvoiceEl.textContent = submissionPending;
                     overdueInvoiceEl.textContent = overdue;
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
@@ -1916,7 +1923,7 @@
                     totalInvoiceEl.textContent = 'Error';
                     paidInvoiceEl.textContent = 'Error';
                     pendingInvoiceEl.textContent = 'Error';
-                    submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
+                    submissionPendingInvoiceEl.textContent = 'Error';
                     overdueInvoiceEl.textContent = 'Error';
                 });
 
@@ -1926,7 +1933,7 @@
                 totalInvoiceEl.textContent = 'Error';
                 paidInvoiceEl.textContent = 'Error';
                 pendingInvoiceEl.textContent = 'Error';
-                submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
+                submissionPendingInvoiceEl.textContent = 'Error';
                 overdueInvoiceEl.textContent = 'Error';
             }
         }
