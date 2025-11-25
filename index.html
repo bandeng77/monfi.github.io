@@ -1408,59 +1408,54 @@
         }
 
         // --- Calculate Status Based on Dates (MODIFIED) ---
-        function calculateStatus(tglDiterima, jatuhTempo, tglBayar, currentStatus, isManualStatusFromDB) {
-            // 1. Prioritas tertinggi: Jika sudah dibayar, statusnya 'Dibayar'
+        function calculateStatus(tglDiterima, jatuhTempo, tglBayar, currentStatus, isManualStatus) {
+            // 1. Jika sudah dibayar, status 'Dibayar'
             if (tglBayar) {
                 return 'Dibayar';
             }
-
-            // 2. Jika status saat ini diatur secara manual (isManualStatusFromDB adalah true),
-            //    maka pertahankan status manual tersebut.
-            //    Ini meng-override perhitungan otomatis.
-            if (isManualStatusFromDB && currentStatus) {
+            
+            // 2. Jika status manual, pertahankan status manual
+            if (isManualStatus && currentStatus) {
                 return currentStatus;
             }
-
-            // 3. Jika belum dibayar dan bukan status manual yang dipertahankan,
-            //    hitung status otomatis berdasarkan tanggal
+            
+            // 3. Hitung status otomatis berdasarkan tanggal
             if (!tglDiterima || !jatuhTempo) {
-                return currentStatus || 'Belum Diproses'; // Fallback if dates are missing
+                return currentStatus || 'Belum Diproses';
             }
-
+            
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize today's date to start of day
-
+            today.setHours(0, 0, 0, 0);
+            
             const receivedDate = new Date(tglDiterima);
             receivedDate.setHours(0, 0, 0, 0);
-
+            
             const dueDate = new Date(jatuhTempo);
             dueDate.setHours(0, 0, 0, 0);
-
-            // Calculate 'Jatuh Tempo' (Overdue)
+            
+            // Jatuh Tempo
             if (today > dueDate) {
                 return 'Jatuh Tempo';
             }
-
-            // Calculate 'Menunggu Pembayaran' (3 days before due date)
-            const threeDaysBeforeDueDate = new Date(dueDate);
-            threeDaysBeforeDueDate.setDate(dueDate.getDate() - 3);
-            threeDaysBeforeDueDate.setHours(0, 0, 0, 0);
-
-            if (today >= threeDaysBeforeDueDate && today <= dueDate) {
+            
+            // Menunggu Pembayaran (3 hari sebelum jatuh tempo)
+            const threeDaysBefore = new Date(dueDate);
+            threeDaysBefore.setDate(dueDate.getDate() - 3);
+            threeDaysBefore.setHours(0, 0, 0, 0);
+            
+            if (today >= threeDaysBefore && today <= dueDate) {
                 return 'Menunggu Pembayaran';
             }
-
-            // Calculate 'Menunggu Pengajuan' (7 days before due date)
-            const sevenDaysBeforeDueDate = new Date(dueDate);
-            sevenDaysBeforeDueDate.setDate(dueDate.getDate() - 7);
-            sevenDaysBeforeDueDate.setHours(0, 0, 0, 0);
-
-            if (today >= sevenDaysBeforeDueDate && today < threeDaysBeforeDueDate) {
+            
+            // Menunggu Pengajuan (7 hari sebelum jatuh tempo)
+            const sevenDaysBefore = new Date(dueDate);
+            sevenDaysBefore.setDate(dueDate.getDate() - 7);
+            sevenDaysBefore.setHours(0, 0, 0, 0);
+            
+            if (today >= sevenDaysBefore && today < threeDaysBefore) {
                 return 'Menunggu Pengajuan';
             }
-
-            // Default: If none of the above conditions are met,
-            // return the existing status or 'Belum Diproses'
+            
             return currentStatus || 'Belum Diproses';
         }
 
@@ -1511,30 +1506,23 @@
                     currencyText = 'USD';
                 }
 
-                rowsHtml.push(`
-                    <tr data-invoice-id="${invoice.No_Invoice}">
-                        <td>${rowNum++}</td>
-                        <td>${invoice.Email_Hard || '-'}</td>
-                        <td>${invoice.Penerima || '-'}</td>
-                        <td>${invoice.Corp || '-'}</td>
-                        <td>${invoice.Tanggal_Diterima || '-'}</td>
-                        <td><a href="#" class="view-invoice-detail" data-invoice-no="${invoice.No_Invoice}">${invoice.No_Invoice}</a></td>
-                        <td>${invoice.Nama_Vendor || '-'}</td>
-                        <td>
-                            ${dppDisplay}
-                            ${currencyText ? `<span class="currency-indicator ${currencyClass}">${currencyText}</span>` : ''}
-                        </td>
-                        <td>
-                            <button class="status-button ${statusClass}" data-invoice-no="${invoice.No_Invoice}" data-current-status="${invoice.Status}">
-                                ${invoice.Status}
-                            </button>
-                        </td>
-                        <td class="action-cell">
-                            <button class="action-btn edit-invoice-btn" data-invoice-no="${invoice.No_Invoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-invoice-btn" data-invoice-no="${invoice.No_Invoice}" title="Hapus Invoice"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `);
+                rowsHtml.push(
+                    '<tr data-invoice-id="' + invoice.No_Invoice + '">' +
+                    '<td>' + (rowNum++) + '</td>' +
+                    '<td>' + (invoice.Email_Hard || '-') + '</td>' +
+                    '<td>' + (invoice.Penerima || '-') + '</td>' +
+                    '<td>' + (invoice.Corp || '-') + '</td>' +
+                    '<td>' + (invoice.Tanggal_Diterima || '-') + '</td>' +
+                    '<td><a href="#" class="view-invoice-detail" data-invoice-no="' + invoice.No_Invoice + '">' + invoice.No_Invoice + '</a></td>' +
+                    '<td>' + (invoice.Nama_Vendor || '-') + '</td>' +
+                    '<td>' + dppDisplay + 
+                    (currencyText ? '<span class="currency-indicator ' + currencyClass + '">' + currencyText + '</span>' : '') + '</td>' +
+                    '<td><button class="status-button ' + statusClass + '" data-invoice-no="' + invoice.No_Invoice + '" data-current-status="' + invoice.Status + '">' + invoice.Status + '</button></td>' +
+                    '<td class="action-cell">' +
+                    '<button class="action-btn edit-invoice-btn" data-invoice-no="' + invoice.No_Invoice + '" title="Edit Invoice"><i class="fas fa-edit"></i></button>' +
+                    '<button class="action-btn delete-invoice-btn" data-invoice-no="' + invoice.No_Invoice + '" title="Hapus Invoice"><i class="fas fa-trash"></i></button>' +
+                    '</td></tr>'
+                );
             });
             invoiceTableBody.innerHTML = rowsHtml.join('');
             renderPagination(data.length, window.currentPage); // Gunakan window.currentPage
@@ -2405,7 +2393,7 @@
                     tglInvoice: document.getElementById('invoice-tgl-invoice').value,
                     suratJalan: document.getElementById('invoice-surat-jalan').value,
                     namaVendor: vendorName,
-                    noInvoice: rawNoInvoice,
+                    noInvoice: rawNoInvoice
                 };
 
                 try {
