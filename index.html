@@ -826,10 +826,23 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
             transition: transform 0.2s ease;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
         .summary-item:hover {
             transform: translateY(-3px);
+        }
+
+        .summary-item.loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: loading 1.5s infinite;
         }
 
         .summary-value {
@@ -837,6 +850,10 @@
             font-weight: 700;
             color: var(--primary);
             margin-bottom: 0.5rem;
+            min-height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .summary-label {
@@ -851,6 +868,11 @@
         .summary-item:nth-child(3) .summary-value { color: var(--warning); }
         .summary-item:nth-child(4) .summary-value { color: var(--primary); }
         .summary-item:nth-child(5) .summary-value { color: var(--danger); }
+
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
 
         /* Settings Layout */
         .settings-layout {
@@ -1010,6 +1032,8 @@
             border-radius: 0.75rem;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             width: 100%;
+            max-width: 900px;
+            max-height: 80vh;
             overflow-y: auto;
             position: relative;
         }
@@ -1111,7 +1135,7 @@
         let allInvoiceData = [];
         let filteredInvoiceData = [];
         window.currentPage = 1;
-        const itemsPerPage = 25; // DIUBAH: dari 10 menjadi 25
+        const itemsPerPage = 25;
 
         // Global variables to store unsubscribe functions for realtime listeners
         window.invoiceUnsubscribe = null;
@@ -1635,7 +1659,6 @@
             pageControls.appendChild(nextBtn);
         }
 
-
         // --- Load Invoices to Table (Initial Load and Refresh) (MODIFIED) ---
         async function loadInvoicesToTable() {
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
@@ -1788,7 +1811,6 @@
             renderInvoicesTable(filteredInvoiceData);
         }
 
-
         // --- Load Dashboard Data (MODIFIED) ---
         async function loadDashboardData() {
             const totalInvoiceEl = document.getElementById('dashboard-total-invoice');
@@ -1797,15 +1819,18 @@
             const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice'); // New element
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
 
-
             if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl) return;
 
+            // PERBAIKAN: Tampilkan loading state
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
-            submissionPendingInvoiceEl.textContent = '...'; // Initialize new element
+            submissionPendingInvoiceEl.textContent = '...';
             overdueInvoiceEl.textContent = '...';
 
+            // PERBAIKAN: Tambah class loading
+            const summaryItems = document.querySelectorAll('.summary-item');
+            summaryItems.forEach(item => item.classList.add('loading'));
 
             try {
                 // Unsubscribe previous listener if exists
@@ -1873,6 +1898,9 @@
                     pendingInvoiceEl.textContent = pending;
                     submissionPendingInvoiceEl.textContent = submissionPending; // Update new element
                     overdueInvoiceEl.textContent = overdue;
+
+                    // PERBAIKAN: Hapus class loading setelah data selesai di-load
+                    summaryItems.forEach(item => item.classList.remove('loading'));
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
                     showAlert("Gagal memuat data dashboard: " + error.message, 'error');
@@ -1881,6 +1909,10 @@
                     pendingInvoiceEl.textContent = 'Error';
                     submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
                     overdueInvoiceEl.textContent = 'Error';
+                    
+                    // PERBAIKAN: Hapus class loading meskipun error
+                    const summaryItems = document.querySelectorAll('.summary-item');
+                    summaryItems.forEach(item => item.classList.remove('loading'));
                 });
 
             } catch (error) {
@@ -1891,97 +1923,12 @@
                 pendingInvoiceEl.textContent = 'Error';
                 submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
                 overdueInvoiceEl.textContent = 'Error';
+                
+                // PERBAIKAN: Hapus class loading meskipun error
+                const summaryItems = document.querySelectorAll('.summary-item');
+                summaryItems.forEach(item => item.classList.remove('loading'));
             }
         }
-
-
-        // --- Laporan Section Data Loading --- (Jika diaktifkan kembali) (MODIFIED)
-        async function loadReportData() {
-            const reportTableBody = document.querySelector('#report-invoice-table tbody');
-            if (!reportTableBody) return;
-
-            reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
-
-            try {
-                // Unsubscribe previous listener if exists
-                if (window.reportUnsubscribe) {
-                    window.reportUnsubscribe();
-                }
-
-                window.reportUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
-                    if (snapshot.empty) {
-                        reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data laporan.</td></tr>';
-                        return;
-                    }
-
-                    const reportRowsHtml = [];
-                    let rowNum = 1;
-
-                    // Fetch all related data once to optimize
-                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
-                        pembayaranCol.get(),
-                        keteranganCol.get()
-                    ]);
-
-                    const pembayaranMap = new Map();
-                    pembayaranSnapshot.forEach(doc => {
-                        pembayaranMap.set(doc.data().noInvoice, doc.data());
-                    });
-
-                    const keteranganMap = new Map();
-                    keteranganSnapshot.forEach(doc => {
-                        keteranganMap.set(doc.data().noInvoice, doc.data());
-                    });
-
-                    snapshot.forEach(doc => {
-                        const invoice = doc.data();
-                        const noInvoice = invoice.noInvoice; // Gunakan nilai asli dari field
-
-                        const pembayaran = pembayaranMap.get(noInvoice) || {};
-                        const keterangan = keteranganMap.get(noInvoice) || {};
-
-                        const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : '0';
-                        // Use calculated status (MODIFIED: pass isManualStatus)
-                        const statusDisplay = calculateStatus(
-                            invoice.tglDiterima,
-                            pembayaran.jatuhTempo,
-                            keterangan.tglBayar,
-                            keterangan.statusAkhir,
-                            keterangan.isManualStatus || false // Default to false if not set
-                        );
-                        const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
-                        const tglBayarDisplay = keterangan.tglBayar || '-';
-
-                        let statusClass = '';
-                        if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
-                        else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
-                        else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
-
-                        reportRowsHtml.push(`
-                            <tr>
-                                <td>${rowNum++}</td>
-                                <td>${noInvoice}</td>
-                                <td>${invoice.namaVendor || '-'}</td>
-                                <td>${dppDisplay}</td>
-                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                                <td>${jatuhTempoDisplay}</td>
-                                <td>${tglBayarDisplay}</td>
-                            </tr>
-                        `);
-                    });
-                    reportTableBody.innerHTML = reportRowsHtml.join('');
-                }, (error) => {
-                    console.error("Error loading report data: ", error);
-                    reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                    showAlert("Gagal memuat data laporan: " + error.message, 'error');
-                });
-            } catch (error) {
-                console.error("Error setting up report listener: ", error);
-                reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                showAlert("Gagal memuat data laporan: " + error.message, 'error');
-            }
-        }
-
 
         // Apply autocomplete to relevant input fields
         function setupAllAutocompletes() {
@@ -1998,6 +1945,7 @@
 
         // --- Format Rupiah Function ---
         function formatRupiah(angka, prefix = '') {
+            if (!angka) return '';
             let number_string = angka.toString().replace(/[^,\d]/g, ''),
                 split = number_string.split(','),
                 sisa = split[0].length % 3,
@@ -2044,27 +1992,6 @@
                 ppnIdrInput.value = '';
             }
         }
-
-        // --- Fungsi untuk menghitung total dengan PPN ---
-        function calculateTotalWithPPN() {
-            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
-            const ppnIdrInput = document.getElementById('pembayaran-ppn-idr');
-            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
-            
-            if (!dppIdrInput || !ppnIdrInput || !includePPNCheckbox) return;
-            
-            const dppValue = dppIdrInput.value.replace(/[^0-9]/g, '');
-            
-            if (dppValue && includePPNCheckbox.checked) {
-                const dppNumber = parseInt(dppValue);
-                const ppnAmount = Math.round(dppNumber * 0.11);
-                const totalWithPPN = dppNumber + ppnAmount;
-                return totalWithPPN;
-            }
-            
-            return dppValue ? parseInt(dppValue) : 0;
-        }
-
 
         // --- Improved Login Functionality ---
         function initLogin() {
@@ -2133,6 +2060,12 @@
 
         // --- Status Summary Modal Functions ---
         function openStatusSummaryModal(statusType) {
+            // PERBAIKAN: Pastikan data sudah tersedia sebelum membuka modal
+            if (allInvoiceData.length === 0) {
+                showAlert('Data sedang dimuat, silakan tunggu sebentar...', 'info');
+                return;
+            }
+
             const modal = document.getElementById('status-summary-modal');
             const title = document.getElementById('status-summary-title');
             const tableBody = document.querySelector('#status-summary-table tbody');
@@ -2248,7 +2181,6 @@
                 sidebarToggleBtn.addEventListener('click', toggleSidebar);
             }
 
-
             // --- Fungsi Navigasi Sidebar ---
             function showSection(targetId) {
                 contentSections.forEach(section => {
@@ -2269,17 +2201,9 @@
                     loadDashboardData();
                 } else if (targetId === 'invoice-list-section') {
                     loadInvoicesToTable();
-                } else if (targetId === 'laporan-section') {
-                    // loadReportData();
                 }
             }
             window.showSection = showSection;
-
-            // PERBAIKAN: Pindahkan ini ke dalam initLogin agar dashboard langsung tampil setelah login
-            // if (auth.currentUser) {
-            //     showSection('dashboard-section');
-            // }
-
 
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -2323,7 +2247,6 @@
 
             // Override openModal to handle fetching tglDiterima for pembayaran-modal
             // dan memastikan noInvoice diisi dengan nilai asli
-            const originalOpenModal = window.openModal;
             window.openModal = async function(modalId, rawInvoiceNo = null) {
                 const modal = document.getElementById(modalId);
                 resetModalForm(modalId);
@@ -2354,7 +2277,6 @@
                     }
                 }
             };
-
 
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = 'none';
@@ -2608,7 +2530,6 @@
                 }
             }
 
-
             document.getElementById('back-to-list-btn').addEventListener('click', function() {
                 showSection('invoice-list-section');
             });
@@ -2689,7 +2610,6 @@
             setupSearchAndFillModal('search-faktur-pajak-btn', 'search-invoice-faktur-pajak', 'faktur-pajak-modal');
             setupSearchAndFillModal('search-pembayaran-btn', 'search-invoice-pembayaran', 'pembayaran-modal');
             setupSearchAndFillModal('search-keterangan-btn', 'search-invoice-keterangan', 'keterangan-modal');
-
 
             // --- Fill Modal with Existing Data (for edit) (MODIFIED) ---
             async function fillModalWithExistingData(modalId, rawInvoiceNo) {
@@ -2905,7 +2825,6 @@
             if (tglPengajuanFinanceInput) tglPengajuanFinanceInput.addEventListener('change', calculateLamaPengajuan);
             if (tglDiterimaAnggiInput) tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
 
-
             // --- Auto-calculate Jatuh Tempo based on TOP ---
             const pembayaranTopInput = document.getElementById('pembayaran-top');
             const pembayaranJatuhTempoInput = document.getElementById('pembayaran-jatuh-tempo');
@@ -2966,7 +2885,6 @@
                 dppIdrInput.addEventListener('blur', calculatePPN);
             }
 
-
             // --- Export to Excel (CSV) ---
             document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -3016,7 +2934,6 @@
                     // showAlert('Filter diterapkan.', 'info');
                 });
             }
-
 
             // --- Pengaturan Akun (Settings) ---
             const settingsForm = document.getElementById('settings-form');
@@ -3099,7 +3016,7 @@
                     }
                 });
 
-                forgotPasswordLink.addEventListener('click', async (e) => {
+                forgotPasswordLink.addEventListener('click', async (e) {
                     e.preventDefault();
                     forgotPasswordErrorMessage.style.display = 'none';
                     forgotPasswordSuccessMessage.style.display = 'none';
@@ -3124,7 +3041,6 @@
                     }
                 });
             }
-
 
             // Setup Rupiah formatting for relevant inputs
             setupRupiahInput('pembayaran-dpp-idr');
