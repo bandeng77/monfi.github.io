@@ -826,23 +826,10 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
             transition: transform 0.2s ease;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
         }
 
         .summary-item:hover {
             transform: translateY(-3px);
-        }
-
-        .summary-item.loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: loading 1.5s infinite;
         }
 
         .summary-value {
@@ -850,10 +837,6 @@
             font-weight: 700;
             color: var(--primary);
             margin-bottom: 0.5rem;
-            min-height: 3rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .summary-label {
@@ -868,11 +851,6 @@
         .summary-item:nth-child(3) .summary-value { color: var(--warning); }
         .summary-item:nth-child(4) .summary-value { color: var(--primary); }
         .summary-item:nth-child(5) .summary-value { color: var(--danger); }
-
-        @keyframes loading {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
 
         /* Settings Layout */
         .settings-layout {
@@ -1032,8 +1010,6 @@
             border-radius: 0.75rem;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             width: 100%;
-            max-width: 900px;
-            max-height: 80vh;
             overflow-y: auto;
             position: relative;
         }
@@ -1135,7 +1111,7 @@
         let allInvoiceData = [];
         let filteredInvoiceData = [];
         window.currentPage = 1;
-        const itemsPerPage = 25;
+        const itemsPerPage = 25; // DIUBAH: dari 10 menjadi 25
 
         // Global variables to store unsubscribe functions for realtime listeners
         window.invoiceUnsubscribe = null;
@@ -1821,18 +1797,15 @@
             const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice'); // New element
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
 
+
             if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl) return;
 
-            // PERBAIKAN: Tampilkan loading state
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
-            submissionPendingInvoiceEl.textContent = '...';
+            submissionPendingInvoiceEl.textContent = '...'; // Initialize new element
             overdueInvoiceEl.textContent = '...';
 
-            // PERBAIKAN: Tambah class loading
-            const summaryItems = document.querySelectorAll('.summary-item');
-            summaryItems.forEach(item => item.classList.add('loading'));
 
             try {
                 // Unsubscribe previous listener if exists
@@ -1900,9 +1873,6 @@
                     pendingInvoiceEl.textContent = pending;
                     submissionPendingInvoiceEl.textContent = submissionPending; // Update new element
                     overdueInvoiceEl.textContent = overdue;
-
-                    // PERBAIKAN: Hapus class loading setelah data selesai di-load
-                    summaryItems.forEach(item => item.classList.remove('loading'));
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
                     showAlert("Gagal memuat data dashboard: " + error.message, 'error');
@@ -1911,10 +1881,6 @@
                     pendingInvoiceEl.textContent = 'Error';
                     submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
                     overdueInvoiceEl.textContent = 'Error';
-                    
-                    // PERBAIKAN: Hapus class loading meskipun error
-                    const summaryItems = document.querySelectorAll('.summary-item');
-                    summaryItems.forEach(item => item.classList.remove('loading'));
                 });
 
             } catch (error) {
@@ -1925,10 +1891,6 @@
                 pendingInvoiceEl.textContent = 'Error';
                 submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
                 overdueInvoiceEl.textContent = 'Error';
-                
-                // PERBAIKAN: Hapus class loading meskipun error
-                const summaryItems = document.querySelectorAll('.summary-item');
-                summaryItems.forEach(item => item.classList.remove('loading'));
             }
         }
 
@@ -2171,12 +2133,6 @@
 
         // --- Status Summary Modal Functions ---
         function openStatusSummaryModal(statusType) {
-            // PERBAIKAN: Pastikan data sudah tersedia sebelum membuka modal
-            if (allInvoiceData.length === 0) {
-                showAlert('Data sedang dimuat, silakan tunggu sebentar...', 'info');
-                return;
-            }
-
             const modal = document.getElementById('status-summary-modal');
             const title = document.getElementById('status-summary-title');
             const tableBody = document.querySelector('#status-summary-table tbody');
@@ -2318,6 +2274,12 @@
                 }
             }
             window.showSection = showSection;
+
+            // PERBAIKAN: Pindahkan ini ke dalam initLogin agar dashboard langsung tampil setelah login
+            // if (auth.currentUser) {
+            //     showSection('dashboard-section');
+            // }
+
 
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -3137,7 +3099,7 @@
                     }
                 });
 
-                forgotPasswordLink.addEventListener('click', async (e) {
+                forgotPasswordLink.addEventListener('click', async (e) => {
                     e.preventDefault();
                     forgotPasswordErrorMessage.style.display = 'none';
                     forgotPasswordSuccessMessage.style.display = 'none';
