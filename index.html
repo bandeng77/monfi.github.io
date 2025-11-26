@@ -1930,7 +1930,14 @@
                 const ppnAmount = Math.round(dppNumber * 0.11);
                 ppnIdrInput.value = formatRupiah(ppnAmount.toString());
             } else if (includePPNCheckbox.checked === false) {
-                ppnIdrInput.value = '';
+                // Tidak mengosongkan PPN jika diketik manual
+                // Hanya kosongkan jika nilainya sama dengan hasil kalkulasi otomatis
+                const currentPPNValue = ppnIdrInput.value.replace(/[^0-9]/g, '');
+                const calculatedPPN = Math.round(parseInt(dppValue || 0) * 0.11);
+                
+                if (currentPPNValue === calculatedPPN.toString()) {
+                    ppnIdrInput.value = '';
+                }
             }
         }
 
@@ -2265,16 +2272,90 @@
                     // Simpan halaman saat ini sebelum refresh
                     const currentPageBeforeRefresh = window.currentPage;
                     
-                    // Refresh data untuk menampilkan invoice baru
-                    // Jangan panggil loadInvoicesToTable() karena akan reset currentPage
-                    // Sebagai gantinya, refresh data dengan cara yang tidak mengubah currentPage
+                    // Refresh data dengan mempertahankan halaman saat ini
                     if (window.invoiceUnsubscribe) {
                         window.invoiceUnsubscribe();
                     }
+                    
                     // Set up listener baru untuk data terbaru
                     window.invoiceUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
-                        // Kode untuk memuat data invoice...
-                        // Setelah data dimuat, render tabel dengan currentPage yang sama
+                        if (snapshot.empty) {
+                            allInvoiceData = [];
+                            filteredInvoiceData = [];
+                            renderInvoicesTable(filteredInvoiceData);
+                            return;
+                        }
+
+                        let rowNum = 1;
+                        const currentAllInvoiceData = [];
+                        const currentInvoiceNumbers = [];
+
+                        // Fetch all related data once to optimize
+                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                            pembayaranCol.get(),
+                            keteranganCol.get()
+                        ]);
+
+                        const pembayaranMap = new Map();
+                        pembayaranSnapshot.forEach(doc => {
+                            pembayaranMap.set(doc.data().noInvoice, doc.data());
+                        });
+
+                        const keteranganMap = new Map();
+                        keteranganSnapshot.forEach(doc => {
+                            keteranganMap.set(doc.data().noInvoice, doc.data());
+                        });
+
+                        snapshot.forEach(doc => {
+                            const invoice = doc.data();
+                            const noInvoice = invoice.noInvoice;
+                            currentInvoiceNumbers.push(noInvoice);
+
+                            const pembayaran = pembayaranMap.get(noInvoice) || {};
+                            const keterangan = keteranganMap.get(noInvoice) || {};
+
+                            const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
+                            const statusDisplay = calculateStatus(
+                                invoice.tglDiterima,
+                                pembayaran.jatuhTempo,
+                                keterangan.tglBayar,
+                                keterangan.statusAkhir,
+                                keterangan.isManualStatus || false
+                            );
+                            
+                            currentAllInvoiceData.push({
+                                No: rowNum++,
+                                Email_Hard: invoice.emailHard || '',
+                                Penerima: invoice.penerima || '',
+                                Corp: invoice.corp || '',
+                                Tanggal_Diterima: invoice.tglDiterima || '',
+                                No_Invoice: noInvoice,
+                                Nama_Vendor: invoice.namaVendor || '',
+                                DPP_IDR: dppDisplay,
+                                PPn_IDR: pembayaran.ppnIdr || '0',
+                                DPP_USD: pembayaran.dppUsd || '0',
+                                Keterangan_Pembayaran: pembayaran.keterangan || '',
+                                Follow_Up: pembayaran.followUp || '',
+                                Hasil_Follow_Up: pembayaran.hasilFollowUp || '',
+                                TOP: pembayaran.top || '',
+                                Jatuh_Tempo: pembayaran.jatuhTempo || '',
+                                Tanggal_Pengajuan_Finance: keterangan.tglPengajuanFinance || '',
+                                Tanggal_Pengajuan_Reni: keterangan.tglPengajuanReni || '',
+                                Tanggal_Diterima_Anggi: keterangan.tglDiterimaAnggi || '',
+                                Lama_Pengajuan: keterangan.lamaPengajuan || '',
+                                Keterangan_Proses: keterangan.keteranganProses || '',
+                                Tanggal_Bayar: keterangan.tglBayar || '',
+                                Status: statusDisplay,
+                                Is_Manual_Status: keterangan.isManualStatus || false
+                            });
+                        });
+                        allInvoiceData = currentAllInvoiceData;
+                        allInvoiceNumbers = currentInvoiceNumbers;
+                        setupAllAutocompletes();
+                        
+                        // Terapkan filter dan render dengan halaman yang sama
+                        applyFilters();
+                        window.currentPage = currentPageBeforeRefresh;
                         renderInvoicesTable(filteredInvoiceData);
                     });
                 } catch (error) {
@@ -2449,15 +2530,91 @@
                     
                     // Tetap di halaman yang sama setelah hapus
                     const currentPageBeforeDelete = window.currentPage;
-                    // Jangan panggil loadInvoicesToTable() karena akan reset currentPage
-                    // Sebagai gantinya, refresh data dengan cara yang tidak mengubah currentPage
+                    
+                    // Refresh data dengan mempertahankan halaman saat ini
                     if (window.invoiceUnsubscribe) {
                         window.invoiceUnsubscribe();
                     }
+                    
                     // Set up listener baru untuk data terbaru
                     window.invoiceUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
-                        // Kode untuk memuat data invoice...
-                        // Setelah data dimuat, render tabel dengan currentPage yang sama
+                        if (snapshot.empty) {
+                            allInvoiceData = [];
+                            filteredInvoiceData = [];
+                            renderInvoicesTable(filteredInvoiceData);
+                            return;
+                        }
+
+                        let rowNum = 1;
+                        const currentAllInvoiceData = [];
+                        const currentInvoiceNumbers = [];
+
+                        // Fetch all related data once to optimize
+                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                            pembayaranCol.get(),
+                            keteranganCol.get()
+                        ]);
+
+                        const pembayaranMap = new Map();
+                        pembayaranSnapshot.forEach(doc => {
+                            pembayaranMap.set(doc.data().noInvoice, doc.data());
+                        });
+
+                        const keteranganMap = new Map();
+                        keteranganSnapshot.forEach(doc => {
+                            keteranganMap.set(doc.data().noInvoice, doc.data());
+                        });
+
+                        snapshot.forEach(doc => {
+                            const invoice = doc.data();
+                            const noInvoice = invoice.noInvoice;
+                            currentInvoiceNumbers.push(noInvoice);
+
+                            const pembayaran = pembayaranMap.get(noInvoice) || {};
+                            const keterangan = keteranganMap.get(noInvoice) || {};
+
+                            const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
+                            const statusDisplay = calculateStatus(
+                                invoice.tglDiterima,
+                                pembayaran.jatuhTempo,
+                                keterangan.tglBayar,
+                                keterangan.statusAkhir,
+                                keterangan.isManualStatus || false
+                            );
+                            
+                            currentAllInvoiceData.push({
+                                No: rowNum++,
+                                Email_Hard: invoice.emailHard || '',
+                                Penerima: invoice.penerima || '',
+                                Corp: invoice.corp || '',
+                                Tanggal_Diterima: invoice.tglDiterima || '',
+                                No_Invoice: noInvoice,
+                                Nama_Vendor: invoice.namaVendor || '',
+                                DPP_IDR: dppDisplay,
+                                PPn_IDR: pembayaran.ppnIdr || '0',
+                                DPP_USD: pembayaran.dppUsd || '0',
+                                Keterangan_Pembayaran: pembayaran.keterangan || '',
+                                Follow_Up: pembayaran.followUp || '',
+                                Hasil_Follow_Up: pembayaran.hasilFollowUp || '',
+                                TOP: pembayaran.top || '',
+                                Jatuh_Tempo: pembayaran.jatuhTempo || '',
+                                Tanggal_Pengajuan_Finance: keterangan.tglPengajuanFinance || '',
+                                Tanggal_Pengajuan_Reni: keterangan.tglPengajuanReni || '',
+                                Tanggal_Diterima_Anggi: keterangan.tglDiterimaAnggi || '',
+                                Lama_Pengajuan: keterangan.lamaPengajuan || '',
+                                Keterangan_Proses: keterangan.keteranganProses || '',
+                                Tanggal_Bayar: keterangan.tglBayar || '',
+                                Status: statusDisplay,
+                                Is_Manual_Status: keterangan.isManualStatus || false
+                            });
+                        });
+                        allInvoiceData = currentAllInvoiceData;
+                        allInvoiceNumbers = currentInvoiceNumbers;
+                        setupAllAutocompletes();
+                        
+                        // Terapkan filter dan render dengan halaman yang sama
+                        applyFilters();
+                        window.currentPage = currentPageBeforeDelete;
                         renderInvoicesTable(filteredInvoiceData);
                     });
                 } catch (error) {
@@ -2812,11 +2969,17 @@
             // --- Event Listeners for PPN Calculation ---
             const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
             const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
+            const ppnIdrInput = document.getElementById('pembayaran-ppn-idr');
 
             if (includePPNCheckbox && dppIdrInput) {
                 includePPNCheckbox.addEventListener('change', calculatePPN);
                 dppIdrInput.addEventListener('input', calculatePPN);
                 dppIdrInput.addEventListener('blur', calculatePPN);
+                
+                // Hapus readonly dari input PPN agar bisa diisi manual
+                if (ppnIdrInput) {
+                    ppnIdrInput.readOnly = false;
+                }
             }
 
             // --- Export to Excel (CSV) ---
@@ -3459,7 +3622,7 @@
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-ppn-idr">PPn (IDR)</label>
-                    <input type="text" id="pembayaran-ppn-idr" class="filter-input rupiah-input" placeholder="Rp 0" readonly>
+                    <input type="text" id="pembayaran-ppn-idr" class="filter-input rupiah-input" placeholder="Rp 0">
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-dpp-usd">DPP (USD)</label>
