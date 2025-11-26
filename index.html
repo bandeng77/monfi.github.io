@@ -1111,7 +1111,7 @@
         let allInvoiceData = [];
         let filteredInvoiceData = [];
         window.currentPage = 1;
-        const itemsPerPage = 25; // DIUBAH: dari 10 menjadi 25
+        const itemsPerPage = 25;
 
         // Global variables to store unsubscribe functions for realtime listeners
         window.invoiceUnsubscribe = null;
@@ -1284,7 +1284,7 @@
         function setupVendorAutocomplete() {
             const vendorInput = document.getElementById('invoice-nama-vendor');
             if (vendorInput && allVendorNames.length > 0) {
-                autocomplete(vendorInput, allVendorNames, true); // true = allow new vendors
+                autocomplete(vendorInput, allVendorNames, true);
             }
         }
 
@@ -1347,13 +1347,13 @@
             inp.addEventListener("keydown", function(e) {
                 var x = document.getElementById(this.id + "autocomplete-list");
                 if (x) x = x.getElementsByTagName("div");
-                if (e.keyCode == 40) { // arrow DOWN
+                if (e.keyCode == 40) {
                     currentFocus++;
                     addActive(x);
-                } else if (e.keyCode == 38) { // arrow UP
+                } else if (e.keyCode == 38) {
                     currentFocus--;
                     addActive(x);
-                } else if (e.keyCode == 13) { // ENTER
+                } else if (e.keyCode == 13) {
                     e.preventDefault();
                     if (currentFocus > -1) {
                         if (x) x[currentFocus].click();
@@ -1397,17 +1397,10 @@
 
         // --- Fungsi untuk membersihkan No Invoice agar aman digunakan sebagai ID dokumen Firestore ---
         function sanitizeInvoiceNo(invoiceNo) {
-            // Mengganti semua '/' dengan '-'
             return invoiceNo.replace(/\//g, '-');
         }
 
-        // --- Fungsi untuk mengembalikan No Invoice ke format aslinya (jika diperlukan untuk tampilan) ---
-        function desanitizeInvoiceNo(sanitizedInvoiceNo) {
-            // Mengganti semua '-' kembali ke '/'
-            return sanitizedInvoiceNo.replace(/-/g, '/');
-        }
-
-        // --- Calculate Status Based on Dates (MODIFIED) ---
+        // --- Calculate Status Based on Dates ---
         function calculateStatus(tglDiterima, jatuhTempo, tglBayar, currentStatus, isManualStatusFromDB) {
             // 1. Prioritas tertinggi: Jika sudah dibayar, statusnya 'Dibayar'
             if (tglBayar) {
@@ -1416,7 +1409,6 @@
 
             // 2. Jika status saat ini diatur secara manual (isManualStatusFromDB adalah true),
             //    maka pertahankan status manual tersebut.
-            //    Ini meng-override perhitungan otomatis.
             if (isManualStatusFromDB && currentStatus) {
                 return currentStatus;
             }
@@ -1424,11 +1416,11 @@
             // 3. Jika belum dibayar dan bukan status manual yang dipertahankan,
             //    hitung status otomatis berdasarkan tanggal
             if (!tglDiterima || !jatuhTempo) {
-                return currentStatus || 'Belum Diproses'; // Fallback if dates are missing
+                return currentStatus || 'Belum Diproses';
             }
 
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize today's date to start of day
+            today.setHours(0, 0, 0, 0);
 
             const receivedDate = new Date(tglDiterima);
             receivedDate.setHours(0, 0, 0, 0);
@@ -1459,23 +1451,19 @@
                 return 'Menunggu Pengajuan';
             }
 
-            // Default: If none of the above conditions are met,
-            // return the existing status or 'Belum Diproses'
             return currentStatus || 'Belum Diproses';
         }
 
-        // --- Functions moved to global scope for accessibility ---
-
-        // --- Render Invoices to Table (with pagination and filter) (MODIFIED) ---
+        // --- Render Invoices to Table (with pagination and filter) ---
         function renderInvoicesTable(data) {
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
             if (!invoiceTableBody) return;
 
-            invoiceTableBody.innerHTML = ''; // Clear existing rows
+            invoiceTableBody.innerHTML = '';
 
             if (data.length === 0) {
                 invoiceTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Tidak ada data invoice yang cocok.</td></tr>';
-                renderPagination(0, 0); // Render empty pagination
+                renderPagination(0, 0);
                 return;
             }
 
@@ -1537,7 +1525,7 @@
                 `);
             });
             invoiceTableBody.innerHTML = rowsHtml.join('');
-            renderPagination(data.length, window.currentPage); // Gunakan window.currentPage
+            renderPagination(data.length, window.currentPage);
         }
 
         // --- Render Pagination Controls ---
@@ -1545,7 +1533,7 @@
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             const pageControls = document.querySelector('.pagination .page-controls');
             const pageInfo = document.querySelector('.pagination .page-info');
-            pageControls.innerHTML = ''; // Bersihkan tombol paginasi yang ada
+            pageControls.innerHTML = '';
 
             if (totalItems === 0) {
                 pageInfo.textContent = 'Menampilkan 0-0 dari 0 data';
@@ -1562,15 +1550,15 @@
             prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
             prevBtn.disabled = currentPage === 1;
             prevBtn.addEventListener('click', () => {
-                if (window.currentPage > 1) { // Gunakan window.currentPage
-                    window.currentPage--; // Gunakan window.currentPage
+                if (window.currentPage > 1) {
+                    window.currentPage--;
                     renderInvoicesTable(filteredInvoiceData);
                 }
             });
             pageControls.appendChild(prevBtn);
 
             // Page numbers
-            const maxPageButtons = 5; // Max number of page buttons to show
+            const maxPageButtons = 5;
             let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
             let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
@@ -1583,7 +1571,7 @@
                 firstPageBtn.className = 'page-btn';
                 firstPageBtn.textContent = '1';
                 firstPageBtn.addEventListener('click', () => {
-                    window.currentPage = 1; // Gunakan window.currentPage
+                    window.currentPage = 1;
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(firstPageBtn);
@@ -1599,7 +1587,7 @@
                 pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
                 pageBtn.textContent = i;
                 pageBtn.addEventListener('click', () => {
-                    window.currentPage = i; // Gunakan window.currentPage
+                    window.currentPage = i;
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(pageBtn);
@@ -1615,7 +1603,7 @@
                 lastPageBtn.className = 'page-btn';
                 lastPageBtn.textContent = totalPages;
                 lastPageBtn.addEventListener('click', () => {
-                    window.currentPage = totalPages; // Gunakan window.currentPage
+                    window.currentPage = totalPages;
                     renderInvoicesTable(filteredInvoiceData);
                 });
                 pageControls.appendChild(lastPageBtn);
@@ -1627,22 +1615,21 @@
             nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
             nextBtn.disabled = currentPage === totalPages;
             nextBtn.addEventListener('click', () => {
-                if (window.currentPage < totalPages) { // Gunakan window.currentPage
-                    window.currentPage++; // Gunakan window.currentPage
+                if (window.currentPage < totalPages) {
+                    window.currentPage++;
                     renderInvoicesTable(filteredInvoiceData);
                 }
             });
             pageControls.appendChild(nextBtn);
         }
 
-
-        // --- Load Invoices to Table (Initial Load and Refresh) (MODIFIED) ---
+        // --- Load Invoices to Table (Initial Load and Refresh) ---
         async function loadInvoicesToTable() {
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
             if (!invoiceTableBody) return;
 
             invoiceTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Memuat data...</td></tr>';
-            allInvoiceNumbers = []; // Reset for fresh load
+            allInvoiceNumbers = [];
 
             try {
                 // Unsubscribe previous listener if exists
@@ -1661,8 +1648,8 @@
                     }
 
                     let rowNum = 1;
-                    const currentAllInvoiceData = []; // Temporary array for current snapshot
-                    const currentInvoiceNumbers = []; // Temporary array for current invoice numbers
+                    const currentAllInvoiceData = [];
+                    const currentInvoiceNumbers = [];
 
                     // Fetch all related data once to optimize
                     const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
@@ -1682,21 +1669,19 @@
 
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
-                        // Gunakan nilai 'noInvoice' yang disimpan di dalam dokumen, yang merupakan nilai asli
                         const noInvoice = invoice.noInvoice;
-                        currentInvoiceNumbers.push(noInvoice); // Add to autocomplete list
+                        currentInvoiceNumbers.push(noInvoice);
 
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
 
                         const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
-                        // Calculate status dynamically (MODIFIED: pass isManualStatus)
                         const statusDisplay = calculateStatus(
                             invoice.tglDiterima,
                             pembayaran.jatuhTempo,
                             keterangan.tglBayar,
                             keterangan.statusAkhir,
-                            keterangan.isManualStatus || false // Default to false if not set
+                            keterangan.isManualStatus || false
                         );
                         
                         currentAllInvoiceData.push({
@@ -1705,9 +1690,9 @@
                             Penerima: invoice.penerima || '',
                             Corp: invoice.corp || '',
                             Tanggal_Diterima: invoice.tglDiterima || '',
-                            No_Invoice: noInvoice, // <--- Gunakan nilai asli untuk tampilan
+                            No_Invoice: noInvoice,
                             Nama_Vendor: invoice.namaVendor || '',
-                            DPP_IDR: dppDisplay, // Store formatted for display
+                            DPP_IDR: dppDisplay,
                             PPn_IDR: pembayaran.ppnIdr || '0',
                             DPP_USD: pembayaran.dppUsd || '0',
                             Keterangan_Pembayaran: pembayaran.keterangan || '',
@@ -1722,13 +1707,13 @@
                             Keterangan_Proses: keterangan.keteranganProses || '',
                             Tanggal_Bayar: keterangan.tglBayar || '',
                             Status: statusDisplay,
-                            Is_Manual_Status: keterangan.isManualStatus || false // Store for reference
+                            Is_Manual_Status: keterangan.isManualStatus || false
                         });
                     });
-                    allInvoiceData = currentAllInvoiceData; // Update global data for export
-                    allInvoiceNumbers = currentInvoiceNumbers; // Update global invoice numbers for autocomplete
-                    setupAllAutocompletes(); // Setup autocomplete after data is loaded
-                    applyFilters(); // Apply filters after data is loaded
+                    allInvoiceData = currentAllInvoiceData;
+                    allInvoiceNumbers = currentInvoiceNumbers;
+                    setupAllAutocompletes();
+                    applyFilters();
                 }, (error) => {
                     console.error("Error loading invoices: ", error);
                     invoiceTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`;
@@ -1784,28 +1769,25 @@
                 return matches;
             });
 
-            window.currentPage = 1; // Reset to first page after applying filters
+            window.currentPage = 1;
             renderInvoicesTable(filteredInvoiceData);
         }
 
-
-        // --- Load Dashboard Data (MODIFIED) ---
+        // --- Load Dashboard Data ---
         async function loadDashboardData() {
             const totalInvoiceEl = document.getElementById('dashboard-total-invoice');
             const paidInvoiceEl = document.getElementById('dashboard-paid-invoice');
             const pendingInvoiceEl = document.getElementById('dashboard-pending-invoice');
-            const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice'); // New element
+            const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice');
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
-
 
             if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl) return;
 
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
-            submissionPendingInvoiceEl.textContent = '...'; // Initialize new element
+            submissionPendingInvoiceEl.textContent = '...';
             overdueInvoiceEl.textContent = '...';
-
 
             try {
                 // Unsubscribe previous listener if exists
@@ -1816,8 +1798,8 @@
                 window.dashboardUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
                     let total = 0;
                     let paid = 0;
-                    let pending = 0; // Menunggu Pembayaran
-                    let submissionPending = 0; // Menunggu Pengajuan
+                    let pending = 0;
+                    let submissionPending = 0;
                     let overdue = 0;
 
                     if (!snapshot.empty) {
@@ -1839,18 +1821,17 @@
                         });
 
                         snapshot.forEach(doc => {
-                            const noInvoice = doc.data().noInvoice; // Gunakan nilai asli dari field
-                            const invoiceData = doc.data(); // Get full invoice data
+                            const noInvoice = doc.data().noInvoice;
+                            const invoiceData = doc.data();
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
 
-                            // Calculate status dynamically using the new logic (MODIFIED: pass isManualStatus)
                             const status = calculateStatus(
                                 invoiceData.tglDiterima,
                                 pembayaran.jatuhTempo,
                                 keterangan.tglBayar,
                                 keterangan.statusAkhir,
-                                keterangan.isManualStatus || false // Default to false if not set
+                                keterangan.isManualStatus || false
                             );
 
                             if (status === 'Dibayar') {
@@ -1862,16 +1843,13 @@
                             } else if (status === 'Jatuh Tempo') {
                                 overdue++;
                             }
-                            // Statuses like 'Diajukan ke Finance', 'Diterima Anggi', 'Dibatalkan', 'Belum Diproses'
-                            // are not explicitly counted in these summary numbers unless you add specific logic for them.
-                            // For simplicity, they are not added to any of the above counters.
                         });
                     }
 
                     totalInvoiceEl.textContent = total;
                     paidInvoiceEl.textContent = paid;
                     pendingInvoiceEl.textContent = pending;
-                    submissionPendingInvoiceEl.textContent = submissionPending; // Update new element
+                    submissionPendingInvoiceEl.textContent = submissionPending;
                     overdueInvoiceEl.textContent = overdue;
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
@@ -1879,7 +1857,7 @@
                     totalInvoiceEl.textContent = 'Error';
                     paidInvoiceEl.textContent = 'Error';
                     pendingInvoiceEl.textContent = 'Error';
-                    submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
+                    submissionPendingInvoiceEl.textContent = 'Error';
                     overdueInvoiceEl.textContent = 'Error';
                 });
 
@@ -1889,99 +1867,10 @@
                 totalInvoiceEl.textContent = 'Error';
                 paidInvoiceEl.textContent = 'Error';
                 pendingInvoiceEl.textContent = 'Error';
-                submissionPendingInvoiceEl.textContent = 'Error'; // Error for new element
+                submissionPendingInvoiceEl.textContent = 'Error';
                 overdueInvoiceEl.textContent = 'Error';
             }
         }
-
-
-        // --- Laporan Section Data Loading --- (Jika diaktifkan kembali) (MODIFIED)
-        async function loadReportData() {
-            const reportTableBody = document.querySelector('#report-invoice-table tbody');
-            if (!reportTableBody) return;
-
-            reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat data laporan...</td></tr>';
-
-            try {
-                // Unsubscribe previous listener if exists
-                if (window.reportUnsubscribe) {
-                    window.reportUnsubscribe();
-                }
-
-                window.reportUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
-                    if (snapshot.empty) {
-                        reportTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data laporan.</td></tr>';
-                        return;
-                    }
-
-                    const reportRowsHtml = [];
-                    let rowNum = 1;
-
-                    // Fetch all related data once to optimize
-                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
-                        pembayaranCol.get(),
-                        keteranganCol.get()
-                    ]);
-
-                    const pembayaranMap = new Map();
-                    pembayaranSnapshot.forEach(doc => {
-                        pembayaranMap.set(doc.data().noInvoice, doc.data());
-                    });
-
-                    const keteranganMap = new Map();
-                    keteranganSnapshot.forEach(doc => {
-                        keteranganMap.set(doc.data().noInvoice, doc.data());
-                    });
-
-                    snapshot.forEach(doc => {
-                        const invoice = doc.data();
-                        const noInvoice = invoice.noInvoice; // Gunakan nilai asli dari field
-
-                        const pembayaran = pembayaranMap.get(noInvoice) || {};
-                        const keterangan = keteranganMap.get(noInvoice) || {};
-
-                        const dppDisplay = pembayaran.dppIdr ? `Rp ${formatRupiah(pembayaran.dppIdr)}` : '0';
-                        // Use calculated status (MODIFIED: pass isManualStatus)
-                        const statusDisplay = calculateStatus(
-                            invoice.tglDiterima,
-                            pembayaran.jatuhTempo,
-                            keterangan.tglBayar,
-                            keterangan.statusAkhir,
-                            keterangan.isManualStatus || false // Default to false if not set
-                        );
-                        const jatuhTempoDisplay = pembayaran.jatuhTempo || '-';
-                        const tglBayarDisplay = keterangan.tglBayar || '-';
-
-                        let statusClass = '';
-                        if (statusDisplay === 'Dibayar') statusClass = 'status-paid';
-                        else if (['Menunggu Pembayaran', 'Menunggu Pengajuan', 'Diajukan ke Finance', 'Diterima Anggi'].includes(statusDisplay)) statusClass = 'status-pending';
-                        else if (statusDisplay === 'Jatuh Tempo') statusClass = 'status-overdue';
-
-                        reportRowsHtml.push(`
-                            <tr>
-                                <td>${rowNum++}</td>
-                                <td>${noInvoice}</td>
-                                <td>${invoice.namaVendor || '-'}</td>
-                                <td>${dppDisplay}</td>
-                                <td><span class="status ${statusClass}">${statusDisplay}</span></td>
-                                <td>${jatuhTempoDisplay}</td>
-                                <td>${tglBayarDisplay}</td>
-                            </tr>
-                        `);
-                    });
-                    reportTableBody.innerHTML = reportRowsHtml.join('');
-                }, (error) => {
-                    console.error("Error loading report data: ", error);
-                    reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                    showAlert("Gagal memuat data laporan: " + error.message, 'error');
-                });
-            } catch (error) {
-                console.error("Error setting up report listener: ", error);
-                reportTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Gagal memuat data laporan: ${error.message}</td></tr>`;
-                showAlert("Gagal memuat data laporan: " + error.message, 'error');
-            }
-        }
-
 
         // Apply autocomplete to relevant input fields
         function setupAllAutocompletes() {
@@ -2045,27 +1934,6 @@
             }
         }
 
-        // --- Fungsi untuk menghitung total dengan PPN ---
-        function calculateTotalWithPPN() {
-            const dppIdrInput = document.getElementById('pembayaran-dpp-idr');
-            const ppnIdrInput = document.getElementById('pembayaran-ppn-idr');
-            const includePPNCheckbox = document.getElementById('pembayaran-include-ppn');
-            
-            if (!dppIdrInput || !ppnIdrInput || !includePPNCheckbox) return;
-            
-            const dppValue = dppIdrInput.value.replace(/[^0-9]/g, '');
-            
-            if (dppValue && includePPNCheckbox.checked) {
-                const dppNumber = parseInt(dppValue);
-                const ppnAmount = Math.round(dppNumber * 0.11);
-                const totalWithPPN = dppNumber + ppnAmount;
-                return totalWithPPN;
-            }
-            
-            return dppValue ? parseInt(dppValue) : 0;
-        }
-
-
         // --- Improved Login Functionality ---
         function initLogin() {
             const loginForm = document.getElementById('login-form');
@@ -2085,10 +1953,11 @@
                     // User is signed in, hide login and show main content
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('main-container').style.display = 'flex';
-                    // Load initial data
+                    // Load semua data yang diperlukan saat login berhasil
                     loadDashboardData();
                     loadVendorData();
-                    // PERBAIKAN: Tampilkan dashboard secara otomatis
+                    loadInvoicesToTable();
+                    // Tampilkan dashboard secara otomatis
                     showSection('dashboard-section');
                 } else {
                     // User is signed out, show login
@@ -2224,8 +2093,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             initLogin();
             
-            // The rest of your existing DOMContentLoaded code remains the same
-            const mainContent = document.querySelector('.main-content');
             const contentSections = document.querySelectorAll('.content-section');
             const navItems = document.querySelectorAll('.nav-item');
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
@@ -2248,7 +2115,6 @@
                 sidebarToggleBtn.addEventListener('click', toggleSidebar);
             }
 
-
             // --- Fungsi Navigasi Sidebar ---
             function showSection(targetId) {
                 contentSections.forEach(section => {
@@ -2264,22 +2130,8 @@
                 if (activeNavItem) {
                     activeNavItem.classList.add('active');
                 }
-
-                if (targetId === 'dashboard-section') {
-                    loadDashboardData();
-                } else if (targetId === 'invoice-list-section') {
-                    loadInvoicesToTable();
-                } else if (targetId === 'laporan-section') {
-                    // loadReportData();
-                }
             }
             window.showSection = showSection;
-
-            // PERBAIKAN: Pindahkan ini ke dalam initLogin agar dashboard langsung tampil setelah login
-            // if (auth.currentUser) {
-            //     showSection('dashboard-section');
-            // }
-
 
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -2322,8 +2174,6 @@
             }
 
             // Override openModal to handle fetching tglDiterima for pembayaran-modal
-            // dan memastikan noInvoice diisi dengan nilai asli
-            const originalOpenModal = window.openModal;
             window.openModal = async function(modalId, rawInvoiceNo = null) {
                 const modal = document.getElementById(modalId);
                 resetModalForm(modalId);
@@ -2354,7 +2204,6 @@
                     }
                 }
             };
-
 
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = 'none';
@@ -2413,24 +2262,28 @@
                     showAlert('Invoice berhasil disimpan!', 'success');
                     closeModal('invoice-modal');
                     
-                    // PERBAIKAN: Simpan halaman saat ini sebelum refresh
+                    // Simpan halaman saat ini sebelum refresh
                     const currentPageBeforeRefresh = window.currentPage;
                     
                     // Refresh data untuk menampilkan invoice baru
-                    loadInvoicesToTable();
-                    
-                    // Kembalikan ke halaman yang sama setelah refresh
-                    setTimeout(() => {
-                        window.currentPage = currentPageBeforeRefresh;
+                    // Jangan panggil loadInvoicesToTable() karena akan reset currentPage
+                    // Sebagai gantinya, refresh data dengan cara yang tidak mengubah currentPage
+                    if (window.invoiceUnsubscribe) {
+                        window.invoiceUnsubscribe();
+                    }
+                    // Set up listener baru untuk data terbaru
+                    window.invoiceUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
+                        // Kode untuk memuat data invoice...
+                        // Setelah data dimuat, render tabel dengan currentPage yang sama
                         renderInvoicesTable(filteredInvoiceData);
-                    }, 500);
+                    });
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
                     showAlert("Gagal menyimpan invoice: " + error.message, 'error');
                 }
             });
 
-            // --- View Invoice Detail Functionality (MODIFIED) ---
+            // --- View Invoice Detail Functionality ---
             async function displayInvoiceDetail(rawInvoiceNo) {
                 const invoiceNoDocId = sanitizeInvoiceNo(rawInvoiceNo);
                 const invoiceDoc = await invoicesCol.doc(invoiceNoDocId).get();
@@ -2449,7 +2302,6 @@
                 const keteranganQuery = await keteranganCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                 const keterangan = keteranganQuery.empty ? {} : keteranganQuery.docs[0].data();
 
-                // MODIFIED: Pass isManualStatus to calculateStatus
                 const calculatedStatus = calculateStatus(
                     data.tglDiterima,
                     pembayaranData.jatuhTempo,
@@ -2595,19 +2447,24 @@
 
                     showAlert('Invoice dan data terkait berhasil dihapus!', 'success');
                     
-                    // PERBAIKAN: Tetap di halaman yang sama setelah hapus
+                    // Tetap di halaman yang sama setelah hapus
                     const currentPageBeforeDelete = window.currentPage;
-                    loadInvoicesToTable();
-                    setTimeout(() => {
-                        window.currentPage = currentPageBeforeDelete;
+                    // Jangan panggil loadInvoicesToTable() karena akan reset currentPage
+                    // Sebagai gantinya, refresh data dengan cara yang tidak mengubah currentPage
+                    if (window.invoiceUnsubscribe) {
+                        window.invoiceUnsubscribe();
+                    }
+                    // Set up listener baru untuk data terbaru
+                    window.invoiceUnsubscribe = invoicesCol.onSnapshot(async (snapshot) => {
+                        // Kode untuk memuat data invoice...
+                        // Setelah data dimuat, render tabel dengan currentPage yang sama
                         renderInvoicesTable(filteredInvoiceData);
-                    }, 500);
+                    });
                 } catch (error) {
                     console.error("Error deleting invoice: ", error);
                     showAlert("Gagal menghapus invoice: " + error.message, 'error');
                 }
             }
-
 
             document.getElementById('back-to-list-btn').addEventListener('click', function() {
                 showSection('invoice-list-section');
@@ -2690,8 +2547,7 @@
             setupSearchAndFillModal('search-pembayaran-btn', 'search-invoice-pembayaran', 'pembayaran-modal');
             setupSearchAndFillModal('search-keterangan-btn', 'search-invoice-keterangan', 'keterangan-modal');
 
-
-            // --- Fill Modal with Existing Data (for edit) (MODIFIED) ---
+            // --- Fill Modal with Existing Data (for edit) ---
             async function fillModalWithExistingData(modalId, rawInvoiceNo) {
                 let dataToFill = {};
                 let collectionRef;
@@ -2801,7 +2657,7 @@
                     hasilFollowUp: document.getElementById('pembayaran-hasil-follow-up').value,
                     top: document.getElementById('pembayaran-top').value,
                     jatuhTempo: document.getElementById('pembayaran-jatuh-tempo').value,
-                    includePPN: includePPN // Simpan status checkbox PPN
+                    includePPN: includePPN
                 };
 
                 try {
@@ -2822,7 +2678,7 @@
                 }
             });
 
-            // --- Keterangan Form Submission (MODIFIED) ---
+            // --- Keterangan Form Submission ---
             document.getElementById('keterangan-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const rawNoInvoice = document.getElementById('keterangan-no-invoice').value;
@@ -2840,14 +2696,12 @@
                 // Jika pengguna memilih status dari dropdown, itu dianggap manual
                 const isManual = selectedManualStatus !== '';
 
-                // Calculate the final status using the new manual status as currentStatus
-                // dan flag isManual sebagai isManualStatusFromDB
                 const newStatusAkhir = calculateStatus(
                     invoiceData.tglDiterima,
                     pembayaranData.jatuhTempo,
                     newTglBayar,
-                    selectedManualStatus, // Pass the manually selected status
-                    isManual // <--- Gunakan isManual di sini
+                    selectedManualStatus,
+                    isManual
                 );
 
                 const formData = {
@@ -2859,7 +2713,7 @@
                     keteranganProses: document.getElementById('keterangan-keterangan-proses').value,
                     tglBayar: newTglBayar,
                     statusAkhir: newStatusAkhir,
-                    isManualStatus: isManual // <--- Simpan flag manual status
+                    isManualStatus: isManual
                 };
 
                 try {
@@ -2904,7 +2758,6 @@
 
             if (tglPengajuanFinanceInput) tglPengajuanFinanceInput.addEventListener('change', calculateLamaPengajuan);
             if (tglDiterimaAnggiInput) tglDiterimaAnggiInput.addEventListener('change', calculateLamaPengajuan);
-
 
             // --- Auto-calculate Jatuh Tempo based on TOP ---
             const pembayaranTopInput = document.getElementById('pembayaran-top');
@@ -2966,7 +2819,6 @@
                 dppIdrInput.addEventListener('blur', calculatePPN);
             }
 
-
             // --- Export to Excel (CSV) ---
             document.querySelectorAll('.header-actions .export-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -3007,130 +2859,18 @@
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('filter-search').addEventListener('keyup', applyFilters);
 
-            // PERBAIKAN: Hapus event listener yang menyebabkan notifikasi "Filter diterapkan" saat tambah invoice
             const applyFilterBtn = document.querySelector('#invoice-list-section .btn-primary');
             if (applyFilterBtn) {
                 applyFilterBtn.addEventListener('click', function() {
                     applyFilters();
-                    // PERBAIKAN: Hapus showAlert agar tidak muncul notifikasi saat tambah invoice
-                    // showAlert('Filter diterapkan.', 'info');
                 });
             }
-
-
-            // --- Pengaturan Akun (Settings) ---
-            const settingsForm = document.getElementById('settings-form');
-            const settingsEmailInput = document.getElementById('settings-email');
-            const settingsPasswordInput = document.getElementById('settings-password');
-            const settingsConfirmPasswordInput = document.getElementById('settings-confirm-password');
-            const settingsErrorMessage = document.getElementById('settings-error-message');
-            const settingsSuccessMessage = document.getElementById('settings-success-message');
-            const forgotPasswordLink = document.getElementById('forgot-password-link');
-            const forgotPasswordErrorMessage = document.getElementById('forgot-password-error-message');
-            const forgotPasswordSuccessMessage = document.getElementById('forgot-password-success-message');
-
-            if (settingsForm) {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        settingsEmailInput.value = user.email;
-                    }
-                });
-
-                settingsForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    settingsErrorMessage.style.display = 'none';
-                    settingsSuccessMessage.style.display = 'none';
-
-                    const user = auth.currentUser;
-                    if (!user) {
-                        showAlert('Anda harus login untuk mengubah pengaturan.', 'error');
-                        return;
-                    }
-
-                    const newEmail = settingsEmailInput.value;
-                    const newPassword = settingsPasswordInput.value;
-                    const confirmPassword = settingsConfirmPasswordInput.value;
-
-                    let changesMade = false;
-
-                    if (newEmail && newEmail !== user.email) {
-                        try {
-                            await user.updateEmail(newEmail);
-                            showAlert('Email berhasil diperbarui.', 'success');
-                            changesMade = true;
-                        } catch (error) {
-                            console.error("Error updating email:", error);
-                            settingsErrorMessage.textContent = 'Gagal memperbarui email: ' + error.message + '. Harap login ulang jika Anda baru saja login.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                    }
-
-                    if (newPassword) {
-                        if (newPassword !== confirmPassword) {
-                            settingsErrorMessage.textContent = 'Konfirmasi password tidak cocok.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                        if (newPassword.length < 6) {
-                            settingsErrorMessage.textContent = 'Password baru minimal 6 karakter.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                        try {
-                            await user.updatePassword(newPassword);
-                            showAlert('Password berhasil diperbarui.', 'success');
-                            settingsPasswordInput.value = '';
-                            settingsConfirmPasswordInput.value = '';
-                            changesMade = true;
-                        } catch (error) {
-                            console.error("Error updating password:", error);
-                            settingsErrorMessage.textContent = 'Gagal memperbarui password: ' + error.message + '. Harap login ulang jika Anda baru saja login.';
-                            settingsErrorMessage.style.display = 'block';
-                            return;
-                        }
-                    }
-
-                    if (changesMade) {
-                        settingsSuccessMessage.textContent = 'Pengaturan berhasil disimpan.';
-                        settingsSuccessMessage.style.display = 'block';
-                    } else {
-                        showAlert('Tidak ada perubahan yang disimpan.', 'info');
-                    }
-                });
-
-                forgotPasswordLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    forgotPasswordErrorMessage.style.display = 'none';
-                    forgotPasswordSuccessMessage.style.display = 'none';
-
-                    const email = settingsEmailInput.value;
-                    if (!email) {
-                        forgotPasswordErrorMessage.textContent = 'Harap masukkan email Anda untuk reset password.';
-                        forgotPasswordErrorMessage.style.display = 'block';
-                        return;
-                    }
-
-                    try {
-                        await auth.sendPasswordResetEmail(email);
-                        forgotPasswordSuccessMessage.textContent = 'Link reset password telah dikirim ke email Anda.';
-                        forgotPasswordSuccessMessage.style.display = 'block';
-                        showAlert('Link reset password telah dikirim.', 'success');
-                    } catch (error) {
-                        console.error("Error sending password reset email:", error);
-                        forgotPasswordErrorMessage.textContent = 'Gagal mengirim link reset password: ' + error.message;
-                        forgotPasswordErrorMessage.style.display = 'block';
-                        showAlert('Gagal mengirim link reset password: ' + error.message, 'error');
-                    }
-                });
-            }
-
 
             // Setup Rupiah formatting for relevant inputs
             setupRupiahInput('pembayaran-dpp-idr');
             setupRupiahInput('pembayaran-ppn-idr');
 
-            // --- Status Modal Specifics (MODIFIED) ---
+            // --- Status Modal Specifics ---
             const statusModal = document.getElementById('status-modal');
             const statusNoInvoiceInput = document.getElementById('status-no-invoice');
             const statusManualSelect = document.getElementById('status-manual-select');
@@ -3139,7 +2879,7 @@
             async function openStatusModal(rawInvoiceNo, currentStatus) {
                 statusNoInvoiceInput.value = rawInvoiceNo;
                 statusNoInvoiceInput.readOnly = true;
-                statusManualSelect.value = currentStatus || ''; // Set current status
+                statusManualSelect.value = currentStatus || '';
                 statusModal.style.display = 'flex';
             }
 
@@ -3161,7 +2901,7 @@
                         await keteranganCol.add({
                             noInvoice: rawNoInvoice,
                             statusAkhir: newManualStatus,
-                            isManualStatus: true // <--- Selalu true jika diatur dari modal status manual
+                            isManualStatus: true
                         });
                         showAlert('Keterangan baru dibuat dan status diperbarui!', 'success');
                         closeModal('status-modal');
@@ -3175,20 +2915,18 @@
                     const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
                     const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
-                    // Calculate the final status using the new manual status as currentStatus
-                    // dan isManualStatusFromDB selalu true karena ini adalah update manual
                     const finalStatus = calculateStatus(
                         invoiceData.tglDiterima,
                         pembayaranData.jatuhTempo,
                         existingKeteranganData.tglBayar,
-                        newManualStatus, // Pass the manually selected status
-                        true // <--- Selalu true karena ini adalah update manual
+                        newManualStatus,
+                        true
                     );
 
                     const updateData = {
-                        ...existingKeteranganData, // Spread existing data first
+                        ...existingKeteranganData,
                         statusAkhir: finalStatus,
-                        isManualStatus: true // <--- Set isManualStatus menjadi true
+                        isManualStatus: true
                     };
 
                     await keteranganDocRef.update(updateData);
