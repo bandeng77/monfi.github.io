@@ -301,7 +301,14 @@
             background-color: var(--primary); /* Menu aktif menggunakan warna pink #FFC0CB */
             color: var(--dark);
         }
-
+        
+        /* Warna hover khusus untuk menu tertentu dengan warna primary */
+        .nav-item[data-target="invoice-list-section"]:hover,
+        .nav-item[data-target="pembayaran-section"]:hover,
+        .nav-item[data-target="pengaturan-section"]:hover {
+            background-color: var(--primary);
+            color: white;
+        }
         /* Warna pink untuk menu tertentu */
         .nav-item[data-target="dashboard-section"]:hover,
         .nav-item[data-target="faktur-pajak-section"]:hover,
