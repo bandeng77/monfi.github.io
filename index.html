@@ -22,8 +22,8 @@
             --card-bg: #ffffff;
             --sidebar-bg: #f1f5f9;
             --hover: #f8fafc;
-            --pink: #ec4899;
-            --pink-light: #FFC0CB; /* Warna pink berubah ke #FFC0CB */
+            --pink: #FFC0CB; /* Semua pink menjadi #FFC0CB */
+            --pink-light: #FFC0CB; /* Warna pink menjadi #FFC0CB */
         }
 
         * {
@@ -298,8 +298,8 @@
         }
 
         .nav-item.active {
-            background-color: var(--primary);
-            color: white;
+            background-color: var(--pink); /* Menu aktif menggunakan warna pink #FFC0CB */
+            color: var(--dark);
         }
 
         /* Warna pink untuk menu tertentu */
@@ -307,15 +307,15 @@
         .nav-item[data-target="faktur-pajak-section"]:hover,
         .nav-item[data-target="keterangan-section"]:hover,
         #logout-btn:hover {
-            background-color: var(--pink-light); /* Menggunakan warna pink #FFC0CB */
-            color: var(--pink);
+            background-color: var(--pink); /* Menggunakan warna pink #FFC0CB */
+            color: var(--dark);
         }
 
         .nav-item[data-target="dashboard-section"].active,
         .nav-item[data-target="faktur-pajak-section"].active,
         .nav-item[data-target="keterangan-section"].active {
-            background-color: var(--pink);
-            color: white;
+            background-color: var(--pink); /* Menu aktif menggunakan warna pink #FFC0CB */
+            color: var(--dark);
         }
 
         .nav-icon {
