@@ -1048,6 +1048,23 @@
             border: 1px solid var(--border);
             margin-top: 1rem;
         }
+
+        /* Keterangan Proses Styles */
+        .keterangan-proses-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .keterangan-proses-cell:hover {
+            overflow: visible;
+            white-space: normal;
+            position: relative;
+            z-index: 10;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -2062,7 +2079,7 @@
             // Render table rows
             tableBody.innerHTML = '';
             if (filteredData.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Tidak ada data.</td></tr>';
             } else {
                 filteredData.forEach((invoice, index) => {
                     let statusClass = '';
@@ -2081,6 +2098,7 @@
                         <td>${invoice.Nama_Vendor || '-'}</td>
                         <td>${invoice.DPP_IDR || '-'}</td>
                         <td><span class="status-button ${statusClass}">${invoice.Status}</span></td>
+                        <td class="keterangan-proses-cell">${invoice.Keterangan_Proses || '-'}</td>
                         <td>${invoice.Jatuh_Tempo || '-'}</td>
                         <td>${invoice.Tanggal_Bayar || '-'}</td>
                     `;
@@ -3759,6 +3777,7 @@
                             <th>Nama Vendor</th>
                             <th>DPP</th>
                             <th>Status</th>
+                            <th>Keterangan Proses</th>
                             <th>Jatuh Tempo</th>
                             <th>Tanggal Bayar</th>
                         </tr>
