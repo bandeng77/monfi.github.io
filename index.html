@@ -22,6 +22,8 @@
             --card-bg: #ffffff;
             --sidebar-bg: #f1f5f9;
             --hover: #f8fafc;
+            --pink: #ec4899;
+            --pink-light: #fce7f3;
         }
 
         * {
@@ -297,6 +299,22 @@
 
         .nav-item.active {
             background-color: var(--primary);
+            color: white;
+        }
+
+        /* Warna pink untuk menu tertentu */
+        .nav-item[data-target="dashboard-section"]:hover,
+        .nav-item[data-target="faktur-pajak-section"]:hover,
+        .nav-item[data-target="keterangan-section"]:hover,
+        #logout-btn:hover {
+            background-color: var(--pink-light);
+            color: var(--pink);
+        }
+
+        .nav-item[data-target="dashboard-section"].active,
+        .nav-item[data-target="faktur-pajak-section"].active,
+        .nav-item[data-target="keterangan-section"].active {
+            background-color: var(--pink);
             color: white;
         }
 
@@ -988,6 +1006,23 @@
             color: #15803d;
         }
 
+        /* DPP & PPN Styles */
+        .dpp-ppn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .dpp-amount {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .ppn-amount {
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+
         /* Status Summary Modal */
         .status-summary-modal {
             display: none;
@@ -1501,13 +1536,17 @@
                 else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                 else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
 
-                // Determine which DPP to display and add currency indicator
+                // Format DPP dan PPN
                 let dppDisplay = 'N/A';
+                let ppnDisplay = '';
                 let currencyClass = '';
                 let currencyText = '';
                 
                 if (invoice.DPP_IDR && invoice.DPP_IDR !== 'N/A' && invoice.DPP_IDR !== '0') {
                     dppDisplay = invoice.DPP_IDR;
+                    if (invoice.PPn_IDR && invoice.PPn_IDR !== '0') {
+                        ppnDisplay = `PPN: ${formatRupiah(invoice.PPn_IDR)}`;
+                    }
                     currencyClass = 'currency-idr';
                     currencyText = 'IDR';
                 } else if (invoice.DPP_USD && invoice.DPP_USD !== '0') {
@@ -1526,7 +1565,10 @@
                         <td><a href="#" class="view-invoice-detail" data-invoice-no="${invoice.No_Invoice}">${invoice.No_Invoice}</a></td>
                         <td>${invoice.Nama_Vendor || '-'}</td>
                         <td>
-                            ${dppDisplay}
+                            <div class="dpp-ppn-container">
+                                <div class="dpp-amount">${dppDisplay}</div>
+                                ${ppnDisplay ? `<div class="ppn-amount">${ppnDisplay}</div>` : ''}
+                            </div>
                             ${currencyText ? `<span class="currency-indicator ${currencyClass}">${currencyText}</span>` : ''}
                         </td>
                         <td>
@@ -1693,6 +1735,7 @@
                         const keterangan = keteranganMap.get(noInvoice) || {};
 
                         const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
+                        const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
                         const statusDisplay = calculateStatus(
                             invoice.tglDiterima,
                             pembayaran.jatuhTempo,
@@ -1710,7 +1753,7 @@
                             No_Invoice: noInvoice,
                             Nama_Vendor: invoice.namaVendor || '',
                             DPP_IDR: dppDisplay,
-                            PPn_IDR: pembayaran.ppnIdr || '0',
+                            PPn_IDR: ppnDisplay,
                             DPP_USD: pembayaran.dppUsd || '0',
                             Keterangan_Pembayaran: pembayaran.keterangan || '',
                             Follow_Up: pembayaran.followUp || '',
@@ -2333,6 +2376,7 @@
                             const keterangan = keteranganMap.get(noInvoice) || {};
 
                             const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
+                            const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
                             const statusDisplay = calculateStatus(
                                 invoice.tglDiterima,
                                 pembayaran.jatuhTempo,
@@ -2350,7 +2394,7 @@
                                 No_Invoice: noInvoice,
                                 Nama_Vendor: invoice.namaVendor || '',
                                 DPP_IDR: dppDisplay,
-                                PPn_IDR: pembayaran.ppnIdr || '0',
+                                PPn_IDR: ppnDisplay,
                                 DPP_USD: pembayaran.dppUsd || '0',
                                 Keterangan_Pembayaran: pembayaran.keterangan || '',
                                 Follow_Up: pembayaran.followUp || '',
@@ -2592,6 +2636,7 @@
                             const keterangan = keteranganMap.get(noInvoice) || {};
 
                             const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
+                            const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
                             const statusDisplay = calculateStatus(
                                 invoice.tglDiterima,
                                 pembayaran.jatuhTempo,
@@ -2609,7 +2654,7 @@
                                 No_Invoice: noInvoice,
                                 Nama_Vendor: invoice.namaVendor || '',
                                 DPP_IDR: dppDisplay,
-                                PPn_IDR: pembayaran.ppnIdr || '0',
+                                PPn_IDR: ppnDisplay,
                                 DPP_USD: pembayaran.dppUsd || '0',
                                 Keterangan_Pembayaran: pembayaran.keterangan || '',
                                 Follow_Up: pembayaran.followUp || '',
@@ -3330,7 +3375,7 @@
                                         <th>Tanggal Diterima</th>
                                         <th>No Invoice</th>
                                         <th>Nama Vendor</th>
-                                        <th>DPP</th>
+                                        <th>DPP & PPN</th>
                                         <th>Status</th>
                                         <th>Aksi</th>
                                     </tr>
