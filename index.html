@@ -26,6 +26,14 @@
             --pink-light: #FFC0CB;
             --text-dark: #000000;
             --text-dark-secondary: #333333;
+            --info: #3b82f6;
+            --problem: #ef4444;
+            --unpaid: #f59e0b;
+            --chart-1: #79BAEC;
+            --chart-2: #10b981;
+            --chart-3: #f59e0b;
+            --chart-4: #ef4444;
+            --chart-5: #8b5cf6;
         }
 
         * {
@@ -540,7 +548,9 @@
         }
 
         .status-button {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.35rem 0.75rem;
             border-radius: 1rem;
             font-size: 0.875rem;
@@ -591,6 +601,23 @@
         .status-belum-diproses, .status-menunggu-pengajuan {
             background-color: #e2e8f0;
             color: #475569;
+        }
+
+        .status-belum-dibayar {
+            background-color: #fde68a;
+            color: #92400e;
+        }
+
+        .status-bermasalah {
+            background-color: #fecaca;
+            color: #b91c1c;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
         }
 
         .action-cell {
@@ -891,6 +918,8 @@
         .summary-item:nth-child(3) .summary-value { color: var(--warning); }
         .summary-item:nth-child(4) .summary-value { color: var(--primary); }
         .summary-item:nth-child(5) .summary-value { color: var(--danger); }
+        .summary-item:nth-child(6) .summary-value { color: var(--unpaid); }
+        .summary-item:nth-child(7) .summary-value { color: var(--problem); }
 
         /* Settings Layout */
         .settings-layout {
@@ -1122,6 +1151,217 @@
             background-color: white;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+
+        /* Dashboard Statistics Styles */
+        .statistics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .statistics-card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+
+        .statistics-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--light);
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-dark-secondary);
+        }
+
+        /* Sort Icon Styles */
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 24px !important;
+        }
+
+        .sortable-header:hover {
+            background-color: #f1f5f9;
+        }
+
+        .sort-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+            font-size: 0.8rem;
+        }
+
+        .sort-icon.active {
+            color: var(--primary);
+        }
+
+        .sort-icon.asc::before {
+            content: "▲";
+        }
+
+        .sort-icon.desc::before {
+            content: "▼";
+        }
+
+        /* Status Icon Styles */
+        .status-icon {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+            cursor: help;
+            position: relative;
+            vertical-align: middle;
+        }
+
+        .status-icon.green {
+            background-color: var(--success);
+        }
+
+        .status-icon.yellow {
+            background-color: var(--warning);
+        }
+
+        .status-icon.red {
+            background-color: var(--danger);
+        }
+
+        /* Status Note Popup */
+        .status-note-popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .status-note-content {
+            background-color: var(--card-bg);
+            margin: auto;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .status-note-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .status-note-close-btn {
+            color: var(--text-dark-secondary);
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .status-note-detail {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-note-detail-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-note-detail-item strong {
+            width: 120px;
+            flex-shrink: 0;
+            color: var(--text-dark);
+        }
+
+        .status-note-detail-item span {
+            flex-grow: 1;
+            color: var(--text-dark-secondary);
+        }
+
+        /* Year Filter Styles */
+        .year-filter-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .year-filter-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border);
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .year-filter-btn:hover {
+            background-color: var(--hover);
+        }
+
+        .year-filter-btn.active {
+            background-color: var(--primary);
+            color: var(--text-dark);
+            border-color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -1184,6 +1424,7 @@
         let allInvoiceNumbers = [];
         let allInvoiceData = [];
         let filteredInvoiceData = [];
+        let problematicInvoiceData = [];
         window.currentPage = 1;
         const itemsPerPage = 25;
 
@@ -1194,6 +1435,10 @@
 
         // Global variables for vendor data
         let allVendorNames = [];
+
+        // Sorting variables
+        let currentSortColumn = '';
+        let currentSortDirection = 'asc';
 
         // --- VENDOR MANAGEMENT FUNCTIONS ---
         // Load vendor data from localStorage or default sample
@@ -1474,6 +1719,44 @@
             return invoiceNo.replace(/\//g, '-');
         }
 
+        // --- Check if Invoice is Problematic ---
+        function checkProblematicInvoice(invoice, fakturPajak, pembayaran) {
+            const problems = [];
+            
+            // 1. Check if no faktur pajak
+            if (!fakturPajak || !fakturPajak.noFakturPajak || fakturPajak.noFakturPajak.trim() === '') {
+                problems.push('No faktur pajak belum ada');
+            }
+            
+            // 2. Check if no tanggal faktur pajak
+            if (!fakturPajak || !fakturPajak.tglFakturPajak || fakturPajak.tglFakturPajak.trim() === '') {
+                problems.push('Tanggal faktur pajak belum ada');
+            }
+            
+            // 3. Check if exceeds TOP and jatuh tempo
+            if (pembayaran && pembayaran.jatuhTempo) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const dueDate = new Date(pembayaran.jatuhTempo);
+                dueDate.setHours(0, 0, 0, 0);
+                
+                if (today > dueDate) {
+                    problems.push('Melebihi TOP dan jatuh tempo');
+                }
+            }
+            
+            // 4. Check if no DPP value
+            if (!pembayaran || !pembayaran.dppIdr || pembayaran.dppIdr === '0' || pembayaran.dppIdr === '') {
+                problems.push('Tidak ada nilai DPP (IDR)');
+            }
+            
+            return {
+                isProblematic: problems.length > 0,
+                problems: problems
+            };
+        }
+
         // --- Calculate Status Based on Dates ---
         function calculateStatus(tglDiterima, jatuhTempo, tglBayar, currentStatus, isManualStatusFromDB) {
             // 1. Prioritas tertinggi: Jika sudah dibayar, statusnya 'Dibayar'
@@ -1528,6 +1811,25 @@
             return currentStatus || 'Belum Diproses';
         }
 
+        // --- Calculate Payment Duration Status ---
+        function calculatePaymentDurationStatus(tglDiterima, tglBayar) {
+            if (!tglDiterima || !tglBayar) return null;
+            
+            const receivedDate = new Date(tglDiterima);
+            const paymentDate = new Date(tglBayar);
+            
+            const diffTime = Math.abs(paymentDate - receivedDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 7) {
+                return { days: diffDays, status: 'green', label: 'Cepat (≤ 7 hari)' };
+            } else if (diffDays <= 14) {
+                return { days: diffDays, status: 'yellow', label: 'Sedang (8-14 hari)' };
+            } else {
+                return { days: diffDays, status: 'red', label: 'Lambat (> 14 hari)' };
+            }
+        }
+
         // --- Render Invoices to Table (with pagination and filter) ---
         function renderInvoicesTable(data) {
             const invoiceTableBody = document.querySelector('#invoice-table tbody');
@@ -1557,6 +1859,8 @@
                 else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                 else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                 else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
+                else if (invoice.Status === 'Belum Dibayar') statusClass = 'status-belum-dibayar';
+                else if (invoice.Status === 'Bermasalah') statusClass = 'status-bermasalah';
 
                 // Format DPP dan PPN
                 let dppDisplay = 'N/A';
@@ -1577,6 +1881,21 @@
                     currencyText = 'USD';
                 }
 
+                // Payment duration icon
+                let paymentDurationIcon = '';
+                if (invoice.Status === 'Dibayar' && invoice.Tanggal_Diterima && invoice.Tanggal_Bayar) {
+                    const durationStatus = calculatePaymentDurationStatus(invoice.Tanggal_Diterima, invoice.Tanggal_Bayar);
+                    if (durationStatus) {
+                        paymentDurationIcon = `<span class="status-icon ${durationStatus.status}" 
+                            data-invoice-no="${invoice.No_Invoice}"
+                            data-duration-days="${durationStatus.days}"
+                            data-duration-label="${durationStatus.label}"
+                            data-tgl-diterima="${invoice.Tanggal_Diterima}"
+                            data-tgl-bayar="${invoice.Tanggal_Bayar}"
+                            title="${durationStatus.label} (${durationStatus.days} hari)"></span>`;
+                    }
+                }
+
                 rowsHtml.push(`
                     <tr data-invoice-id="${invoice.No_Invoice}">
                         <td>${rowNum++}</td>
@@ -1595,6 +1914,7 @@
                         </td>
                         <td>
                             <button class="status-button ${statusClass}" data-invoice-no="${invoice.No_Invoice}" data-current-status="${invoice.Status}">
+                                ${paymentDurationIcon}
                                 ${invoice.Status}
                             </button>
                         </td>
@@ -1731,11 +2051,13 @@
                     let rowNum = 1;
                     const currentAllInvoiceData = [];
                     const currentInvoiceNumbers = [];
+                    const currentProblematicInvoices = [];
 
                     // Fetch all related data once to optimize
-                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                    const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
                         pembayaranCol.get(),
-                        keteranganCol.get()
+                        keteranganCol.get(),
+                        fakturPajakCol.get()
                     ]);
 
                     const pembayaranMap = new Map();
@@ -1748,6 +2070,11 @@
                         keteranganMap.set(doc.data().noInvoice, doc.data());
                     });
 
+                    const fakturPajakMap = new Map();
+                    fakturPajakSnapshot.forEach(doc => {
+                        fakturPajakMap.set(doc.data().noInvoice, doc.data());
+                    });
+
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
                         const noInvoice = invoice.noInvoice;
@@ -1755,6 +2082,7 @@
 
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
+                        const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                         const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                         const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -1765,8 +2093,27 @@
                             keterangan.statusAkhir,
                             keterangan.isManualStatus || false
                         );
+
+                        // Check if invoice is problematic
+                        const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
                         
-                        currentAllInvoiceData.push({
+                        let finalStatus = statusDisplay;
+                        if (problemCheck.isProblematic) {
+                            finalStatus = 'Bermasalah';
+                            // Add to problematic invoices
+                            currentProblematicInvoices.push({
+                                ...invoice,
+                                problems: problemCheck.problems,
+                                fakturPajak: fakturPajak,
+                                pembayaran: pembayaran,
+                                keterangan: keterangan,
+                                Status: finalStatus
+                            });
+                        } else if (statusDisplay !== 'Dibayar') {
+                            finalStatus = 'Belum Dibayar';
+                        }
+                        
+                        const invoiceData = {
                             No: rowNum++,
                             Email_Hard: invoice.emailHard || '',
                             Penerima: invoice.penerima || '',
@@ -1788,14 +2135,22 @@
                             Lama_Pengajuan: keterangan.lamaPengajuan || '',
                             Keterangan_Proses: keterangan.keteranganProses || '',
                             Tanggal_Bayar: keterangan.tglBayar || '',
-                            Status: statusDisplay,
-                            Is_Manual_Status: keterangan.isManualStatus || false
-                        });
+                            Status: finalStatus,
+                            Is_Manual_Status: keterangan.isManualStatus || false,
+                            Problems: problemCheck.problems,
+                            Is_Problematic: problemCheck.isProblematic
+                        };
+
+                        currentAllInvoiceData.push(invoiceData);
                     });
                     allInvoiceData = currentAllInvoiceData;
+                    problematicInvoiceData = currentProblematicInvoices;
                     allInvoiceNumbers = currentInvoiceNumbers;
                     setupAllAutocompletes();
                     applyFilters();
+                    
+                    // Update dashboard statistics
+                    updateDashboardStatistics();
                 }, (error) => {
                     console.error("Error loading invoices: ", error);
                     invoiceTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--danger);">Gagal memuat data: ${error.message}</td></tr>`;
@@ -1814,9 +2169,18 @@
             const endDate = document.getElementById('filter-end-date').value;
             const statusFilter = document.getElementById('filter-status').value;
             const searchKeyword = document.getElementById('filter-search').value.toLowerCase();
+            const yearFilter = document.querySelector('.year-filter-btn.active')?.dataset.year || 'all';
 
             filteredInvoiceData = allInvoiceData.filter(invoice => {
                 let matches = true;
+
+                // Year filter
+                if (yearFilter !== 'all') {
+                    const invoiceYear = invoice.Tanggal_Diterima ? invoice.Tanggal_Diterima.substring(0, 4) : '';
+                    if (invoiceYear !== yearFilter) {
+                        matches = false;
+                    }
+                }
 
                 // Date filter (Tanggal Diterima)
                 if (startDate && invoice.Tanggal_Diterima < startDate) {
@@ -1851,8 +2215,89 @@
                 return matches;
             });
 
+            // Apply sorting
+            if (currentSortColumn) {
+                sortData(currentSortColumn, currentSortDirection, false);
+            }
+
             window.currentPage = 1;
             renderInvoicesTable(filteredInvoiceData);
+        }
+
+        // --- Sort Data Function ---
+        function sortData(column, direction, updateTable = true) {
+            currentSortColumn = column;
+            currentSortDirection = direction;
+            
+            filteredInvoiceData.sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
+                
+                // Handle different data types
+                if (column === 'Tanggal_Diterima' || column === 'Jatuh_Tempo' || column === 'Tanggal_Bayar') {
+                    valueA = valueA ? new Date(valueA) : new Date(0);
+                    valueB = valueB ? new Date(valueB) : new Date(0);
+                } else if (column === 'DPP_IDR') {
+                    valueA = parseFloat(valueA.replace(/[^0-9]/g, '')) || 0;
+                    valueB = parseFloat(valueB.replace(/[^0-9]/g, '')) || 0;
+                } else if (column === 'No') {
+                    valueA = parseInt(valueA);
+                    valueB = parseInt(valueB);
+                } else {
+                    // String comparison
+                    valueA = String(valueA || '').toLowerCase();
+                    valueB = String(valueB || '').toLowerCase();
+                }
+                
+                if (direction === 'asc') {
+                    return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+                } else {
+                    return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
+                }
+            });
+            
+            if (updateTable) {
+                window.currentPage = 1;
+                renderInvoicesTable(filteredInvoiceData);
+            }
+        }
+
+        // --- Setup Sortable Headers ---
+        function setupSortableHeaders() {
+            const headers = document.querySelectorAll('#invoice-table th');
+            headers.forEach((header, index) => {
+                const columns = ['No', 'Email_Hard', 'Penerima', 'Corp', 'Tanggal_Diterima', 'No_Invoice', 'Nama_Vendor', 'DPP_IDR', 'Status'];
+                
+                if (columns[index]) {
+                    header.classList.add('sortable-header');
+                    header.dataset.column = columns[index];
+                    
+                    // Add sort icon
+                    const sortIcon = document.createElement('span');
+                    sortIcon.className = 'sort-icon';
+                    header.appendChild(sortIcon);
+                    
+                    header.addEventListener('click', () => {
+                        const column = header.dataset.column;
+                        let direction = 'asc';
+                        
+                        if (currentSortColumn === column) {
+                            direction = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                        }
+                        
+                        // Update all sort icons
+                        headers.forEach(h => {
+                            const icon = h.querySelector('.sort-icon');
+                            icon.className = 'sort-icon';
+                            if (h.dataset.column === column) {
+                                icon.classList.add('active', direction);
+                            }
+                        });
+                        
+                        sortData(column, direction);
+                    });
+                }
+            });
         }
 
         // --- Load Dashboard Data ---
@@ -1862,14 +2307,18 @@
             const pendingInvoiceEl = document.getElementById('dashboard-pending-invoice');
             const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice');
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
+            const unpaidInvoiceEl = document.getElementById('dashboard-unpaid-invoice');
+            const problematicInvoiceEl = document.getElementById('dashboard-problematic-invoice');
 
-            if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl) return;
+            if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl || !unpaidInvoiceEl || !problematicInvoiceEl) return;
 
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
             submissionPendingInvoiceEl.textContent = '...';
             overdueInvoiceEl.textContent = '...';
+            unpaidInvoiceEl.textContent = '...';
+            problematicInvoiceEl.textContent = '...';
 
             try {
                 // Unsubscribe previous listener if exists
@@ -1883,13 +2332,16 @@
                     let pending = 0;
                     let submissionPending = 0;
                     let overdue = 0;
+                    let unpaid = 0;
+                    let problematic = 0;
 
                     if (!snapshot.empty) {
                         total = snapshot.size;
                         // Fetch all keterangan documents once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                        const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
                             pembayaranCol.get(),
-                            keteranganCol.get()
+                            keteranganCol.get(),
+                            fakturPajakCol.get()
                         ]);
 
                         const pembayaranMap = new Map();
@@ -1902,11 +2354,17 @@
                             keteranganMap.set(doc.data().noInvoice, doc.data());
                         });
 
+                        const fakturPajakMap = new Map();
+                        fakturPajakSnapshot.forEach(doc => {
+                            fakturPajakMap.set(doc.data().noInvoice, doc.data());
+                        });
+
                         snapshot.forEach(doc => {
                             const noInvoice = doc.data().noInvoice;
                             const invoiceData = doc.data();
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
+                            const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                             const status = calculateStatus(
                                 invoiceData.tglDiterima,
@@ -1916,7 +2374,12 @@
                                 keterangan.isManualStatus || false
                             );
 
-                            if (status === 'Dibayar') {
+                            // Check if problematic
+                            const problemCheck = checkProblematicInvoice(invoiceData, fakturPajak, pembayaran);
+                            
+                            if (problemCheck.isProblematic) {
+                                problematic++;
+                            } else if (status === 'Dibayar') {
                                 paid++;
                             } else if (status === 'Menunggu Pembayaran') {
                                 pending++;
@@ -1924,6 +2387,8 @@
                                 submissionPending++;
                             } else if (status === 'Jatuh Tempo') {
                                 overdue++;
+                            } else if (status !== 'Dibayar') {
+                                unpaid++;
                             }
                         });
                     }
@@ -1933,6 +2398,8 @@
                     pendingInvoiceEl.textContent = pending;
                     submissionPendingInvoiceEl.textContent = submissionPending;
                     overdueInvoiceEl.textContent = overdue;
+                    unpaidInvoiceEl.textContent = unpaid;
+                    problematicInvoiceEl.textContent = problematic;
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
                     showAlert("Gagal memuat data dashboard: " + error.message, 'error');
@@ -1941,6 +2408,8 @@
                     pendingInvoiceEl.textContent = 'Error';
                     submissionPendingInvoiceEl.textContent = 'Error';
                     overdueInvoiceEl.textContent = 'Error';
+                    unpaidInvoiceEl.textContent = 'Error';
+                    problematicInvoiceEl.textContent = 'Error';
                 });
 
             } catch (error) {
@@ -1951,6 +2420,219 @@
                 pendingInvoiceEl.textContent = 'Error';
                 submissionPendingInvoiceEl.textContent = 'Error';
                 overdueInvoiceEl.textContent = 'Error';
+                unpaidInvoiceEl.textContent = 'Error';
+                problematicInvoiceEl.textContent = 'Error';
+            }
+        }
+
+        // --- Update Dashboard Statistics ---
+        function updateDashboardStatistics() {
+            // Update statistics charts
+            updateStatusChart();
+            updateVendorChart();
+            updateMonthlyChart();
+            updateProblemStats();
+        }
+
+        // --- Update Status Chart ---
+        function updateStatusChart() {
+            const statusCounts = {
+                'Dibayar': 0,
+                'Menunggu Pembayaran': 0,
+                'Menunggu Pengajuan': 0,
+                'Jatuh Tempo': 0,
+                'Belum Dibayar': 0,
+                'Bermasalah': 0,
+                'Dibatalkan': 0
+            };
+
+            allInvoiceData.forEach(invoice => {
+                if (statusCounts.hasOwnProperty(invoice.Status)) {
+                    statusCounts[invoice.Status]++;
+                }
+            });
+
+            // Update chart display
+            const chartLabels = Object.keys(statusCounts).filter(label => statusCounts[label] > 0);
+            const chartData = chartLabels.map(label => statusCounts[label]);
+            const chartColors = chartLabels.map(label => {
+                switch(label) {
+                    case 'Dibayar': return '#10b981';
+                    case 'Menunggu Pembayaran': return '#f59e0b';
+                    case 'Menunggu Pengajuan': return '#64748b';
+                    case 'Jatuh Tempo': return '#ef4444';
+                    case 'Belum Dibayar': return '#8b5cf6';
+                    case 'Bermasalah': return '#dc2626';
+                    case 'Dibatalkan': return '#6b7280';
+                    default: return '#79BAEC';
+                }
+            });
+
+            // Create simple HTML chart
+            const chartContainer = document.getElementById('status-chart-container');
+            if (chartContainer) {
+                let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
+                chartLabels.forEach((label, index) => {
+                    const percentage = ((chartData[index] / allInvoiceData.length) * 100).toFixed(1);
+                    html += `
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span style="font-size: 0.9rem;">${label}</span>
+                                <span style="font-size: 0.9rem; font-weight: 600;">${chartData[index]} (${percentage}%)</span>
+                            </div>
+                            <div style="height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: ${percentage}%; background-color: ${chartColors[index]}; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                chartContainer.innerHTML = html;
+            }
+        }
+
+        // --- Update Vendor Chart ---
+        function updateVendorChart() {
+            const vendorCounts = {};
+            
+            allInvoiceData.forEach(invoice => {
+                const vendor = invoice.Nama_Vendor || 'Unknown';
+                if (!vendorCounts[vendor]) {
+                    vendorCounts[vendor] = 0;
+                }
+                vendorCounts[vendor]++;
+            });
+
+            // Get top 5 vendors
+            const topVendors = Object.entries(vendorCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const chartContainer = document.getElementById('vendor-chart-container');
+            if (chartContainer) {
+                let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
+                topVendors.forEach(([vendor, count], index) => {
+                    const percentage = ((count / allInvoiceData.length) * 100).toFixed(1);
+                    const colors = ['#79BAEC', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+                    const color = colors[index] || '#64748b';
+                    
+                    html += `
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span style="font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${vendor}">${vendor}</span>
+                                <span style="font-size: 0.9rem; font-weight: 600;">${count} (${percentage}%)</span>
+                            </div>
+                            <div style="height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: ${percentage}%; background-color: ${color}; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                chartContainer.innerHTML = html;
+            }
+        }
+
+        // --- Update Monthly Chart ---
+        function updateMonthlyChart() {
+            const monthlyCounts = {};
+            const currentYear = new Date().getFullYear();
+            
+            allInvoiceData.forEach(invoice => {
+                if (invoice.Tanggal_Diterima) {
+                    const date = new Date(invoice.Tanggal_Diterima);
+                    const year = date.getFullYear();
+                    
+                    if (year === currentYear || year === currentYear - 1) {
+                        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        if (!monthlyCounts[monthYear]) {
+                            monthlyCounts[monthYear] = 0;
+                        }
+                        monthlyCounts[monthYear]++;
+                    }
+                }
+            });
+
+            // Get last 6 months
+            const months = [];
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                months.push(monthYear);
+            }
+
+            const chartContainer = document.getElementById('monthly-chart-container');
+            if (chartContainer) {
+                let html = '<div style="display: flex; align-items: flex-end; height: 200px; gap: 0.5rem; padding: 1rem 0;">';
+                months.forEach(monthYear => {
+                    const count = monthlyCounts[monthYear] || 0;
+                    const maxCount = Math.max(...Object.values(monthlyCounts), 1);
+                    const height = (count / maxCount) * 150;
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                    const [year, month] = monthYear.split('-');
+                    const monthName = monthNames[parseInt(month) - 1];
+                    
+                    html += `
+                        <div style="display: flex; flex-direction: column; align-items: center; height: 100%;">
+                            <div style="flex: 1; display: flex; align-items: flex-end;">
+                                <div style="width: 30px; height: ${height}px; background-color: #79BAEC; border-radius: 4px 4px 0 0;"></div>
+                            </div>
+                            <div style="font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">
+                                <div>${monthName}</div>
+                                <div style="font-weight: 600;">${count}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                chartContainer.innerHTML = html;
+            }
+        }
+
+        // --- Update Problem Stats ---
+        function updateProblemStats() {
+            const problemStats = {
+                'No faktur pajak': 0,
+                'Tanggal faktur pajak': 0,
+                'Melebihi TOP': 0,
+                'Tidak ada DPP': 0
+            };
+
+            problematicInvoiceData.forEach(invoice => {
+                if (invoice.problems) {
+                    invoice.problems.forEach(problem => {
+                        if (problem.includes('No faktur pajak')) problemStats['No faktur pajak']++;
+                        if (problem.includes('Tanggal faktur pajak')) problemStats['Tanggal faktur pajak']++;
+                        if (problem.includes('Melebihi TOP')) problemStats['Melebihi TOP']++;
+                        if (problem.includes('Tidak ada nilai DPP')) problemStats['Tidak ada DPP']++;
+                    });
+                }
+            });
+
+            const chartContainer = document.getElementById('problem-chart-container');
+            if (chartContainer) {
+                let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
+                Object.entries(problemStats).forEach(([problem, count], index) => {
+                    if (count > 0) {
+                        const colors = ['#ef4444', '#f59e0b', '#8b5cf6', '#64748b'];
+                        const color = colors[index] || '#79BAEC';
+                        
+                        html += `
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                    <span style="font-size: 0.9rem;">${problem}</span>
+                                    <span style="font-size: 0.9rem; font-weight: 600;">${count}</span>
+                                </div>
+                                <div style="height: 8px; background-color: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; width: 100%; background-color: ${color}; border-radius: 4px; width: ${(count / problematicInvoiceData.length) * 100}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                html += '</div>';
+                chartContainer.innerHTML = html;
             }
         }
 
@@ -1969,6 +2651,8 @@
 
         // --- Format Rupiah Function ---
         function formatRupiah(angka, prefix = '') {
+            if (!angka || angka === 'N/A') return 'N/A';
+            
             let number_string = angka.toString().replace(/[^,\d]/g, ''),
                 split = number_string.split(','),
                 sisa = split[0].length % 3,
@@ -2097,56 +2781,50 @@
             
             // Set title based on status type
             let statusText = '';
+            let dataToShow = [];
+            
             switch(statusType) {
                 case 'total':
                     statusText = 'Total Invoice';
+                    dataToShow = allInvoiceData;
                     break;
                 case 'paid':
                     statusText = 'Invoice Telah Dibayar';
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Dibayar');
                     break;
                 case 'pending':
                     statusText = 'Invoice Menunggu Pembayaran';
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Menunggu Pembayaran');
                     break;
                 case 'submission-pending':
                     statusText = 'Invoice Menunggu Pengajuan';
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Menunggu Pengajuan');
                     break;
                 case 'overdue':
                     statusText = 'Invoice Jatuh Tempo';
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Jatuh Tempo');
+                    break;
+                case 'unpaid':
+                    statusText = 'Invoice Belum Dibayar';
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Belum Dibayar');
+                    break;
+                case 'problematic':
+                    statusText = 'Invoice Bermasalah';
+                    dataToShow = problematicInvoiceData;
                     break;
                 default:
                     statusText = 'Invoice';
+                    dataToShow = allInvoiceData;
             }
             
             title.textContent = `Daftar ${statusText}`;
             
-            // Filter data based on status type
-            let filteredData = [];
-            switch(statusType) {
-                case 'total':
-                    filteredData = allInvoiceData;
-                    break;
-                case 'paid':
-                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Dibayar');
-                    break;
-                case 'pending':
-                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Menunggu Pembayaran');
-                    break;
-                case 'submission-pending':
-                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Menunggu Pengajuan');
-                    break;
-                case 'overdue':
-                    filteredData = allInvoiceData.filter(invoice => invoice.Status === 'Jatuh Tempo');
-                    break;
-                default:
-                    filteredData = allInvoiceData;
-            }
-            
             // Render table rows
             tableBody.innerHTML = '';
-            if (filteredData.length === 0) {
+            if (dataToShow.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Tidak ada data.</td></tr>';
             } else {
-                filteredData.forEach((invoice, index) => {
+                dataToShow.forEach((invoice, index) => {
                     let statusClass = '';
                     if (invoice.Status === 'Dibayar') statusClass = 'status-paid';
                     else if (['Menunggu Pembayaran'].includes(invoice.Status)) statusClass = 'status-pending';
@@ -2155,18 +2833,39 @@
                     else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                     else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                     else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
+                    else if (invoice.Status === 'Belum Dibayar') statusClass = 'status-belum-dibayar';
+                    else if (invoice.Status === 'Bermasalah') statusClass = 'status-bermasalah';
+
+                    // Add problems column for problematic invoices
+                    const problemsHtml = invoice.Problems ? 
+                        `<ul style="margin: 0; padding-left: 1rem; font-size: 0.85rem; color: var(--danger);">
+                            ${invoice.Problems.map(problem => `<li>${problem}</li>`).join('')}
+                        </ul>` : '-';
 
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${invoice.No_Invoice}</td>
-                        <td>${invoice.Nama_Vendor || '-'}</td>
-                        <td>${invoice.DPP_IDR || '-'}</td>
-                        <td><span class="status-button ${statusClass}">${invoice.Status}</span></td>
-                        <td class="keterangan-proses-cell">${invoice.Keterangan_Proses || '-'}</td>
-                        <td>${invoice.Jatuh_Tempo || '-'}</td>
-                        <td>${invoice.Tanggal_Bayar || '-'}</td>
-                    `;
+                    if (statusType === 'problematic') {
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${invoice.No_Invoice}</td>
+                            <td>${invoice.Nama_Vendor || '-'}</td>
+                            <td>${invoice.DPP_IDR || '-'}</td>
+                            <td><span class="status-button ${statusClass}">${invoice.Status}</span></td>
+                            <td>${problemsHtml}</td>
+                            <td>${invoice.Jatuh_Tempo || '-'}</td>
+                            <td>${invoice.Tanggal_Bayar || '-'}</td>
+                        `;
+                    } else {
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${invoice.No_Invoice}</td>
+                            <td>${invoice.Nama_Vendor || '-'}</td>
+                            <td>${invoice.DPP_IDR || '-'}</td>
+                            <td><span class="status-button ${statusClass}">${invoice.Status}</span></td>
+                            <td class="keterangan-proses-cell">${invoice.Keterangan_Proses || '-'}</td>
+                            <td>${invoice.Jatuh_Tempo || '-'}</td>
+                            <td>${invoice.Tanggal_Bayar || '-'}</td>
+                        `;
+                    }
                     tableBody.appendChild(row);
                 });
             }
@@ -2177,6 +2876,50 @@
 
         function closeStatusSummaryModal() {
             document.getElementById('status-summary-modal').style.display = 'none';
+        }
+
+        // --- Status Note Popup Functions ---
+        function openStatusNotePopup(invoiceNo, durationDays, durationLabel, tglDiterima, tglBayar) {
+            const popup = document.getElementById('status-note-popup');
+            const title = document.getElementById('status-note-title');
+            const details = document.getElementById('status-note-details');
+            
+            title.textContent = `Detail Durasi Pembayaran - ${invoiceNo}`;
+            
+            details.innerHTML = `
+                <div class="status-note-detail-item">
+                    <strong>No Invoice:</strong>
+                    <span>${invoiceNo}</span>
+                </div>
+                <div class="status-note-detail-item">
+                    <strong>Tanggal Diterima:</strong>
+                    <span>${tglDiterima}</span>
+                </div>
+                <div class="status-note-detail-item">
+                    <strong>Tanggal Bayar:</strong>
+                    <span>${tglBayar}</span>
+                </div>
+                <div class="status-note-detail-item">
+                    <strong>Durasi:</strong>
+                    <span>${durationDays} hari</span>
+                </div>
+                <div class="status-note-detail-item">
+                    <strong>Kategori:</strong>
+                    <span>${durationLabel}</span>
+                </div>
+                <div class="status-note-detail-item">
+                    <strong>Status:</strong>
+                    <span style="color: ${durationLabel.includes('Cepat') ? 'var(--success)' : durationLabel.includes('Sedang') ? 'var(--warning)' : 'var(--danger)'}">
+                        ${durationLabel}
+                    </span>
+                </div>
+            `;
+            
+            popup.style.display = 'flex';
+        }
+
+        function closeStatusNotePopup() {
+            document.getElementById('status-note-popup').style.display = 'none';
         }
 
         // Initialize the application
@@ -2219,6 +2962,11 @@
                 const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
                 if (activeNavItem) {
                     activeNavItem.classList.add('active');
+                }
+                
+                // Update statistics when showing dashboard
+                if (targetId === 'dashboard-section') {
+                    updateDashboardStatistics();
                 }
             }
             window.showSection = showSection;
@@ -2314,6 +3062,51 @@
                 });
             });
 
+            // --- Year Filter Setup ---
+            function setupYearFilter() {
+                const yearFilterContainer = document.querySelector('.year-filter-container');
+                if (yearFilterContainer) {
+                    // Add year buttons
+                    const years = ['all', '2025', '2026'];
+                    years.forEach(year => {
+                        const button = document.createElement('button');
+                        button.className = `year-filter-btn ${year === 'all' ? 'active' : ''}`;
+                        button.dataset.year = year;
+                        button.textContent = year === 'all' ? 'Semua Tahun' : year;
+                        button.addEventListener('click', () => {
+                            // Remove active class from all buttons
+                            document.querySelectorAll('.year-filter-btn').forEach(btn => {
+                                btn.classList.remove('active');
+                            });
+                            // Add active class to clicked button
+                            button.classList.add('active');
+                            applyFilters();
+                        });
+                        yearFilterContainer.appendChild(button);
+                    });
+                }
+            }
+
+            // --- Setup Sortable Headers ---
+            function setupInvoiceTableSorting() {
+                setupSortableHeaders();
+            }
+
+            // --- Setup Status Icon Click Handlers ---
+            function setupStatusIconHandlers() {
+                document.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('status-icon')) {
+                        const invoiceNo = e.target.dataset.invoiceNo;
+                        const durationDays = e.target.dataset.durationDays;
+                        const durationLabel = e.target.dataset.durationLabel;
+                        const tglDiterima = e.target.dataset.tglDiterima;
+                        const tglBayar = e.target.dataset.tglBayar;
+                        
+                        openStatusNotePopup(invoiceNo, durationDays, durationLabel, tglDiterima, tglBayar);
+                    }
+                });
+            }
+
             // --- Invoice Modal Specifics ---
             document.getElementById('add-invoice-btn').addEventListener('click', function() {
                 window.openModal('invoice-modal');
@@ -2372,11 +3165,13 @@
                         let rowNum = 1;
                         const currentAllInvoiceData = [];
                         const currentInvoiceNumbers = [];
+                        const currentProblematicInvoices = [];
 
                         // Fetch all related data once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                        const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
                             pembayaranCol.get(),
-                            keteranganCol.get()
+                            keteranganCol.get(),
+                            fakturPajakCol.get()
                         ]);
 
                         const pembayaranMap = new Map();
@@ -2389,6 +3184,11 @@
                             keteranganMap.set(doc.data().noInvoice, doc.data());
                         });
 
+                        const fakturPajakMap = new Map();
+                        fakturPajakSnapshot.forEach(doc => {
+                            fakturPajakMap.set(doc.data().noInvoice, doc.data());
+                        });
+
                         snapshot.forEach(doc => {
                             const invoice = doc.data();
                             const noInvoice = invoice.noInvoice;
@@ -2396,6 +3196,7 @@
 
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
+                            const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                             const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                             const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -2406,8 +3207,27 @@
                                 keterangan.statusAkhir,
                                 keterangan.isManualStatus || false
                             );
+
+                            // Check if invoice is problematic
+                            const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
                             
-                            currentAllInvoiceData.push({
+                            let finalStatus = statusDisplay;
+                            if (problemCheck.isProblematic) {
+                                finalStatus = 'Bermasalah';
+                                // Add to problematic invoices
+                                currentProblematicInvoices.push({
+                                    ...invoice,
+                                    problems: problemCheck.problems,
+                                    fakturPajak: fakturPajak,
+                                    pembayaran: pembayaran,
+                                    keterangan: keterangan,
+                                    Status: finalStatus
+                                });
+                            } else if (statusDisplay !== 'Dibayar') {
+                                finalStatus = 'Belum Dibayar';
+                            }
+                            
+                            const invoiceData = {
                                 No: rowNum++,
                                 Email_Hard: invoice.emailHard || '',
                                 Penerima: invoice.penerima || '',
@@ -2429,11 +3249,16 @@
                                 Lama_Pengajuan: keterangan.lamaPengajuan || '',
                                 Keterangan_Proses: keterangan.keteranganProses || '',
                                 Tanggal_Bayar: keterangan.tglBayar || '',
-                                Status: statusDisplay,
-                                Is_Manual_Status: keterangan.isManualStatus || false
-                            });
+                                Status: finalStatus,
+                                Is_Manual_Status: keterangan.isManualStatus || false,
+                                Problems: problemCheck.problems,
+                                Is_Problematic: problemCheck.isProblematic
+                            };
+
+                            currentAllInvoiceData.push(invoiceData);
                         });
                         allInvoiceData = currentAllInvoiceData;
+                        problematicInvoiceData = currentProblematicInvoices;
                         allInvoiceNumbers = currentInvoiceNumbers;
                         setupAllAutocompletes();
                         
@@ -2441,6 +3266,9 @@
                         applyFilters();
                         window.currentPage = currentPageBeforeRefresh;
                         renderInvoicesTable(filteredInvoiceData);
+                        
+                        // Update dashboard statistics
+                        updateDashboardStatistics();
                     });
                 } catch (error) {
                     console.error("Error saving invoice: ", error);
@@ -2474,6 +3302,15 @@
                     keterangan.statusAkhir,
                     keterangan.isManualStatus || false
                 );
+
+                // Check if problematic
+                const problemCheck = checkProblematicInvoice(data, fpData, pembayaranData);
+                let finalStatus = calculatedStatus;
+                if (problemCheck.isProblematic) {
+                    finalStatus = 'Bermasalah';
+                } else if (calculatedStatus !== 'Dibayar') {
+                    finalStatus = 'Belum Dibayar';
+                }
 
                 contentSections.forEach(section => section.style.display = 'none');
                 document.getElementById('invoice-detail-section').style.display = 'block';
@@ -2520,7 +3357,7 @@
                 document.getElementById('detail-lama-pengajuan').textContent = keterangan.lamaPengajuan || '-';
                 document.getElementById('detail-keterangan-proses').textContent = keterangan.keteranganProses || '-';
                 document.getElementById('detail-tgl-bayar').textContent = keterangan.tglBayar || '-';
-                document.getElementById('detail-status-akhir').textContent = calculatedStatus || '-';
+                document.getElementById('detail-status-akhir').textContent = finalStatus || '-';
                 document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = rawInvoiceNo;
 
                 document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = rawInvoiceNo;
@@ -2632,11 +3469,13 @@
                         let rowNum = 1;
                         const currentAllInvoiceData = [];
                         const currentInvoiceNumbers = [];
+                        const currentProblematicInvoices = [];
 
                         // Fetch all related data once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                        const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
                             pembayaranCol.get(),
-                            keteranganCol.get()
+                            keteranganCol.get(),
+                            fakturPajakCol.get()
                         ]);
 
                         const pembayaranMap = new Map();
@@ -2649,6 +3488,11 @@
                             keteranganMap.set(doc.data().noInvoice, doc.data());
                         });
 
+                        const fakturPajakMap = new Map();
+                        fakturPajakSnapshot.forEach(doc => {
+                            fakturPajakMap.set(doc.data().noInvoice, doc.data());
+                        });
+
                         snapshot.forEach(doc => {
                             const invoice = doc.data();
                             const noInvoice = invoice.noInvoice;
@@ -2656,6 +3500,7 @@
 
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
+                            const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                             const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                             const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -2666,8 +3511,27 @@
                                 keterangan.statusAkhir,
                                 keterangan.isManualStatus || false
                             );
+
+                            // Check if invoice is problematic
+                            const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
                             
-                            currentAllInvoiceData.push({
+                            let finalStatus = statusDisplay;
+                            if (problemCheck.isProblematic) {
+                                finalStatus = 'Bermasalah';
+                                // Add to problematic invoices
+                                currentProblematicInvoices.push({
+                                    ...invoice,
+                                    problems: problemCheck.problems,
+                                    fakturPajak: fakturPajak,
+                                    pembayaran: pembayaran,
+                                    keterangan: keterangan,
+                                    Status: finalStatus
+                                });
+                            } else if (statusDisplay !== 'Dibayar') {
+                                finalStatus = 'Belum Dibayar';
+                            }
+                            
+                            const invoiceData = {
                                 No: rowNum++,
                                 Email_Hard: invoice.emailHard || '',
                                 Penerima: invoice.penerima || '',
@@ -2689,11 +3553,16 @@
                                 Lama_Pengajuan: keterangan.lamaPengajuan || '',
                                 Keterangan_Proses: keterangan.keteranganProses || '',
                                 Tanggal_Bayar: keterangan.tglBayar || '',
-                                Status: statusDisplay,
-                                Is_Manual_Status: keterangan.isManualStatus || false
-                            });
+                                Status: finalStatus,
+                                Is_Manual_Status: keterangan.isManualStatus || false,
+                                Problems: problemCheck.problems,
+                                Is_Problematic: problemCheck.isProblematic
+                            };
+
+                            currentAllInvoiceData.push(invoiceData);
                         });
                         allInvoiceData = currentAllInvoiceData;
+                        problematicInvoiceData = currentProblematicInvoices;
                         allInvoiceNumbers = currentInvoiceNumbers;
                         setupAllAutocompletes();
                         
@@ -2701,6 +3570,9 @@
                         applyFilters();
                         window.currentPage = currentPageBeforeDelete;
                         renderInvoicesTable(filteredInvoiceData);
+                        
+                        // Update dashboard statistics
+                        updateDashboardStatistics();
                     });
                 } catch (error) {
                     console.error("Error deleting invoice: ", error);
@@ -3207,14 +4079,44 @@
             document.getElementById('dashboard-overdue-invoice').parentElement.addEventListener('click', function() {
                 openStatusSummaryModal('overdue');
             });
+            
+            document.getElementById('dashboard-unpaid-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('unpaid');
+            });
+            
+            document.getElementById('dashboard-problematic-invoice').parentElement.addEventListener('click', function() {
+                openStatusSummaryModal('problematic');
+            });
 
             // Status Summary Modal Close Button
             document.getElementById('status-summary-close-btn').addEventListener('click', function() {
                 closeStatusSummaryModal();
             });
 
+            // Status Note Popup Close Button
+            document.getElementById('status-note-close-btn').addEventListener('click', function() {
+                closeStatusNotePopup();
+            });
+
+            // Close status note popup when clicking outside
+            window.addEventListener('click', function(event) {
+                const popup = document.getElementById('status-note-popup');
+                if (event.target == popup) {
+                    closeStatusNotePopup();
+                }
+            });
+
             // Load vendor data
             loadVendorData();
+            
+            // Setup year filter
+            setupYearFilter();
+            
+            // Setup table sorting
+            setupInvoiceTableSorting();
+            
+            // Setup status icon handlers
+            setupStatusIconHandlers();
         });
     </script>
 
@@ -3319,6 +4221,67 @@
                                 <div class="summary-value" id="dashboard-overdue-invoice">0</div>
                                 <div class="summary-label">Jatuh Tempo</div>
                             </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="dashboard-unpaid-invoice">0</div>
+                                <div class="summary-label">Belum Dibayar</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="dashboard-problematic-invoice">0</div>
+                                <div class="summary-label">Bermasalah</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="statistics-container">
+                    <div class="statistics-card">
+                        <h3 class="statistics-title">Distribusi Status Invoice</h3>
+                        <div class="chart-container" id="status-chart-container">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div class="statistics-card">
+                        <h3 class="statistics-title">Top 5 Vendor</h3>
+                        <div class="chart-container" id="vendor-chart-container">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div class="statistics-card" style="grid-column: span 2;">
+                        <h3 class="statistics-title">Invoice per Bulan (6 Bulan Terakhir)</h3>
+                        <div class="chart-container" id="monthly-chart-container">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div class="statistics-card">
+                        <h3 class="statistics-title">Statistik Invoice Bermasalah</h3>
+                        <div class="chart-container" id="problem-chart-container">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <div class="statistics-card">
+                        <h3 class="statistics-title">Ringkasan Performa</h3>
+                        <div class="statistics-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-average-payment-days">0</div>
+                                <div class="stat-label">Rata-rata Hari Bayar</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-on-time-payment">0%</div>
+                                <div class="stat-label">Pembayaran Tepat Waktu</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-total-amount">Rp 0</div>
+                                <div class="stat-label">Total Nilai Invoice</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-avg-invoice-amount">Rp 0</div>
+                                <div class="stat-label">Rata-rata Nilai Invoice</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3335,6 +4298,16 @@
                         <button class="btn btn-primary" id="add-invoice-btn">
                             <i class="fas fa-plus btn-icon"></i> Tambah Invoice
                         </button>
+                    </div>
+                </div>
+
+                <!-- Year Filter -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-body">
+                        <h3 style="margin-bottom: 1rem;">Filter Tahun</h3>
+                        <div class="year-filter-container">
+                            <!-- Year buttons will be added here by JavaScript -->
+                        </div>
                     </div>
                 </div>
 
@@ -3365,6 +4338,8 @@
                                     <option value="Jatuh Tempo">Jatuh Tempo</option>
                                     <option value="Dibatalkan">Dibatalkan</option>
                                     <option value="Belum Diproses">Belum Diproses</option>
+                                    <option value="Belum Dibayar">Belum Dibayar</option>
+                                    <option value="Bermasalah">Bermasalah</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -3788,6 +4763,8 @@
                         <option value="Dibayar">Dibayar</option>
                         <option value="Jatuh Tempo">Jatuh Tempo</option>
                         <option value="Dibatalkan">Dibatalkan</option>
+                        <option value="Belum Dibayar">Belum Dibayar</option>
+                        <option value="Bermasalah">Bermasalah</option>
                     </select>
                 </div>
                 <div class="form-actions">
@@ -3819,6 +4796,8 @@
                         <option value="Jatuh Tempo">Jatuh Tempo</option>
                         <option value="Dibatalkan">Dibatalkan</option>
                         <option value="Belum Diproses">Belum Diproses</option>
+                        <option value="Belum Dibayar">Belum Dibayar</option>
+                        <option value="Bermasalah">Bermasalah</option>
                     </select>
                 </div>
                 <div class="form-actions">
@@ -3853,6 +4832,17 @@
                         <!-- Data will be loaded here by JavaScript -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW Modal for Status Note Popup -->
+    <div id="status-note-popup" class="status-note-popup">
+        <div class="status-note-content">
+            <button class="status-note-close-btn" id="status-note-close-btn">&times;</button>
+            <h2 class="status-note-title" id="status-note-title">Detail Durasi Pembayaran</h2>
+            <div id="status-note-details">
+                <!-- Details will be loaded here by JavaScript -->
             </div>
         </div>
     </div>
