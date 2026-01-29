@@ -1533,6 +1533,15 @@
             font-size: 0.85rem;
             color: var(--text-dark-secondary);
         }
+        
+        /* Z-index untuk memastikan modal status muncul di atas */
+        #status-modal {
+            z-index: 1100;
+        }
+        
+        .status-modal-content {
+            z-index: 1101;
+        }
     </style>
 </head>
 <body>
@@ -2479,17 +2488,17 @@
             const pendingInvoiceEl = document.getElementById('dashboard-pending-invoice');
             const submissionPendingInvoiceEl = document.getElementById('dashboard-submission-pending-invoice');
             const overdueInvoiceEl = document.getElementById('dashboard-overdue-invoice');
-            const unpaidInvoiceEl = document.getElementById('dashboard-unpaid-invoice');
+            const unprocessedInvoiceEl = document.getElementById('dashboard-unprocessed-invoice'); // DIUBAH
             const problematicInvoiceEl = document.getElementById('dashboard-problematic-invoice');
 
-            if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl || !unpaidInvoiceEl || !problematicInvoiceEl) return;
+            if (!totalInvoiceEl || !paidInvoiceEl || !pendingInvoiceEl || !overdueInvoiceEl || !submissionPendingInvoiceEl || !unprocessedInvoiceEl || !problematicInvoiceEl) return;
 
             totalInvoiceEl.textContent = '...';
             paidInvoiceEl.textContent = '...';
             pendingInvoiceEl.textContent = '...';
             submissionPendingInvoiceEl.textContent = '...';
             overdueInvoiceEl.textContent = '...';
-            unpaidInvoiceEl.textContent = '...';
+            unprocessedInvoiceEl.textContent = '...'; // DIUBAH
             problematicInvoiceEl.textContent = '...';
 
             try {
@@ -2504,7 +2513,7 @@
                     let pending = 0;
                     let submissionPending = 0;
                     let overdue = 0;
-                    let unpaid = 0;
+                    let unprocessed = 0; // DIUBAH
                     let problematic = 0;
 
                     if (!snapshot.empty) {
@@ -2553,7 +2562,7 @@
                                 problematic++;
                             }
                             
-                            // Hitung invoice yang belum dibayar (selain status Dibayar)
+                            // Hitung invoice berdasarkan status
                             if (status === 'Dibayar') {
                                 paid++;
                             } else if (status === 'Menunggu Pembayaran') {
@@ -2562,8 +2571,8 @@
                                 submissionPending++;
                             } else if (status === 'Jatuh Tempo') {
                                 overdue++;
-                            } else {
-                                unpaid++;
+                            } else if (status === 'Belum Diproses') { // DIUBAH
+                                unprocessed++;
                             }
                         });
                     }
@@ -2573,7 +2582,7 @@
                     pendingInvoiceEl.textContent = pending;
                     submissionPendingInvoiceEl.textContent = submissionPending;
                     overdueInvoiceEl.textContent = overdue;
-                    unpaidInvoiceEl.textContent = unpaid;
+                    unprocessedInvoiceEl.textContent = unprocessed; // DIUBAH
                     problematicInvoiceEl.textContent = problematic;
                 }, (error) => {
                     console.error("Error loading dashboard data: ", error);
@@ -2583,7 +2592,7 @@
                     pendingInvoiceEl.textContent = 'Error';
                     submissionPendingInvoiceEl.textContent = 'Error';
                     overdueInvoiceEl.textContent = 'Error';
-                    unpaidInvoiceEl.textContent = 'Error';
+                    unprocessedInvoiceEl.textContent = 'Error'; // DIUBAH
                     problematicInvoiceEl.textContent = 'Error';
                 });
 
@@ -2595,7 +2604,7 @@
                 pendingInvoiceEl.textContent = 'Error';
                 submissionPendingInvoiceEl.textContent = 'Error';
                 overdueInvoiceEl.textContent = 'Error';
-                unpaidInvoiceEl.textContent = 'Error';
+                unprocessedInvoiceEl.textContent = 'Error'; // DIUBAH
                 problematicInvoiceEl.textContent = 'Error';
             }
         }
@@ -3203,10 +3212,9 @@
                     statusText = 'Invoice Jatuh Tempo';
                     dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Jatuh Tempo');
                     break;
-                case 'unpaid':
-                    statusText = 'Invoice Belum Dibayar';
-                    // Kumpulkan semua invoice yang belum dibayar
-                    dataToShow = allInvoiceData.filter(invoice => invoice.Status !== 'Dibayar');
+                case 'unprocessed': // DIUBAH
+                    statusText = 'Invoice Belum Diproses';
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Belum Diproses');
                     break;
                 case 'problematic':
                     statusText = 'Invoice Bermasalah';
@@ -3511,6 +3519,7 @@
                     
                     // Handle status button click (untuk modal status)
                     if (e.target.classList.contains('status-button')) {
+                        e.stopPropagation(); // Mencegah event bubbling
                         const invoiceNo = e.target.dataset.invoiceNo;
                         const currentStatus = e.target.dataset.currentStatus;
                         openStatusModal(invoiceNo, currentStatus);
@@ -4474,8 +4483,8 @@
                 openStatusSummaryModal('overdue');
             });
             
-            document.getElementById('dashboard-unpaid-invoice').parentElement.addEventListener('click', function() {
-                openStatusSummaryModal('unpaid');
+            document.getElementById('dashboard-unprocessed-invoice').parentElement.addEventListener('click', function() { // DIUBAH
+                openStatusSummaryModal('unprocessed'); // DIUBAH
             });
             
             document.getElementById('dashboard-problematic-invoice').parentElement.addEventListener('click', function() {
@@ -4631,8 +4640,8 @@
                                 <div class="summary-label">Jatuh Tempo</div>
                             </div>
                             <div class="summary-item">
-                                <div class="summary-value" id="dashboard-unpaid-invoice">0</div>
-                                <div class="summary-label">Belum Dibayar</div>
+                                <div class="summary-value" id="dashboard-unprocessed-invoice">0</div> <!-- DIUBAH -->
+                                <div class="summary-label">Belum Diproses</div> <!-- DIUBAH -->
                             </div>
                             <div class="summary-item">
                                 <div class="summary-value" id="dashboard-problematic-invoice">0</div>
