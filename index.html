@@ -2364,10 +2364,10 @@
                 }
 
                 // Date filter (Tanggal Diterima)
-                if (startDate && invoice.Tanggal_Diterima < startDate) {
+                if (startDate && invoice.Tanggal_Invoice < startDate) {
                     matches = false;
                 }
-                if (endDate && invoice.Tanggal_Diterima > endDate) {
+                if (endDate && invoice.Tanggal_Invoice > endDate) {
                     matches = false;
                 }
 
@@ -3652,6 +3652,7 @@
                                 Penerima: invoice.penerima || '',
                                 Corp: invoice.corp || '',
                                 Tanggal_Diterima: invoice.tglDiterima || '',
+                                Tanggal_Invoice: invoice.tglInvoice || '',
                                 No_Invoice: noInvoice,
                                 Nama_Vendor: invoice.namaVendor || '',
                                 DPP_IDR: dppDisplay,
