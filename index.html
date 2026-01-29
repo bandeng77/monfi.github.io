@@ -1249,10 +1249,12 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            margin-right: 6px;
+            margin-left: 6px;
             cursor: help;
             position: relative;
             vertical-align: middle;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
         }
 
         .status-icon.green {
@@ -1859,8 +1861,6 @@
                 else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                 else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                 else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
-                else if (invoice.Status === 'Belum Dibayar') statusClass = 'status-belum-dibayar';
-                else if (invoice.Status === 'Bermasalah') statusClass = 'status-bermasalah';
 
                 // Format DPP dan PPN
                 let dppDisplay = 'N/A';
@@ -1881,7 +1881,7 @@
                     currencyText = 'USD';
                 }
 
-                // Payment duration icon
+                // Payment duration icon - DIPISAH dari status button
                 let paymentDurationIcon = '';
                 if (invoice.Status === 'Dibayar' && invoice.Tanggal_Diterima && invoice.Tanggal_Bayar) {
                     const durationStatus = calculatePaymentDurationStatus(invoice.Tanggal_Diterima, invoice.Tanggal_Bayar);
@@ -1913,10 +1913,12 @@
                             ${currencyText ? `<span class="currency-indicator ${currencyClass}">${currencyText}</span>` : ''}
                         </td>
                         <td>
-                            <button class="status-button ${statusClass}" data-invoice-no="${invoice.No_Invoice}" data-current-status="${invoice.Status}">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button class="status-button ${statusClass}" data-invoice-no="${invoice.No_Invoice}" data-current-status="${invoice.Status}">
+                                    ${invoice.Status}
+                                </button>
                                 ${paymentDurationIcon}
-                                ${invoice.Status}
-                            </button>
+                            </div>
                         </td>
                         <td class="action-cell">
                             <button class="action-btn edit-invoice-btn" data-invoice-no="${invoice.No_Invoice}" title="Edit Invoice"><i class="fas fa-edit"></i></button>
@@ -2044,6 +2046,7 @@
                         allInvoiceNumbers = [];
                         allInvoiceData = [];
                         filteredInvoiceData = [];
+                        problematicInvoiceData = [];
                         renderPagination(0, 0);
                         return;
                     }
@@ -2094,23 +2097,21 @@
                             keterangan.isManualStatus || false
                         );
 
-                        // Check if invoice is problematic
+                        // Check if invoice is problematic (HANYA UNTUK DASHBOARD)
                         const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
                         
-                        let finalStatus = statusDisplay;
+                        // Simpan data problematic untuk dashboard
                         if (problemCheck.isProblematic) {
-                            finalStatus = 'Bermasalah';
-                            // Add to problematic invoices
                             currentProblematicInvoices.push({
                                 ...invoice,
                                 problems: problemCheck.problems,
                                 fakturPajak: fakturPajak,
                                 pembayaran: pembayaran,
                                 keterangan: keterangan,
-                                Status: finalStatus
+                                Status: statusDisplay,
+                                No_Invoice: noInvoice,
+                                DPP_IDR: dppDisplay
                             });
-                        } else if (statusDisplay !== 'Dibayar') {
-                            finalStatus = 'Belum Dibayar';
                         }
                         
                         const invoiceData = {
@@ -2135,10 +2136,10 @@
                             Lama_Pengajuan: keterangan.lamaPengajuan || '',
                             Keterangan_Proses: keterangan.keteranganProses || '',
                             Tanggal_Bayar: keterangan.tglBayar || '',
-                            Status: finalStatus,
+                            Status: statusDisplay,
                             Is_Manual_Status: keterangan.isManualStatus || false,
-                            Problems: problemCheck.problems,
-                            Is_Problematic: problemCheck.isProblematic
+                            Is_Problematic: problemCheck.isProblematic,
+                            Problems: problemCheck.problems
                         };
 
                         currentAllInvoiceData.push(invoiceData);
@@ -2374,12 +2375,15 @@
                                 keterangan.isManualStatus || false
                             );
 
-                            // Check if problematic
+                            // Check if problematic (HANYA UNTUK DASHBOARD)
                             const problemCheck = checkProblematicInvoice(invoiceData, fakturPajak, pembayaran);
                             
                             if (problemCheck.isProblematic) {
                                 problematic++;
-                            } else if (status === 'Dibayar') {
+                            }
+                            
+                            // Hitung invoice yang belum dibayar (selain status Dibayar)
+                            if (status === 'Dibayar') {
                                 paid++;
                             } else if (status === 'Menunggu Pembayaran') {
                                 pending++;
@@ -2387,7 +2391,7 @@
                                 submissionPending++;
                             } else if (status === 'Jatuh Tempo') {
                                 overdue++;
-                            } else if (status !== 'Dibayar') {
+                            } else {
                                 unpaid++;
                             }
                         });
@@ -2441,9 +2445,10 @@
                 'Menunggu Pembayaran': 0,
                 'Menunggu Pengajuan': 0,
                 'Jatuh Tempo': 0,
-                'Belum Dibayar': 0,
-                'Bermasalah': 0,
-                'Dibatalkan': 0
+                'Dibatalkan': 0,
+                'Belum Diproses': 0,
+                'Diajukan ke Finance': 0,
+                'Diterima Anggi': 0
             };
 
             allInvoiceData.forEach(invoice => {
@@ -2461,9 +2466,10 @@
                     case 'Menunggu Pembayaran': return '#f59e0b';
                     case 'Menunggu Pengajuan': return '#64748b';
                     case 'Jatuh Tempo': return '#ef4444';
-                    case 'Belum Dibayar': return '#8b5cf6';
-                    case 'Bermasalah': return '#dc2626';
                     case 'Dibatalkan': return '#6b7280';
+                    case 'Belum Diproses': return '#94a3b8';
+                    case 'Diajukan ke Finance': return '#3b82f6';
+                    case 'Diterima Anggi': return '#8b5cf6';
                     default: return '#79BAEC';
                 }
             });
@@ -2806,7 +2812,8 @@
                     break;
                 case 'unpaid':
                     statusText = 'Invoice Belum Dibayar';
-                    dataToShow = allInvoiceData.filter(invoice => invoice.Status === 'Belum Dibayar');
+                    // Kumpulkan semua invoice yang belum dibayar
+                    dataToShow = allInvoiceData.filter(invoice => invoice.Status !== 'Dibayar');
                     break;
                 case 'problematic':
                     statusText = 'Invoice Bermasalah';
@@ -2833,13 +2840,11 @@
                     else if (['Diterima Anggi'].includes(invoice.Status)) statusClass = 'status-diterima-anggi';
                     else if (['Dibatalkan'].includes(invoice.Status)) statusClass = 'status-dibatalkan';
                     else if (['Menunggu Pengajuan', 'Belum Diproses'].includes(invoice.Status)) statusClass = 'status-menunggu-pengajuan';
-                    else if (invoice.Status === 'Belum Dibayar') statusClass = 'status-belum-dibayar';
-                    else if (invoice.Status === 'Bermasalah') statusClass = 'status-bermasalah';
 
                     // Add problems column for problematic invoices
-                    const problemsHtml = invoice.Problems ? 
+                    const problemsHtml = invoice.problems ? 
                         `<ul style="margin: 0; padding-left: 1rem; font-size: 0.85rem; color: var(--danger);">
-                            ${invoice.Problems.map(problem => `<li>${problem}</li>`).join('')}
+                            ${invoice.problems.map(problem => `<li>${problem}</li>`).join('')}
                         </ul>` : '-';
 
                     const row = document.createElement('tr');
@@ -3103,6 +3108,14 @@
                         const tglBayar = e.target.dataset.tglBayar;
                         
                         openStatusNotePopup(invoiceNo, durationDays, durationLabel, tglDiterima, tglBayar);
+                        return; // Hentikan event agar tidak menjalar ke status button
+                    }
+                    
+                    // Handle status button click (untuk modal status)
+                    if (e.target.classList.contains('status-button')) {
+                        const invoiceNo = e.target.dataset.invoiceNo;
+                        const currentStatus = e.target.dataset.currentStatus;
+                        openStatusModal(invoiceNo, currentStatus);
                     }
                 });
             }
@@ -3158,6 +3171,7 @@
                         if (snapshot.empty) {
                             allInvoiceData = [];
                             filteredInvoiceData = [];
+                            problematicInvoiceData = [];
                             renderInvoicesTable(filteredInvoiceData);
                             return;
                         }
@@ -3208,23 +3222,21 @@
                                 keterangan.isManualStatus || false
                             );
 
-                            // Check if invoice is problematic
+                            // Check if invoice is problematic (HANYA UNTUK DASHBOARD)
                             const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
                             
-                            let finalStatus = statusDisplay;
+                            // Simpan data problematic untuk dashboard
                             if (problemCheck.isProblematic) {
-                                finalStatus = 'Bermasalah';
-                                // Add to problematic invoices
                                 currentProblematicInvoices.push({
                                     ...invoice,
                                     problems: problemCheck.problems,
                                     fakturPajak: fakturPajak,
                                     pembayaran: pembayaran,
                                     keterangan: keterangan,
-                                    Status: finalStatus
+                                    Status: statusDisplay,
+                                    No_Invoice: noInvoice,
+                                    DPP_IDR: dppDisplay
                                 });
-                            } else if (statusDisplay !== 'Dibayar') {
-                                finalStatus = 'Belum Dibayar';
                             }
                             
                             const invoiceData = {
@@ -3249,10 +3261,10 @@
                                 Lama_Pengajuan: keterangan.lamaPengajuan || '',
                                 Keterangan_Proses: keterangan.keteranganProses || '',
                                 Tanggal_Bayar: keterangan.tglBayar || '',
-                                Status: finalStatus,
+                                Status: statusDisplay,
                                 Is_Manual_Status: keterangan.isManualStatus || false,
-                                Problems: problemCheck.problems,
-                                Is_Problematic: problemCheck.isProblematic
+                                Is_Problematic: problemCheck.isProblematic,
+                                Problems: problemCheck.problems
                             };
 
                             currentAllInvoiceData.push(invoiceData);
@@ -3303,15 +3315,6 @@
                     keterangan.isManualStatus || false
                 );
 
-                // Check if problematic
-                const problemCheck = checkProblematicInvoice(data, fpData, pembayaranData);
-                let finalStatus = calculatedStatus;
-                if (problemCheck.isProblematic) {
-                    finalStatus = 'Bermasalah';
-                } else if (calculatedStatus !== 'Dibayar') {
-                    finalStatus = 'Belum Dibayar';
-                }
-
                 contentSections.forEach(section => section.style.display = 'none');
                 document.getElementById('invoice-detail-section').style.display = 'block';
                 document.getElementById('detail-invoice-no').textContent = rawInvoiceNo;
@@ -3357,7 +3360,7 @@
                 document.getElementById('detail-lama-pengajuan').textContent = keterangan.lamaPengajuan || '-';
                 document.getElementById('detail-keterangan-proses').textContent = keterangan.keteranganProses || '-';
                 document.getElementById('detail-tgl-bayar').textContent = keterangan.tglBayar || '-';
-                document.getElementById('detail-status-akhir').textContent = finalStatus || '-';
+                document.getElementById('detail-status-akhir').textContent = calculatedStatus || '-';
                 document.getElementById('add-edit-keterangan-btn').dataset.invoiceNo = rawInvoiceNo;
 
                 document.getElementById('edit-full-invoice-btn').dataset.invoiceNo = rawInvoiceNo;
@@ -3385,14 +3388,6 @@
                         e.preventDefault();
                         const invoiceNo = deleteBtn.dataset.invoiceNo;
                         deleteInvoice(invoiceNo);
-                    }
-
-                    const statusButton = e.target.closest('.status-button');
-                    if (statusButton) {
-                        e.preventDefault();
-                        const invoiceNo = statusButton.dataset.invoiceNo;
-                        const currentStatus = statusButton.dataset.currentStatus;
-                        openStatusModal(invoiceNo, currentStatus);
                     }
                 });
             }
@@ -3462,6 +3457,7 @@
                         if (snapshot.empty) {
                             allInvoiceData = [];
                             filteredInvoiceData = [];
+                            problematicInvoiceData = [];
                             renderInvoicesTable(filteredInvoiceData);
                             return;
                         }
@@ -3512,23 +3508,21 @@
                                 keterangan.isManualStatus || false
                             );
 
-                            // Check if invoice is problematic
+                            // Check if invoice is problematic (HANYA UNTUK DASHBOARD)
                             const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
                             
-                            let finalStatus = statusDisplay;
+                            // Simpan data problematic untuk dashboard
                             if (problemCheck.isProblematic) {
-                                finalStatus = 'Bermasalah';
-                                // Add to problematic invoices
                                 currentProblematicInvoices.push({
                                     ...invoice,
                                     problems: problemCheck.problems,
                                     fakturPajak: fakturPajak,
                                     pembayaran: pembayaran,
                                     keterangan: keterangan,
-                                    Status: finalStatus
+                                    Status: statusDisplay,
+                                    No_Invoice: noInvoice,
+                                    DPP_IDR: dppDisplay
                                 });
-                            } else if (statusDisplay !== 'Dibayar') {
-                                finalStatus = 'Belum Dibayar';
                             }
                             
                             const invoiceData = {
@@ -3553,10 +3547,10 @@
                                 Lama_Pengajuan: keterangan.lamaPengajuan || '',
                                 Keterangan_Proses: keterangan.keteranganProses || '',
                                 Tanggal_Bayar: keterangan.tglBayar || '',
-                                Status: finalStatus,
+                                Status: statusDisplay,
                                 Is_Manual_Status: keterangan.isManualStatus || false,
-                                Problems: problemCheck.problems,
-                                Is_Problematic: problemCheck.isProblematic
+                                Is_Problematic: problemCheck.isProblematic,
+                                Problems: problemCheck.problems
                             };
 
                             currentAllInvoiceData.push(invoiceData);
@@ -4338,8 +4332,6 @@
                                     <option value="Jatuh Tempo">Jatuh Tempo</option>
                                     <option value="Dibatalkan">Dibatalkan</option>
                                     <option value="Belum Diproses">Belum Diproses</option>
-                                    <option value="Belum Dibayar">Belum Dibayar</option>
-                                    <option value="Bermasalah">Bermasalah</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -4763,8 +4755,6 @@
                         <option value="Dibayar">Dibayar</option>
                         <option value="Jatuh Tempo">Jatuh Tempo</option>
                         <option value="Dibatalkan">Dibatalkan</option>
-                        <option value="Belum Dibayar">Belum Dibayar</option>
-                        <option value="Bermasalah">Bermasalah</option>
                     </select>
                 </div>
                 <div class="form-actions">
@@ -4796,8 +4786,6 @@
                         <option value="Jatuh Tempo">Jatuh Tempo</option>
                         <option value="Dibatalkan">Dibatalkan</option>
                         <option value="Belum Diproses">Belum Diproses</option>
-                        <option value="Belum Dibayar">Belum Dibayar</option>
-                        <option value="Bermasalah">Bermasalah</option>
                     </select>
                 </div>
                 <div class="form-actions">
