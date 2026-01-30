@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Semua style CSS dari file sebelumnya tetap sama */
         :root {
             --primary: #79BAEC;
             --primary-dark: #1d4ed8;
@@ -386,6 +387,45 @@
         .sidebar.collapsed .sidebar-toggle {
             right: -12px;
             transform: rotate(180deg);
+        }
+
+        /* User Info in Sidebar */
+        .user-info {
+            margin-top: auto;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .user-email {
+            font-size: 0.9rem;
+            color: var(--text-dark-secondary);
+            word-break: break-all;
+        }
+
+        .user-role {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .user-role.manager {
+            background-color: var(--primary);
+            color: var(--text-dark);
+        }
+
+        .user-role.user {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .sidebar.collapsed .user-info {
+            display: none;
         }
 
         /* Main Content Styles */
@@ -991,6 +1031,10 @@
             .sidebar-toggle {
                 display: none;
             }
+
+            .user-info {
+                margin-top: 1rem;
+            }
         }
 
         @media (max-width: 768px) {
@@ -1542,6 +1586,25 @@
         .status-modal-content {
             z-index: 1101;
         }
+        
+        /* Access Control Styles */
+        .access-denied-message {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-dark-secondary);
+        }
+        
+        .access-denied-message i {
+            font-size: 3rem;
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+        
+        .access-denied-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
     </style>
 </head>
 <body>
@@ -1572,6 +1635,14 @@
         const fakturPajakCol = db.collection('fakturPajak');
         const pembayaranCol = db.collection('pembayaran');
         const keteranganCol = db.collection('keterangan');
+        const usersCol = db.collection('users'); // Collection untuk menyimpan role user
+
+        // Global user object
+        let currentUser = {
+            email: null,
+            role: null,
+            displayName: null
+        };
 
         // --- Custom Alert Function ---
         function showAlert(message, type = 'info', duration = 3000) {
@@ -1619,6 +1690,124 @@
         // Sorting variables
         let currentSortColumn = '';
         let currentSortDirection = 'asc';
+
+        // --- USER MANAGEMENT FUNCTIONS ---
+        // Define user roles and their email patterns
+        const USER_ROLES = {
+            MANAGER: 'manager',
+            USER: 'user'
+        };
+
+        // Predefined users with roles
+        const PREDEFINED_USERS = {
+            'anggita-s@genetek.co.id': {
+                email: 'anggita-s@genetek.co.id',
+                role: USER_ROLES.MANAGER,
+                displayName: 'Anggita S',
+                password: 'manager123' // Default password for demo
+            },
+            'anisah@genetek.co.id': {
+                email: 'anisah@genetek.co.id',
+                role: USER_ROLES.USER,
+                displayName: 'Anisah',
+                password: 'user123' // Default password for demo
+            }
+        };
+
+        // Function to get user role from email
+        function getUserRoleFromEmail(email) {
+            // Check if email exists in predefined users
+            if (PREDEFINED_USERS[email]) {
+                return PREDEFINED_USERS[email].role;
+            }
+            
+            // Default to user role for any other email
+            return USER_ROLES.USER;
+        }
+
+        // Function to get user display name
+        function getUserDisplayName(email) {
+            if (PREDEFINED_USERS[email]) {
+                return PREDEFINED_USERS[email].displayName;
+            }
+            return email.split('@')[0]; // Use email username as fallback
+        }
+
+        // Function to update UI based on user role
+        function updateUIForUserRole() {
+            const userRole = currentUser.role;
+            const userEmail = currentUser.email;
+            
+            // Update user info in sidebar
+            const userInfoDiv = document.querySelector('.user-info');
+            if (userInfoDiv) {
+                userInfoDiv.innerHTML = `
+                    <div class="user-email">${userEmail}</div>
+                    <div class="user-role ${userRole}">${userRole}</div>
+                `;
+            }
+            
+            // Hide/show menu items based on role
+            const statistikMenuItem = document.querySelector('.nav-item[data-target="statistik-section"]');
+            if (statistikMenuItem) {
+                if (userRole === USER_ROLES.USER) {
+                    statistikMenuItem.style.display = 'none';
+                } else {
+                    statistikMenuItem.style.display = 'flex';
+                }
+            }
+            
+            // Update page title if needed
+            const pageTitle = document.querySelector('.page-title');
+            if (pageTitle && userRole === USER_ROLES.MANAGER) {
+                pageTitle.textContent += ' (Manager)';
+            }
+        }
+
+        // Function to check if user has access to a section
+        function hasAccessToSection(sectionId) {
+            const userRole = currentUser.role;
+            
+            // User cannot access statistik section
+            if (sectionId === 'statistik-section' && userRole === USER_ROLES.USER) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Function to show access denied message
+        function showAccessDeniedMessage(sectionId) {
+            const contentSections = document.querySelectorAll('.content-section');
+            contentSections.forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            const mainContent = document.querySelector('.main-content');
+            let accessDeniedDiv = document.getElementById('access-denied-message');
+            
+            if (!accessDeniedDiv) {
+                accessDeniedDiv = document.createElement('div');
+                accessDeniedDiv.id = 'access-denied-message';
+                accessDeniedDiv.className = 'access-denied-message';
+                accessDeniedDiv.innerHTML = `
+                    <i class="fas fa-ban"></i>
+                    <h3>Akses Ditolak</h3>
+                    <p>Anda tidak memiliki izin untuk mengakses halaman ini.</p>
+                    <p>Hanya user dengan role <strong>Manager</strong> yang dapat mengakses halaman Statistik.</p>
+                    <button class="btn btn-primary" style="margin-top: 1rem;" onclick="showSection('dashboard-section')">
+                        <i class="fas fa-arrow-left btn-icon"></i> Kembali ke Dashboard
+                    </button>
+                `;
+                mainContent.appendChild(accessDeniedDiv);
+            }
+            
+            accessDeniedDiv.style.display = 'block';
+            
+            // Update nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+        }
 
         // --- VENDOR MANAGEMENT FUNCTIONS ---
         // Load vendor data from localStorage or default sample
@@ -3116,7 +3305,7 @@
             }
         }
 
-        // --- Improved Login Functionality ---
+        // --- Improved Login Functionality with User Role Management ---
         function initLogin() {
             const loginForm = document.getElementById('login-form');
             const loginBtn = document.getElementById('login-btn');
@@ -3132,15 +3321,36 @@
             // Check if user is already logged in
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // User is signed in, hide login and show main content
+                    // User is signed in, set user data
+                    const email = user.email;
+                    const role = getUserRoleFromEmail(email);
+                    const displayName = getUserDisplayName(email);
+                    
+                    currentUser = {
+                        email: email,
+                        role: role,
+                        displayName: displayName
+                    };
+                    
+                    // Update UI for user role
+                    updateUIForUserRole();
+                    
+                    // Hide login and show main content
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('main-container').style.display = 'flex';
+                    
                     // Load semua data yang diperlukan saat login berhasil
                     loadDashboardData();
                     loadVendorData();
                     loadInvoicesToTable();
+                    
                     // Tampilkan dashboard secara otomatis
                     showSection('dashboard-section');
+                    
+                    // Show welcome message based on role
+                    const roleMessage = role === USER_ROLES.MANAGER ? 
+                        'Manager' : 'User';
+                    showAlert(`Login berhasil! Selamat datang, ${displayName} (${roleMessage})`, 'success');
                 } else {
                     // User is signed out, show login
                     document.getElementById('auth-container').style.display = 'flex';
@@ -3149,7 +3359,7 @@
             });
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('login-btn');
@@ -3159,23 +3369,43 @@
             loginBtn.classList.add('loading');
             loginError.style.display = 'none';
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
+            try {
+                // Check if this is a predefined user
+                if (PREDEFINED_USERS[email]) {
+                    // Use the predefined password
+                    const userCredential = await auth.signInWithEmailAndPassword(
+                        email, 
+                        PREDEFINED_USERS[email].password
+                    );
+                    
                     // Login successful
                     loginBtn.classList.remove('loading');
-                    showAlert('Login berhasil!', 'success');
-                })
-                .catch((error) => {
-                    // Login failed
+                    
+                } else {
+                    // For other users, try to sign in with provided credentials
+                    // If they don't exist, they'll get an error
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    
+                    // Login successful
                     loginBtn.classList.remove('loading');
-                    loginError.textContent = error.message;
-                    loginError.style.display = 'block';
-                    console.error("Login error:", error);
-                });
+                }
+            } catch (error) {
+                // Login failed
+                loginBtn.classList.remove('loading');
+                loginError.textContent = error.message;
+                loginError.style.display = 'block';
+                console.error("Login error:", error);
+            }
         }
 
         function logout() {
             auth.signOut().then(() => {
+                // Reset current user
+                currentUser = {
+                    email: null,
+                    role: null,
+                    displayName: null
+                };
                 showAlert('Logout berhasil!', 'success');
             }).catch((error) => {
                 console.error("Logout error:", error);
@@ -3329,6 +3559,49 @@
             document.getElementById('status-note-popup').style.display = 'none';
         }
 
+        // --- MODIFIED showSection function to check access ---
+        function showSection(targetId) {
+            // Check if user has access to this section
+            if (!hasAccessToSection(targetId)) {
+                showAccessDeniedMessage(targetId);
+                return;
+            }
+            
+            const contentSections = document.querySelectorAll('.content-section');
+            contentSections.forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Hide access denied message if it exists
+            const accessDeniedDiv = document.getElementById('access-denied-message');
+            if (accessDeniedDiv) {
+                accessDeniedDiv.style.display = 'none';
+            }
+            
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+            
+            // Update statistics when showing dashboard
+            if (targetId === 'dashboard-section') {
+                updateDashboardStatistics();
+            }
+            
+            // Update complete statistics when showing statistik section
+            if (targetId === 'statistik-section') {
+                updateCompleteStatistics();
+            }
+        }
+        window.showSection = showSection;
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             initLogin();
@@ -3356,33 +3629,6 @@
             }
 
             // --- Fungsi Navigasi Sidebar ---
-            function showSection(targetId) {
-                contentSections.forEach(section => {
-                    section.style.display = 'none';
-                });
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                }
-
-                navItems.forEach(item => item.classList.remove('active'));
-                const activeNavItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
-                if (activeNavItem) {
-                    activeNavItem.classList.add('active');
-                }
-                
-                // Update statistics when showing dashboard
-                if (targetId === 'dashboard-section') {
-                    updateDashboardStatistics();
-                }
-                
-                // Update complete statistics when showing statistik section
-                if (targetId === 'statistik-section') {
-                    updateCompleteStatistics();
-                }
-            }
-            window.showSection = showSection;
-
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -4559,6 +4805,11 @@
             </form>
             <div class="auth-footer">
                 <p>Secure Finance Monitoring System</p>
+                <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dark-secondary);">
+                    <strong>Demo Accounts:</strong><br>
+                    Manager: anggita-s@genetek.co.id / manager123<br>
+                    User: anisah@genetek.co.id / user123
+                </p>
             </div>
         </div>
     </div>
@@ -4609,6 +4860,11 @@
                     <div class="nav-text">Logout</div>
                 </a>
             </nav>
+            
+            <!-- User Info Section -->
+            <div class="user-info">
+                <!-- User info will be populated by JavaScript -->
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -5268,7 +5524,7 @@
                 </div>
                 <div class="form-group">
                     <label for="keterangan-tgl-bayar">Tanggal Bayar</label>
-                    <input type="date" id="keterangan-tgl-bayar' class="filter-input">
+                    <input type="date" id="keterangan-tgl-bayar" class="filter-input">
                 </div>
                 <div class="form-group">
                     <label for="keterangan-status-akhir">Status Akhir</label>
