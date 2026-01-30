@@ -1544,7 +1544,7 @@
         }
     </style>
 </head>
-<body>
+<body data-user-role="">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -1572,6 +1572,7 @@
         const fakturPajakCol = db.collection('fakturPajak');
         const pembayaranCol = db.collection('pembayaran');
         const keteranganCol = db.collection('keterangan');
+        const usersCol = db.collection('users');
 
         // --- Custom Alert Function ---
         function showAlert(message, type = 'info', duration = 3000) {
@@ -1619,6 +1620,9 @@
         // Sorting variables
         let currentSortColumn = '';
         let currentSortDirection = 'asc';
+
+        // Current user role
+        let currentUserRole = '';
 
         // --- VENDOR MANAGEMENT FUNCTIONS ---
         // Load vendor data from localStorage or default sample
@@ -2128,7 +2132,7 @@
             // Previous button
             const prevBtn = document.createElement('button');
             prevBtn.className = 'page-btn';
-            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.innerHTML = '<i class="fas fa chevron-left"></i>';
             prevBtn.disabled = currentPage === 1;
             prevBtn.addEventListener('click', () => {
                 if (window.currentPage > 1) {
@@ -3116,6 +3120,31 @@
             }
         }
 
+        // --- SIMPLE ROLE MANAGEMENT ---
+        async function getUserRole(email) {
+            // Manager email
+            if (email === 'anggi-ta-s@genetek.co.id') {
+                return 'manager';
+            }
+            // User email
+            if (email === 'anisah@genetek.co.id') {
+                return 'user';
+            }
+            // Default untuk email lainnya
+            return 'user';
+        }
+
+        // --- Apply Role-Based Menu Restrictions ---
+        function applyRoleBasedMenu() {
+            const statistikNavItem = document.querySelector('.nav-item[data-target="statistik-section"]');
+            
+            if (currentUserRole === 'user' && statistikNavItem) {
+                statistikNavItem.style.display = 'none';
+            } else if (currentUserRole === 'manager' && statistikNavItem) {
+                statistikNavItem.style.display = 'flex';
+            }
+        }
+
         // --- Improved Login Functionality ---
         function initLogin() {
             const loginForm = document.getElementById('login-form');
@@ -3130,11 +3159,19 @@
             }
 
             // Check if user is already logged in
-            auth.onAuthStateChanged(user => {
+            auth.onAuthStateChanged(async (user) => {
                 if (user) {
+                    // Get user role based on email
+                    currentUserRole = await getUserRole(user.email);
+                    document.body.setAttribute('data-user-role', currentUserRole);
+                    
+                    // Apply menu restrictions
+                    applyRoleBasedMenu();
+                    
                     // User is signed in, hide login and show main content
                     document.getElementById('auth-container').style.display = 'none';
                     document.getElementById('main-container').style.display = 'flex';
+                    
                     // Load semua data yang diperlukan saat login berhasil
                     loadDashboardData();
                     loadVendorData();
@@ -3145,11 +3182,13 @@
                     // User is signed out, show login
                     document.getElementById('auth-container').style.display = 'flex';
                     document.getElementById('main-container').style.display = 'none';
+                    document.body.removeAttribute('data-user-role');
+                    currentUserRole = '';
                 }
             });
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('login-btn');
@@ -3159,19 +3198,26 @@
             loginBtn.classList.add('loading');
             loginError.style.display = 'none';
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Login successful
-                    loginBtn.classList.remove('loading');
-                    showAlert('Login berhasil!', 'success');
-                })
-                .catch((error) => {
-                    // Login failed
-                    loginBtn.classList.remove('loading');
-                    loginError.textContent = error.message;
-                    loginError.style.display = 'block';
-                    console.error("Login error:", error);
-                });
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                
+                // Get user role
+                currentUserRole = await getUserRole(email);
+                document.body.setAttribute('data-user-role', currentUserRole);
+                
+                // Apply menu restrictions
+                applyRoleBasedMenu();
+                
+                loginBtn.classList.remove('loading');
+                showAlert('Login berhasil!', 'success');
+                
+            } catch (error) {
+                // Login failed
+                loginBtn.classList.remove('loading');
+                loginError.textContent = error.message;
+                loginError.style.display = 'block';
+                console.error("Login error:", error);
+            }
         }
 
         function logout() {
@@ -3357,6 +3403,12 @@
 
             // --- Fungsi Navigasi Sidebar ---
             function showSection(targetId) {
+                // Check permission for statistics section
+                if (targetId === 'statistik-section' && currentUserRole !== 'manager') {
+                    showAlert('Anda tidak memiliki izin untuk mengakses halaman statistik.', 'error');
+                    return;
+                }
+                
                 contentSections.forEach(section => {
                     section.style.display = 'none';
                 });
@@ -3377,7 +3429,7 @@
                 }
                 
                 // Update complete statistics when showing statistik section
-                if (targetId === 'statistik-section') {
+                if (targetId === 'statistik-section' && currentUserRole === 'manager') {
                     updateCompleteStatistics();
                 }
             }
@@ -3387,6 +3439,13 @@
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
                     const targetId = this.dataset.target;
+                    
+                    // Check permission for statistics
+                    if (targetId === 'statistik-section' && currentUserRole !== 'manager') {
+                        showAlert('Anda tidak memiliki izin untuk mengakses halaman statistik.', 'error');
+                        return;
+                    }
+                    
                     if (targetId) {
                         showSection(targetId);
                     } else if (this.id === 'logout-btn') {
@@ -5268,7 +5327,7 @@
                 </div>
                 <div class="form-group">
                     <label for="keterangan-tgl-bayar">Tanggal Bayar</label>
-                    <input type="date" id="keterangan-tgl-bayar' class="filter-input">
+                    <input type="date" id="keterangan-tgl-bayar" class="filter-input">
                 </div>
                 <div class="form-group">
                     <label for="keterangan-status-akhir">Status Akhir</label>
