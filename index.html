@@ -323,7 +323,6 @@
         }
         /* Warna pink untuk menu tertentu */
         .nav-item[data-target="dashboard-section"]:hover,
-        .nav-item[data-target="faktur-pajak-section"]:hover,
         .nav-item[data-target="keterangan-section"]:hover,
         .nav-item[data-target="statistik-section"]:hover,
         #logout-btn:hover {
@@ -332,7 +331,6 @@
         }
 
         .nav-item[data-target="dashboard-section"].active,
-        .nav-item[data-target="faktur-pajak-section"].active,
         .nav-item[data-target="keterangan-section"].active,
         .nav-item[data-target="statistik-section"].active {
             background-color: var(--pink);
@@ -1660,10 +1658,8 @@
 
         // Firestore Collections references
         const invoicesCol = db.collection('invoices');
-        const fakturPajakCol = db.collection('fakturPajak');
         const pembayaranCol = db.collection('pembayaran');
         const keteranganCol = db.collection('keterangan');
-        const usersCol = db.collection('users');
 
         // --- Custom Alert Function ---
         function showAlert(message, type = 'info', duration = 3000) {
@@ -1995,20 +1991,10 @@
         }
 
         // --- Check if Invoice is Problematic ---
-        function checkProblematicInvoice(invoice, fakturPajak, pembayaran) {
+        function checkProblematicInvoice(invoice, pembayaran) {
             const problems = [];
             
-            // 1. Check if no faktur pajak
-            if (!fakturPajak || !fakturPajak.noFakturPajak || fakturPajak.noFakturPajak.trim() === '') {
-                problems.push('No faktur pajak belum ada');
-            }
-            
-            // 2. Check if no tanggal faktur pajak
-            if (!fakturPajak || !fakturPajak.tglFakturPajak || fakturPajak.tglFakturPajak.trim() === '') {
-                problems.push('Tanggal faktur pajak belum ada');
-            }
-            
-            // 3. Check if exceeds TOP and jatuh tempo
+            // 1. Check if exceeds TOP and jatuh tempo
             if (pembayaran && pembayaran.jatuhTempo) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -2021,9 +2007,14 @@
                 }
             }
             
-            // 4. Check if no DPP value
+            // 2. Check if no DPP value
             if (!pembayaran || !pembayaran.dppIdr || pembayaran.dppIdr === '0' || pembayaran.dppIdr === '') {
                 problems.push('Tidak ada nilai DPP (IDR)');
+            }
+            
+            // 3. Check if no vendor name
+            if (!invoice || !invoice.namaVendor || invoice.namaVendor.trim() === '') {
+                problems.push('Nama vendor tidak ada');
             }
             
             return {
@@ -2330,10 +2321,9 @@
                     const currentProblematicInvoices = [];
 
                     // Fetch all related data once to optimize
-                    const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
+                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
                         pembayaranCol.get(),
-                        keteranganCol.get(),
-                        fakturPajakCol.get()
+                        keteranganCol.get()
                     ]);
 
                     const pembayaranMap = new Map();
@@ -2346,11 +2336,6 @@
                         keteranganMap.set(doc.data().noInvoice, doc.data());
                     });
 
-                    const fakturPajakMap = new Map();
-                    fakturPajakSnapshot.forEach(doc => {
-                        fakturPajakMap.set(doc.data().noInvoice, doc.data());
-                    });
-
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
                         const noInvoice = invoice.noInvoice;
@@ -2358,7 +2343,6 @@
 
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
-                        const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                         const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                         const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -2370,20 +2354,23 @@
                             keterangan.isManualStatus || false
                         );
 
-                        // Check if invoice is problematic (HANYA UNTUK DASHBOARD)
-                        const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
+                        // Check if invoice is problematic
+                        const problemCheck = checkProblematicInvoice(invoice, pembayaran);
                         
                         // Simpan data problematic untuk dashboard
                         if (problemCheck.isProblematic) {
                             currentProblematicInvoices.push({
                                 ...invoice,
                                 problems: problemCheck.problems,
-                                fakturPajak: fakturPajak,
                                 pembayaran: pembayaran,
                                 keterangan: keterangan,
                                 Status: statusDisplay,
                                 No_Invoice: noInvoice,
-                                DPP_IDR: dppDisplay
+                                DPP_IDR: dppDisplay,
+                                Nama_Vendor: invoice.namaVendor || '-',
+                                Jatuh_Tempo: pembayaran.jatuhTempo || '-',
+                                Tanggal_Bayar: keterangan.tglBayar || '-',
+                                Keterangan_Proses: keterangan.keteranganProses || '-'
                             });
                         }
                         
@@ -2393,7 +2380,7 @@
                             Penerima: invoice.penerima || '',
                             Corp: invoice.corp || '',
                             Tanggal_Diterima: invoice.tglDiterima || '',
-                            Tanggal_Invoice: invoice.tglInvoice || '', // LINE YANG DITAMBAHKAN
+                            Tanggal_Invoice: invoice.tglInvoice || '',
                             No_Invoice: noInvoice,
                             Nama_Vendor: invoice.namaVendor || '',
                             DPP_IDR: dppDisplay,
@@ -2639,10 +2626,9 @@
                     if (!snapshot.empty) {
                         total = snapshot.size;
                         // Fetch all keterangan documents once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
+                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
                             pembayaranCol.get(),
-                            keteranganCol.get(),
-                            fakturPajakCol.get()
+                            keteranganCol.get()
                         ]);
 
                         const pembayaranMap = new Map();
@@ -2655,17 +2641,11 @@
                             keteranganMap.set(doc.data().noInvoice, doc.data());
                         });
 
-                        const fakturPajakMap = new Map();
-                        fakturPajakSnapshot.forEach(doc => {
-                            fakturPajakMap.set(doc.data().noInvoice, doc.data());
-                        });
-
                         snapshot.forEach(doc => {
                             const noInvoice = doc.data().noInvoice;
                             const invoiceData = doc.data();
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
-                            const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                             const status = calculateStatus(
                                 invoiceData.tglDiterima,
@@ -2676,7 +2656,7 @@
                             );
 
                             // Check if problematic (HANYA UNTUK DASHBOARD)
-                            const problemCheck = checkProblematicInvoice(invoiceData, fakturPajak, pembayaran);
+                            const problemCheck = checkProblematicInvoice(invoiceData, pembayaran);
                             
                             if (problemCheck.isProblematic) {
                                 problematic++;
@@ -3166,12 +3146,10 @@
 
         // Apply autocomplete to relevant input fields
         function setupAllAutocompletes() {
-            const searchInvoiceFakturPajakInput = document.getElementById('search-invoice-faktur-pajak');
             const searchInvoicePembayaranInput = document.getElementById('search-invoice-pembayaran');
             const searchInvoiceKeteranganInput = document.getElementById('search-invoice-keterangan');
             const filterSearchInput = document.getElementById('filter-search');
 
-            if (searchInvoiceFakturPajakInput) autocomplete(searchInvoiceFakturPajakInput, allInvoiceNumbers);
             if (searchInvoicePembayaranInput) autocomplete(searchInvoicePembayaranInput, allInvoiceNumbers);
             if (searchInvoiceKeteranganInput) autocomplete(searchInvoiceKeteranganInput, allInvoiceNumbers);
             if (filterSearchInput) autocomplete(filterSearchInput, allInvoiceNumbers);
@@ -3769,10 +3747,9 @@
                         const currentProblematicInvoices = [];
 
                         // Fetch all related data once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
+                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
                             pembayaranCol.get(),
-                            keteranganCol.get(),
-                            fakturPajakCol.get()
+                            keteranganCol.get()
                         ]);
 
                         const pembayaranMap = new Map();
@@ -3785,11 +3762,6 @@
                             keteranganMap.set(doc.data().noInvoice, doc.data());
                         });
 
-                        const fakturPajakMap = new Map();
-                        fakturPajakSnapshot.forEach(doc => {
-                            fakturPajakMap.set(doc.data().noInvoice, doc.data());
-                        });
-
                         snapshot.forEach(doc => {
                             const invoice = doc.data();
                             const noInvoice = invoice.noInvoice;
@@ -3797,7 +3769,6 @@
 
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
-                            const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                             const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                             const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -3809,20 +3780,23 @@
                                 keterangan.isManualStatus || false
                             );
 
-                            // Check if invoice is problematic (HANYA UNTUK DASHBOARD)
-                            const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
+                            // Check if invoice is problematic
+                            const problemCheck = checkProblematicInvoice(invoice, pembayaran);
                             
                             // Simpan data problematic untuk dashboard
                             if (problemCheck.isProblematic) {
                                 currentProblematicInvoices.push({
                                     ...invoice,
                                     problems: problemCheck.problems,
-                                    fakturPajak: fakturPajak,
                                     pembayaran: pembayaran,
                                     keterangan: keterangan,
                                     Status: statusDisplay,
                                     No_Invoice: noInvoice,
-                                    DPP_IDR: dppDisplay
+                                    DPP_IDR: dppDisplay,
+                                    Nama_Vendor: invoice.namaVendor || '-',
+                                    Jatuh_Tempo: pembayaran.jatuhTempo || '-',
+                                    Tanggal_Bayar: keterangan.tglBayar || '-',
+                                    Keterangan_Proses: keterangan.keteranganProses || '-'
                                 });
                             }
                             
@@ -3832,7 +3806,7 @@
                                 Penerima: invoice.penerima || '',
                                 Corp: invoice.corp || '',
                                 Tanggal_Diterima: invoice.tglDiterima || '',
-                                Tanggal_Invoice: invoice.tglInvoice || '', // LINE YANG DITAMBAHKAN
+                                Tanggal_Invoice: invoice.tglInvoice || '',
                                 No_Invoice: noInvoice,
                                 Nama_Vendor: invoice.namaVendor || '',
                                 DPP_IDR: dppDisplay,
@@ -3887,9 +3861,6 @@
                 }
                 const data = invoiceDoc.data();
 
-                const fpQuery = await fakturPajakCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
-                const fpData = fpQuery.empty ? {} : fpQuery.docs[0].data();
-
                 const pembayaranQuery = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).limit(1).get();
                 const pembayaranData = pembayaranQuery.empty ? {} : pembayaranQuery.docs[0].data();
 
@@ -3915,10 +3886,6 @@
                 document.getElementById('detail-tgl-invoice').textContent = data.tglInvoice || '-';
                 document.getElementById('detail-surat-jalan').textContent = data.suratJalan || '-';
                 document.getElementById('detail-nama-vendor').textContent = data.namaVendor || '-';
-
-                document.getElementById('detail-no-faktur-pajak').textContent = fpData.noFakturPajak || 'Belum ada';
-                document.getElementById('detail-tgl-faktur-pajak').textContent = fpData.tglFakturPajak || 'Belum ada';
-                document.getElementById('add-edit-faktur-pajak-btn').dataset.invoiceNo = rawInvoiceNo;
 
                 // Tampilkan DPP yang sudah termasuk PPN jika ada
                 let dppDisplay = 'Rp 0';
@@ -4004,7 +3971,7 @@
 
             // Function to delete Invoice
             async function deleteInvoice(rawInvoiceNo) {
-                const userConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus invoice dengan No Invoice: ${rawInvoiceNo}? Ini akan menghapus semua data terkait (Faktur Pajak, Pembayaran, Keterangan).`);
+                const userConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus invoice dengan No Invoice: ${rawInvoiceNo}? Ini akan menghapus semua data terkait (Pembayaran, Keterangan).`);
 
                 if (!userConfirmed) {
                     showAlert('Penghapusan invoice dibatalkan.', 'info');
@@ -4015,11 +3982,6 @@
 
                 try {
                     await invoicesCol.doc(invoiceNoDocId).delete();
-
-                    const fpDocs = await fakturPajakCol.where('noInvoice', '==', rawInvoiceNo).get();
-                    const fpBatch = db.batch();
-                    fpDocs.forEach(doc => fpBatch.delete(doc.ref));
-                    await fpBatch.commit();
 
                     const pembayaranDocs = await pembayaranCol.where('noInvoice', '==', rawInvoiceNo).get();
                     const pembayaranBatch = db.batch();
@@ -4057,10 +4019,9 @@
                         const currentProblematicInvoices = [];
 
                         // Fetch all related data once to optimize
-                        const [pembayaranSnapshot, keteranganSnapshot, fakturPajakSnapshot] = await Promise.all([
+                        const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
                             pembayaranCol.get(),
-                            keteranganCol.get(),
-                            fakturPajakCol.get()
+                            keteranganCol.get()
                         ]);
 
                         const pembayaranMap = new Map();
@@ -4073,11 +4034,6 @@
                             keteranganMap.set(doc.data().noInvoice, doc.data());
                         });
 
-                        const fakturPajakMap = new Map();
-                        fakturPajakSnapshot.forEach(doc => {
-                            fakturPajakMap.set(doc.data().noInvoice, doc.data());
-                        });
-
                         snapshot.forEach(doc => {
                             const invoice = doc.data();
                             const noInvoice = invoice.noInvoice;
@@ -4085,7 +4041,6 @@
 
                             const pembayaran = pembayaranMap.get(noInvoice) || {};
                             const keterangan = keteranganMap.get(noInvoice) || {};
-                            const fakturPajak = fakturPajakMap.get(noInvoice) || {};
 
                             const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                             const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -4097,20 +4052,23 @@
                                 keterangan.isManualStatus || false
                             );
 
-                            // Check if invoice is problematic (HANYA UNTUK DASHBOARD)
-                            const problemCheck = checkProblematicInvoice(invoice, fakturPajak, pembayaran);
+                            // Check if invoice is problematic
+                            const problemCheck = checkProblematicInvoice(invoice, pembayaran);
                             
                             // Simpan data problematic untuk dashboard
                             if (problemCheck.isProblematic) {
                                 currentProblematicInvoices.push({
                                     ...invoice,
                                     problems: problemCheck.problems,
-                                    fakturPajak: fakturPajak,
                                     pembayaran: pembayaran,
                                     keterangan: keterangan,
                                     Status: statusDisplay,
                                     No_Invoice: noInvoice,
-                                    DPP_IDR: dppDisplay
+                                    DPP_IDR: dppDisplay,
+                                    Nama_Vendor: invoice.namaVendor || '-',
+                                    Jatuh_Tempo: pembayaran.jatuhTempo || '-',
+                                    Tanggal_Bayar: keterangan.tglBayar || '-',
+                                    Keterangan_Proses: keterangan.keteranganProses || '-'
                                 });
                             }
                             
@@ -4120,7 +4078,7 @@
                                 Penerima: invoice.penerima || '',
                                 Corp: invoice.corp || '',
                                 Tanggal_Diterima: invoice.tglDiterima || '',
-                                Tanggal_Invoice: invoice.tglInvoice || '', // LINE YANG DITAMBAHKAN
+                                Tanggal_Invoice: invoice.tglInvoice || '',
                                 No_Invoice: noInvoice,
                                 Nama_Vendor: invoice.namaVendor || '',
                                 DPP_IDR: dppDisplay,
@@ -4191,10 +4149,7 @@
                 }
             });
 
-            // --- Modals for Faktur Pajak, Pembayaran, Keterangan (from Detail Page) ---
-            document.getElementById('add-edit-faktur-pajak-btn').addEventListener('click', function() {
-                window.openModal('faktur-pajak-modal', this.dataset.invoiceNo);
-            });
+            // --- Modals for Pembayaran, Keterangan (from Detail Page) ---
             document.getElementById('add-edit-pembayaran-btn').addEventListener('click', function() {
                 window.openModal('pembayaran-modal', this.dataset.invoiceNo);
             });
@@ -4202,12 +4157,7 @@
                 window.openModal('keterangan-modal', this.dataset.invoiceNo);
             });
 
-            // --- Standalone Modals for Faktur Pajak, Pembayaran, Keterangan (from Sidebar) ---
-            document.getElementById('add-faktur-pajak-standalone-btn').addEventListener('click', function() {
-                window.openModal('faktur-pajak-modal');
-                document.getElementById('fp-no-invoice').readOnly = false;
-                document.getElementById('fp-no-invoice').value = '';
-            });
+            // --- Standalone Modals for Pembayaran, Keterangan (from Sidebar) ---
             document.getElementById('add-pembayaran-standalone-btn').addEventListener('click', function() {
                 window.openModal('pembayaran-modal');
                 document.getElementById('pembayaran-no-invoice').readOnly = false;
@@ -4242,7 +4192,6 @@
                 }
             }
 
-            setupSearchAndFillModal('search-faktur-pajak-btn', 'search-invoice-faktur-pajak', 'faktur-pajak-modal');
             setupSearchAndFillModal('search-pembayaran-btn', 'search-invoice-pembayaran', 'pembayaran-modal');
             setupSearchAndFillModal('search-keterangan-btn', 'search-invoice-keterangan', 'keterangan-modal');
 
@@ -4252,9 +4201,6 @@
                 let collectionRef;
 
                 switch (modalId) {
-                    case 'faktur-pajak-modal':
-                        collectionRef = fakturPajakCol;
-                        break;
                     case 'pembayaran-modal':
                         collectionRef = pembayaranCol;
                         break;
@@ -4274,10 +4220,6 @@
                 }
 
                 switch (modalId) {
-                    case 'faktur-pajak-modal':
-                        document.getElementById('fp-tgl-faktur-pajak').value = dataToFill.tglFakturPajak || '';
-                        document.getElementById('fp-no-faktur-pajak').value = dataToFill.noFakturPajak || '';
-                        break;
                     case 'pembayaran-modal':
                         document.getElementById('pembayaran-dpp-idr').value = formatRupiah(dataToFill.dppIdr || '');
                         document.getElementById('pembayaran-ppn-idr').value = formatRupiah(dataToFill.ppnIdr || '');
@@ -4310,34 +4252,6 @@
                         break;
                 }
             }
-
-            // --- Form Submissions (Firestore) ---
-            document.getElementById('faktur-pajak-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const rawNoInvoice = document.getElementById('fp-no-invoice').value;
-                const formData = {
-                    noInvoice: rawNoInvoice,
-                    tglFakturPajak: document.getElementById('fp-tgl-faktur-pajak').value,
-                    noFakturPajak: document.getElementById('fp-no-faktur-pajak').value,
-                };
-
-                try {
-                    const existingDocQuery = await fakturPajakCol.where('noInvoice', '==', rawNoInvoice).limit(1).get();
-                    if (!existingDocQuery.empty) {
-                        await fakturPajakCol.doc(existingDocQuery.docs[0].id).update(formData);
-                    } else {
-                        await fakturPajakCol.add(formData);
-                    }
-                    showAlert('Faktur Pajak berhasil disimpan!', 'success');
-                    closeModal('faktur-pajak-modal');
-                    if (document.getElementById('invoice-detail-section').style.display === 'block') {
-                        displayInvoiceDetail(rawNoInvoice);
-                    }
-                } catch (error) {
-                    console.error("Error saving Faktur Pajak: ", error);
-                    showAlert("Gagal menyimpan Faktur Pajak: " + error.message, 'error');
-                }
-            });
 
             // --- Pembayaran Form Submission dengan PPN ---
             document.getElementById('pembayaran-form').addEventListener('submit', async function(e) {
@@ -4780,10 +4694,6 @@
                     <div class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></div>
                     <div class="nav-text">Invoice</div>
                 </a>
-                <a href="#" class="nav-item" data-target="faktur-pajak-section">
-                    <div class="nav-icon"><i class="fas fa-receipt"></i></div>
-                    <div class="nav-text">Faktur Pajak</div>
-                </a>
                 <a href="#" class="nav-item" data-target="pembayaran-section">
                     <div class="nav-icon"><i class="fas fa-hand-holding-usd"></i></div>
                     <div class="nav-text">Pembayaran</div>
@@ -5017,17 +4927,6 @@
                         </div>
 
                         <div class="detail-section">
-                            <h3>Detail Faktur Pajak</h3>
-                            <div class="detail-item"><strong>No Faktur Pajak:</strong> <span id="detail-no-faktur-pajak"></span></div>
-                            <div class="detail-item"><strong>Tanggal Faktur Pajak:</strong> <span id="detail-tgl-faktur-pajak"></span></div>
-                            <div class="detail-item">
-                                <button class="btn btn-outline btn-sm" id="add-edit-faktur-pajak-btn">
-                                    <i class="fas fa-plus btn-icon"></i> Tambah/Edit Faktur Pajak
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="detail-section">
                             <h3>Detail Pembayaran</h3>
                             <div class="detail-item"><strong>DPP (IDR):</strong> <span id="detail-dpp-idr"></span></div>
                             <div class="detail-item"><strong>PPn (IDR):</strong> <span id="detail-ppn-idr"></span></div>
@@ -5059,30 +4958,6 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Faktur Pajak Section (Standalone for direct access from sidebar) -->
-            <section id="faktur-pajak-section" class="content-section" style="display: none;">
-                <div class="header">
-                    <h1 class="page-title">Manajemen Faktur Pajak</h1>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="add-faktur-pajak-standalone-btn">
-                            <i class="fas fa-plus btn-icon"></i> Tambah Faktur Pajak
-                        </button>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <p>Gunakan form di bawah untuk mencari No Invoice dan menambahkan/mengedit Faktur Pajak terkait.</p>
-                        <div class="filter-group" style="max-width: 400px; margin-bottom: 1rem;">
-                            <label class="filter-label">Cari No Invoice untuk Faktur Pajak</label>
-                            <div class="autocomplete-container">
-                                <input type="text" class="filter-input" id="search-invoice-faktur-pajak" placeholder="Masukkan No Invoice...">
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" id="search-faktur-pajak-btn">Cari & Tambah/Edit</button>
                     </div>
                 </div>
             </section>
@@ -5354,31 +5229,6 @@
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Simpan Invoice</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Tambah/Edit Faktur Pajak -->
-    <div id="faktur-pajak-modal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close-btn">&times;</span>
-            <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Faktur Pajak</h2>
-            <form id="faktur-pajak-form">
-                <div class="form-group">
-                    <label for="fp-no-invoice">No Invoice</label>
-                    <input type="text" id="fp-no-invoice" class="filter-input" readonly required>
-                </div>
-                <div class="form-group">
-                    <label for="fp-tgl-faktur-pajak">Tanggal Faktur Pajak</label>
-                    <input type="date" id="fp-tgl-faktur-pajak" class="filter-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="fp-no-faktur-pajak">No Faktur Pajak</label>
-                    <input type="text" id="fp-no-faktur-pajak" class="filter-input" required>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Simpan Faktur Pajak</button>
                 </div>
             </form>
         </div>
