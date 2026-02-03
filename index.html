@@ -1293,7 +1293,7 @@
             border-radius: 0.75rem;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             position: relative;
         }
 
@@ -1540,6 +1540,31 @@
         .status-modal-content {
             z-index: 1101;
         }
+
+        /* Notes Form Styles */
+        .notes-form {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .notes-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 0.5rem;
+        }
+
+        .notes-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
     </style>
 </head>
 <body data-user-role="">
@@ -1565,11 +1590,12 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Firestore Collections references (fakturPajakCol dihapus)
+        // Firestore Collections references
         const invoicesCol = db.collection('invoices');
         const pembayaranCol = db.collection('pembayaran');
         const keteranganCol = db.collection('keterangan');
         const usersCol = db.collection('users');
+        const notesCol = db.collection('notes'); // NEW collection for notes
 
         // --- Custom Alert Function ---
         function showAlert(message, type = 'info', duration = 3000) {
@@ -2226,9 +2252,10 @@
                     const currentProblematicInvoices = [];
 
                     // Fetch all related data once to optimize
-                    const [pembayaranSnapshot, keteranganSnapshot] = await Promise.all([
+                    const [pembayaranSnapshot, keteranganSnapshot, notesSnapshot] = await Promise.all([
                         pembayaranCol.get(),
-                        keteranganCol.get()
+                        keteranganCol.get(),
+                        notesCol.get() // NEW: Load notes data
                     ]);
 
                     const pembayaranMap = new Map();
@@ -2241,6 +2268,11 @@
                         keteranganMap.set(doc.data().noInvoice, doc.data());
                     });
 
+                    const notesMap = new Map(); // NEW: Map for notes
+                    notesSnapshot.forEach(doc => {
+                        notesMap.set(doc.data().invoiceNo, doc.data());
+                    });
+
                     snapshot.forEach(doc => {
                         const invoice = doc.data();
                         const noInvoice = invoice.noInvoice;
@@ -2248,6 +2280,7 @@
 
                         const pembayaran = pembayaranMap.get(noInvoice) || {};
                         const keterangan = keteranganMap.get(noInvoice) || {};
+                        const notesData = notesMap.get(noInvoice) || {}; // NEW: Get notes data
 
                         const dppDisplay = pembayaran.dppIdr ? formatRupiah(pembayaran.dppIdr) : 'N/A';
                         const ppnDisplay = pembayaran.ppnIdr ? formatRupiah(pembayaran.ppnIdr) : '0';
@@ -2304,7 +2337,9 @@
                             Status: statusDisplay,
                             Is_Manual_Status: keterangan.isManualStatus || false,
                             Is_Problematic: problemCheck.isProblematic,
-                            Problems: problemCheck.problems
+                            Problems: problemCheck.problems,
+                            Notes: notesData.notes || '', // NEW: Add notes to invoice data
+                            NotesTimestamp: notesData.timestamp || '' // NEW: Add notes timestamp
                         };
 
                         currentAllInvoiceData.push(invoiceData);
@@ -2335,6 +2370,8 @@
         function applyFilters() {
             const startDate = document.getElementById('filter-start-date').value;
             const endDate = document.getElementById('filter-end-date').value;
+            const startDateDiterima = document.getElementById('filter-start-date-diterima').value; // NEW
+            const endDateDiterima = document.getElementById('filter-end-date-diterima').value; // NEW
             const statusFilter = document.getElementById('filter-status').value;
             const searchKeyword = document.getElementById('filter-search').value.toLowerCase();
             const yearFilter = document.querySelector('.year-filter-btn.active')?.dataset.year || 'all';
@@ -2350,11 +2387,19 @@
                     }
                 }
 
-                // Date filter (Tanggal Invoice - DIUBAH dari Tanggal Diterima)
+                // Date filter (Tanggal Invoice)
                 if (startDate && invoice.Tanggal_Invoice < startDate) {
                     matches = false;
                 }
                 if (endDate && invoice.Tanggal_Invoice > endDate) {
+                    matches = false;
+                }
+
+                // NEW: Date filter (Tanggal Diterima)
+                if (startDateDiterima && invoice.Tanggal_Diterima < startDateDiterima) {
+                    matches = false;
+                }
+                if (endDateDiterima && invoice.Tanggal_Diterima > endDateDiterima) {
                     matches = false;
                 }
 
@@ -3305,12 +3350,23 @@
         }
 
         // --- Status Note Popup Functions ---
-        function openStatusNotePopup(invoiceNo, durationDays, durationLabel, tglDiterima, tglBayar) {
+        async function openStatusNotePopup(invoiceNo, durationDays, durationLabel, tglDiterima, tglBayar) {
             const popup = document.getElementById('status-note-popup');
             const title = document.getElementById('status-note-title');
             const details = document.getElementById('status-note-details');
             
             title.textContent = `Detail Durasi Pembayaran - ${invoiceNo}`;
+            
+            // Load existing notes
+            const existingNotesQuery = await notesCol.where('invoiceNo', '==', invoiceNo).limit(1).get();
+            let existingNotes = '';
+            let existingNotesId = null;
+            
+            if (!existingNotesQuery.empty) {
+                const notesData = existingNotesQuery.docs[0].data();
+                existingNotes = notesData.notes || '';
+                existingNotesId = existingNotesQuery.docs[0].id;
+            }
             
             details.innerHTML = `
                 <div class="status-note-detail-item">
@@ -3339,7 +3395,57 @@
                         ${durationLabel}
                     </span>
                 </div>
+                
+                <div class="notes-form">
+                    <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Catatan</h4>
+                    <textarea id="status-note-textarea" class="notes-textarea" placeholder="Tambahkan catatan untuk invoice ini...">${existingNotes}</textarea>
+                    <div class="notes-actions">
+                        <button type="button" class="btn btn-outline" id="cancel-notes-btn">Batal</button>
+                        <button type="button" class="btn btn-primary" id="save-notes-btn" data-invoice-no="${invoiceNo}" data-notes-id="${existingNotesId || ''}">Simpan Catatan</button>
+                    </div>
+                </div>
             `;
+            
+            // Add event listeners for notes form
+            setTimeout(() => {
+                document.getElementById('cancel-notes-btn').addEventListener('click', () => {
+                    closeStatusNotePopup();
+                });
+                
+                document.getElementById('save-notes-btn').addEventListener('click', async function() {
+                    const notesText = document.getElementById('status-note-textarea').value.trim();
+                    const invoiceNo = this.dataset.invoiceNo;
+                    const notesId = this.dataset.notesId;
+                    
+                    try {
+                        if (notesId) {
+                            // Update existing notes
+                            await notesCol.doc(notesId).update({
+                                notes: notesText,
+                                timestamp: new Date().toISOString(),
+                                updatedBy: auth.currentUser.email
+                            });
+                        } else {
+                            // Create new notes
+                            await notesCol.add({
+                                invoiceNo: invoiceNo,
+                                notes: notesText,
+                                timestamp: new Date().toISOString(),
+                                createdBy: auth.currentUser.email
+                            });
+                        }
+                        
+                        showAlert('Catatan berhasil disimpan!', 'success');
+                        closeStatusNotePopup();
+                        
+                        // Refresh data to update notes
+                        loadInvoicesToTable();
+                    } catch (error) {
+                        console.error("Error saving notes:", error);
+                        showAlert("Gagal menyimpan catatan: " + error.message, 'error');
+                    }
+                });
+            }, 100);
             
             popup.style.display = 'flex';
         }
@@ -3867,6 +3973,12 @@
                     keteranganDocs.forEach(doc => keteranganBatch.delete(doc.ref));
                     await keteranganBatch.commit();
 
+                    // NEW: Delete notes data
+                    const notesDocs = await notesCol.where('invoiceNo', '==', rawInvoiceNo).get();
+                    const notesBatch = db.batch();
+                    notesDocs.forEach(doc => notesBatch.delete(doc.ref));
+                    await notesBatch.commit();
+
                     showAlert('Invoice dan data terkait berhasil dihapus!', 'success');
                     
                     // Tetap di halaman yang sama setelah hapus
@@ -4348,6 +4460,8 @@
             // --- Filter Event Listeners ---
             document.getElementById('filter-start-date').addEventListener('change', applyFilters);
             document.getElementById('filter-end-date').addEventListener('change', applyFilters);
+            document.getElementById('filter-start-date-diterima').addEventListener('change', applyFilters);
+            document.getElementById('filter-end-date-diterima').addEventListener('change', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('filter-search').addEventListener('keyup', applyFilters);
 
@@ -4675,6 +4789,14 @@
                             <div class="filter-group">
                                 <label class="filter-label">Tanggal Akhir (Invoice)</label>
                                 <input type="date" class="filter-input" id="filter-end-date">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Tanggal Mulai (Diterima)</label>
+                                <input type="date" class="filter-input" id="filter-start-date-diterima">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Tanggal Akhir (Diterima)</label>
+                                <input type="date" class="filter-input" id="filter-end-date-diterima">
                             </div>
                             <div class="filter-group">
                                 <label class="filter-label">Status</label>
@@ -5125,149 +5247,145 @@
                 </div>
                 <div class="form-group">
                     <label for="pembayaran-top">TOP (Term of Payment)</label>
-                    <input type="number" id="pembayaran-top'
-                                                <div class="form-group">
-                            <label for="pembayaran-top">TOP (Term of Payment)</label>
-                            <input type="number" id="pembayaran-top" class="filter-input" placeholder="Contoh: 30">
-                        </div>
-                        <div class="form-group">
-                            <label for="pembayaran-jatuh-tempo">Jatuh Tempo</label>
-                            <input type="date" id="pembayaran-jatuh-tempo" class="filter-input">
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Simpan Pembayaran</button>
-                        </div>
-                    </form>
+                    <input type="number" id="pembayaran-top" class="filter-input" placeholder="Contoh: 30">
                 </div>
-            </div>
-        </div>
-
-        <!-- Modal Tambah/Edit Keterangan -->
-        <div id="keterangan-modal" class="modal">
-            <div class="modal-content">
-                <span class="modal-close-btn">&times;</span>
-                <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Keterangan & Status</h2>
-                <form id="keterangan-form">
-                    <div class="form-group">
-                        <label for="keterangan-no-invoice">No Invoice</label>
-                        <input type="text" id="keterangan-no-invoice" class="filter-input" readonly required>
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-tgl-pengajuan-finance">Tanggal Pengajuan ke Finance</label>
-                        <input type="date" id="keterangan-tgl-pengajuan-finance" class="filter-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-tgl-pengajuan-reni">Tanggal Pengajuan (Reni)</label>
-                        <input type="date" id="keterangan-tgl-pengajuan-reni" class="filter-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-tgl-diterima-anggi">Tanggal Diterima (Anggi)</label>
-                        <input type="date" id="keterangan-tgl-diterima-anggi" class="filter-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-lama-pengajuan">Lama Pengajuan (Hari)</label>
-                        <input type="text" id="keterangan-lama-pengajuan" class="filter-input" readonly placeholder="Otomatis dihitung">
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-keterangan-proses">Keterangan Proses</label>
-                        <textarea id="keterangan-keterangan-proses" class="filter-input"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-tgl-bayar">Tanggal Bayar</label>
-                        <input type="date" id="keterangan-tgl-bayar" class="filter-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="keterangan-status-akhir">Status Akhir</label>
-                        <select id="keterangan-status-akhir" class="filter-input">
-                            <option value="">Pilih Status</option>
-                            <option value="Menunggu Pengajuan">Menunggu Pengajuan</option>
-                            <option value="Diajukan ke Finance">Diajukan ke Finance</option>
-                            <option value="Diterima Anggi">Diterima Anggi</option>
-                            <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
-                            <option value="Dibayar">Dibayar</option>
-                            <option value="Jatuh Tempo">Jatuh Tempo</option>
-                            <option value="Dibatalkan">Dibatalkan</option>
-                        </select>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Simpan Keterangan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- NEW Modal for Manual Status Update -->
-        <div id="status-modal" class="modal">
-            <div class="modal-content">
-                <span class="modal-close-btn">&times;</span>
-                <h2 class="card-title" style="margin-bottom: 1.5rem;">Ubah Status Invoice Manual</h2>
-                <form id="status-form">
-                    <div class="form-group">
-                        <label for="status-no-invoice">No Invoice</label>
-                        <input type="text" id="status-no-invoice" class="filter-input" readonly required>
-                    </div>
-                    <div class="form-group">
-                        <label for="status-manual-select">Pilih Status Manual</label>
-                        <select id="status-manual-select" class="filter-input" required>
-                            <option value="">Pilih Status</option>
-                            <option value="Menunggu Pengajuan">Menunggu Pengajuan</option>
-                            <option value="Diajukan ke Finance">Diajukan ke Finance</option>
-                            <option value="Diterima Anggi">Diterima Anggi</option>
-                            <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
-                            <option value="Dibayar">Dibayar</option>
-                            <option value="Jatuh Tempo">Jatuh Tempo</option>
-                            <option value="Dibatalkan">Dibatalkan</option>
-                            <option value="Belum Diproses">Belum Diproses</option>
-                        </select>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Simpan Status</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- NEW Modal for Status Summary -->
-        <div id="status-summary-modal" class="status-summary-modal">
-            <div class="status-summary-content">
-                <div class="status-summary-header">
-                    <h2 class="status-summary-title" id="status-summary-title">Daftar Invoice</h2>
-                    <button class="status-summary-close-btn" id="status-summary-close-btn">&times;</button>
+                <div class="form-group">
+                    <label for="pembayaran-jatuh-tempo">Jatuh Tempo</label>
+                    <input type="date" id="pembayaran-jatuh-tempo" class="filter-input">
                 </div>
-                <div class="status-summary-table-container">
-                    <table id="status-summary-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>No Invoice</th>
-                                <th>Nama Vendor</th>
-                                <th>DPP</th>
-                                <th>Status</th>
-                                <th>Keterangan Proses</th>
-                                <th>Jatuh Tempo</th>
-                                <th>Tanggal Bayar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Data will be loaded here by JavaScript -->
-                        </tbody>
-                    </table>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Simpan Pembayaran</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Keterangan -->
+    <div id="keterangan-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Form Keterangan & Status</h2>
+            <form id="keterangan-form">
+                <div class="form-group">
+                    <label for="keterangan-no-invoice">No Invoice</label>
+                    <input type="text" id="keterangan-no-invoice" class="filter-input" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-pengajuan-finance">Tanggal Pengajuan ke Finance</label>
+                    <input type="date" id="keterangan-tgl-pengajuan-finance" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-pengajuan-reni">Tanggal Pengajuan (Reni)</label>
+                    <input type="date" id="keterangan-tgl-pengajuan-reni" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-diterima-anggi">Tanggal Diterima (Anggi)</label>
+                    <input type="date" id="keterangan-tgl-diterima-anggi" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-lama-pengajuan">Lama Pengajuan (Hari)</label>
+                    <input type="text" id="keterangan-lama-pengajuan" class="filter-input" readonly placeholder="Otomatis dihitung">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-keterangan-proses">Keterangan Proses</label>
+                    <textarea id="keterangan-keterangan-proses" class="filter-input"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-tgl-bayar">Tanggal Bayar</label>
+                    <input type="date" id="keterangan-tgl-bayar" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="keterangan-status-akhir">Status Akhir</label>
+                    <select id="keterangan-status-akhir" class="filter-input">
+                        <option value="">Pilih Status</option>
+                        <option value="Menunggu Pengajuan">Menunggu Pengajuan</option>
+                        <option value="Diajukan ke Finance">Diajukan ke Finance</option>
+                        <option value="Diterima Anggi">Diterima Anggi</option>
+                        <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+                        <option value="Dibayar">Dibayar</option>
+                        <option value="Jatuh Tempo">Jatuh Tempo</option>
+                        <option value="Dibatalkan">Dibatalkan</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Simpan Keterangan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW Modal for Manual Status Update -->
+    <div id="status-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">Ubah Status Invoice Manual</h2>
+            <form id="status-form">
+                <div class="form-group">
+                    <label for="status-no-invoice">No Invoice</label>
+                    <input type="text" id="status-no-invoice" class="filter-input" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="status-manual-select">Pilih Status Manual</label>
+                    <select id="status-manual-select" class="filter-input" required>
+                        <option value="">Pilih Status</option>
+                        <option value="Menunggu Pengajuan">Menunggu Pengajuan</option>
+                        <option value="Diajukan ke Finance">Diajukan ke Finance</option>
+                        <option value="Diterima Anggi">Diterima Anggi</option>
+                        <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+                        <option value="Dibayar">Dibayar</option>
+                        <option value="Jatuh Tempo">Jatuh Tempo</option>
+                        <option value="Dibatalkan">Dibatalkan</option>
+                        <option value="Belum Diproses">Belum Diproses</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Simpan Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW Modal for Status Summary -->
+    <div id="status-summary-modal" class="status-summary-modal">
+        <div class="status-summary-content">
+            <div class="status-summary-header">
+                <h2 class="status-summary-title" id="status-summary-title">Daftar Invoice</h2>
+                <button class="status-summary-close-btn" id="status-summary-close-btn">&times;</button>
+            </div>
+            <div class="status-summary-table-container">
+                <table id="status-summary-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>No Invoice</th>
+                            <th>Nama Vendor</th>
+                            <th>DPP</th>
+                            <th>Status</th>
+                            <th>Keterangan Proses</th>
+                            <th>Jatuh Tempo</th>
+                            <th>Tanggal Bayar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded here by JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
 
-        <!-- NEW Modal for Status Note Popup -->
-        <div id="status-note-popup" class="status-note-popup">
-            <div class="status-note-content">
-                <button class="status-note-close-btn" id="status-note-close-btn">&times;</button>
-                <h2 class="status-note-title" id="status-note-title">Detail Durasi Pembayaran</h2>
-                <div id="status-note-details">
-                    <!-- Details will be loaded here by JavaScript -->
-                </div>
+    <!-- NEW Modal for Status Note Popup -->
+    <div id="status-note-popup" class="status-note-popup">
+        <div class="status-note-content">
+            <button class="status-note-close-btn" id="status-note-close-btn">&times;</button>
+            <h2 class="status-note-title" id="status-note-title">Detail Durasi Pembayaran</h2>
+            <div id="status-note-details">
+                <!-- Details will be loaded here by JavaScript -->
             </div>
         </div>
+    </div>
 
-        <!-- Custom Alert Box -->
-        <div id="custom-alert-box" class="custom-alert"></div>
-    </body>
-    </html>
+    <!-- Custom Alert Box -->
+    <div id="custom-alert-box" class="custom-alert"></div>
+</body>
+</html>
